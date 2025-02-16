@@ -10,14 +10,15 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1",
+    "@tauri-apps/api": "^2",
     "vue": "^3.3.4",
     "vue-i18n": "^11.1.1",
     "vuetify": "^3.7.12"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",
-    "@tauri-apps/cli": "^1",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^22.13.4",
     "@vitejs/plugin-vue": "^5.0.4",
     "typescript": "^5.0.2",
     "vite": "^5.0.0",

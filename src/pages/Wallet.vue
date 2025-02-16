@@ -30,16 +30,6 @@ const addWallet = function(wallet: Wallet) {
 
 <template>
     <v-row>
-        <v-col>
-            <v-card :min-width="CARD_MIN_WIDTH" :height="CARD_MIN_HEIGHT">
-                <AddWalletDialog @confirm="addWallet">
-                    <template v-slot:activator="{ props: addWalletDialogActivatorProps }">
-                        <v-btn v-bind="addWalletDialogActivatorProps" width="100%" height="100%" prepend-icon="mdi-wallet-plus" stacked></v-btn>
-                    </template>
-                </AddWalletDialog>
-            </v-card>
-        </v-col>
-
         <v-col v-for="wallet in wallets">
             <v-card :min-width="CARD_MIN_WIDTH" :min-height="CARD_MIN_HEIGHT">
                 <v-card-title>

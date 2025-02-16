@@ -14,7 +14,7 @@ const form: Ref<boolean> = ref(false);
 </script>
 
 <template>
-    <v-dialog max-width="60%">
+    <v-dialog width="100%" height="100%">
         <template v-slot:activator="{ props }">
             <slot name="activator" :props="props"></slot>
         </template>

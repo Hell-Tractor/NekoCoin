@@ -1,22 +1,14 @@
 {
+  "productName": "nekocoin",
+  "version": "0.0.0",
+  "identifier": "com.tauri.dev",
   "build": {
     "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "nekocoin",
-    "version": "0.0.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      }
-    },
+  "app": {
     "windows": [
       {
         "title": "NekoCoin",
@@ -26,18 +18,18 @@
     ],
     "security": {
       "csp": null
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.tauri.dev",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ]
     }
-  }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {}
 }

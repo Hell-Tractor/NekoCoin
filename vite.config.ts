@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
+const mobile = !!/android|ios/.exec(process.env.TAURI_ENV_PLATFORM);
+
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
   plugins: [vue()],
@@ -13,6 +15,7 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
+    host: mobile ? "0.0.0.0" : false,
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
