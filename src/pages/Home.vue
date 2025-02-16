@@ -13,8 +13,15 @@ const today = function() {
 </script>
 
 <template>
-    <div>{{ today() }}</div>
-    <div>{{ t('welcome') }}</div>
+    <v-row>
+        <v-col class="flex-grow-0">
+            <v-avatar icon="mdi-cat" size="large" />
+        </v-col>
+        <v-col>
+            <div>{{ today() }}</div>
+            <div>{{ t('welcome') }}</div>
+        </v-col>
+    </v-row>
     <v-card>
         <v-card-text>
             <div>{{ t('total_balance') }}</div>
