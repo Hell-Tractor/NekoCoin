@@ -6,6 +6,10 @@ export default {
     income: 'Income',
     expense: 'Expense',
     WIP: 'Work in Progress...',
+    add_account: 'Add Account',
+    enter_account_name: 'Enter Account Name',
+    enter_amount: 'Enter Amount',
+    select_icon: 'Select Icon',
     page: {
         home: 'Home',
         transactions: 'Transactions',
@@ -13,5 +17,9 @@ export default {
         accounts: 'Accounts',
         tags: 'Tags',
         settings: 'Settings',
+    },
+    validation: {
+        required: 'Required',
+        isValidMoney: 'Not a valid amount.(Up to 2 decimal places)',
     }
 }

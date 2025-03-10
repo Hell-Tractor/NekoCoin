@@ -4,6 +4,7 @@ import Home from './pages/Home.vue';
 import Wallet from './pages/Wallet.vue';
 import Tags from './pages/Tags.vue';
 import { useI18n } from 'vue-i18n';
+import AddWallet from './pages/AddWallet.vue';
 const { t } = useI18n();
 
 interface Page {
@@ -29,6 +30,10 @@ const changePage = function(target_page: Page) : void {
     currentPage.value = target_page;
     showDrawer.value = false;
 };
+const changePageByName = function(target_page_name: string) : void {
+    currentPage.value = allPages.find(page => page.name === target_page_name) as Page;
+    showDrawer.value = false;
+}
 const globalButtonClick = function() : void {
     if (currentPage.value.nextPage) {
         currentPage.value = { name: currentPage.value.nextPage } as Page;
@@ -56,8 +61,9 @@ const showMenuBar = computed(() => allPages.map(page => page.name).includes(curr
             <Home v-if="currentPage.name === 'home'" />
             <Wallet v-else-if="currentPage.name === 'accounts'" />
             <Tags v-else-if="currentPage.name === 'tags'" />
+            <AddWallet v-else-if="currentPage.name === 'add_account'" @back="changePageByName('accounts')"/>
             <span v-else>{{ t("WIP") }}</span>
-            <v-btn color="secondary" @click="globalButtonClick" icon="mdi-paw" size="large" class="right-0 bottom-0" style="margin: 10px; margin-bottom: 65px; position: absolute;"></v-btn>
+            <v-btn v-if="!!currentPage.nextPage" color="secondary" @click="globalButtonClick" icon="mdi-paw" size="large" class="right-0 bottom-0" style="margin: 10px; margin-bottom: 65px; position: absolute;"></v-btn>
         </v-main>
 
         <v-bottom-navigation grow mandatory bg-color="primary" v-if="showMenuBar">

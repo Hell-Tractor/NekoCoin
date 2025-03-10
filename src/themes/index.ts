@@ -4,7 +4,7 @@ import neon from "./neon";
 import pinkPad from "./pinkPad";
 
 const theme = {
-    defaultTheme: 'calico',
+    defaultTheme: 'pinkPad',
     themes: {
         pinkPad,
         midnight,

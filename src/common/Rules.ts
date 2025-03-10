@@ -1,4 +1,8 @@
+// import t from i18n
+import i18n from "../i18n";
+const t = i18n.global.t;
+
 export const rules = {
-    required: (value: any) => !!value || '必填',
-    isValidMoney: (value: any) => /^\d+(\.\d{1,2})?$/.test(value) || '请输入正确的金额',
+    required: (value: any) => !!value || t('validation.required'),
+    isValidMoney: (value: any) => /^\d+(\.\d{1,2})?$/.test(value) || t('validation.isValidMoney'),
 }
