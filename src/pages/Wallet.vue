@@ -12,7 +12,7 @@ export interface Wallet {
 };
 
 const wallets: Ref<Wallet[]> = ref([
-    { name: '微信', balance: 0 },
+    { name: '微信', balance: 0, remark: "一些备注" },
     { name: '现金', balance: 0 },
     { name: '支付宝', balance: 0 },
 ]);
@@ -20,17 +20,12 @@ const wallets: Ref<Wallet[]> = ref([
 const deleteWallet = function(name: string) {
     wallets.value = wallets.value.filter(wallet => wallet.name !== name);
 };
-
-const addWallet = function(wallet: Wallet) {
-    console.log("add wallet: ", wallet);
-    wallets.value.push(wallet);
-};
 </script>
 
 <template>
     <v-row>
         <v-col v-for="wallet in wallets">
-            <v-card :min-width="CARD_MIN_WIDTH" :min-height="CARD_MIN_HEIGHT">
+            <v-card :min-width="CARD_MIN_WIDTH" :min-height="CARD_MIN_HEIGHT" class="fill-height d-flex flex-column">
                 <v-card-title>
                     <span>{{ wallet.name }}</span>
                     <span style="float: right;">{{ wallet.balance.toFixed(2) }}</span>

@@ -9,7 +9,9 @@ export default {
     add_account: '添加账户',
     enter_account_name: '输入账户名称',
     enter_amount: '输入金额',
+    enter_remark: '输入备注',
     select_icon: '选择图标',
+    save: '保存',
     page: {
         home: '首页',
         transactions: '交易',
@@ -21,5 +23,6 @@ export default {
     validation: {
         required: '必填',
         isValidMoney: '请输入正确的金额。(至多两位小数)',
+        maxLength: '最多{max}个字符',
     }
 }

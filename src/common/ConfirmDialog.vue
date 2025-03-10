@@ -10,7 +10,7 @@ const props = defineProps<{
 </script>
 
 <template>
-    <v-dialog max-width="60%">
+    <v-dialog max-width="max(60%, 260px)">
         <template v-slot:activator="{ props }">
             <slot name="activator" :props="props"></slot>
         </template>

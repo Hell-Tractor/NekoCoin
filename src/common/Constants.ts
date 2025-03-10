@@ -1,0 +1,4 @@
+export default {
+    MAX_WALLET_NAME_LENGTH: 16,
+    MAX_WALLET_REMARK_LENGTH: 128,
+}
