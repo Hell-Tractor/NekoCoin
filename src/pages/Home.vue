@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, ref } from 'vue';
+import { ref } from 'vue';
 import { Money } from '../common/Money';
 import { useI18n } from 'vue-i18n';
 import SummaryBar from '../common/SummaryBar.vue';

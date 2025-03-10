@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, Ref } from 'vue';
 import ConfirmDialog from '../common/ConfirmDialog.vue';
-import AddWalletDialog from './Wallet/AddWalletDialog.vue';
 
 const CARD_MIN_HEIGHT = 100;
 const CARD_MIN_WIDTH = 200;
