@@ -36,6 +36,7 @@ export default {
         enter: {
             name: '输入标签名',
             remark: '输入备注',
+            parent_tag: '选择父标签(可选)',
         },
         search: {
             hint: '搜索...',

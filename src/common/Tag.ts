@@ -4,11 +4,11 @@ export enum TagType {
     TRANSFER,
 }
 
-export const TagTypeNames = {
-    [TagType.EXPENSE]: 'expense',
-    [TagType.INCOME]: 'income',
-    [TagType.TRANSFER]: 'transfer',
-};
+export const TagTypeNames = [
+    { type: TagType.EXPENSE, name: 'expense' },
+    { type: TagType.INCOME, name: 'income' },
+    { type: TagType.TRANSFER, name: 'transfer' },
+]
 
 export default interface Tag {
     id: number;
@@ -17,5 +17,5 @@ export default interface Tag {
     color: string;
     icon: string;
     type: TagType;
-    parentId: number;
+    parentId: number | null;
 };

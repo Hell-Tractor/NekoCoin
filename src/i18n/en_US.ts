@@ -36,6 +36,7 @@ export default {
         enter: {
             name: 'Enter Tag Name',
             remark: 'Enter Remark',
+            parent_tag: 'Select Parent Tag(Optional)',
         },
         search: {
             hint: 'Search...',
