@@ -45,6 +45,7 @@ pub async fn delete_wallet(id: u32) -> Result<()> {
         r#"
         DELETE FROM wallets
         WHERE id = $1
+        ON DELETE CASCADE
         "#)
         .bind(id)
         .execute(db())
