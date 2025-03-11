@@ -1,6 +1,10 @@
-use sqlx::FromRow;
+use serde::Serialize;
+use sqlx::{sqlite::{SqliteRow, SqliteValueRef}, Decode, FromRow, Row, Sqlite, Type};
 use std::fmt::Display;
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy,
+    PartialEq, Eq,
+    PartialOrd, Ord,
+    Serialize)]
 pub struct Cent(u32);
 
 impl Display for Cent {
@@ -9,9 +13,28 @@ impl Display for Cent {
     }
 }
 
-#[derive(Debug, Clone, FromRow)]
+impl<'r> sqlx::FromRow<'r, SqliteRow> for Cent {
+    fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
+        Ok(Cent(row.try_get("balance")?))
+    }
+}
+
+impl Type<Sqlite> for Cent {
+    fn type_info() -> sqlx::sqlite::SqliteTypeInfo {
+        <u32 as Type<Sqlite>>::type_info()
+    }
+}
+
+impl<'r> Decode<'r, Sqlite> for Cent {
+    fn decode(value: SqliteValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
+        let int_value: u32 = Decode::<Sqlite>::decode(value)?;
+        Ok(Cent(int_value))
+    }
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
 pub struct Money {
-    pub value: Cent,
+    pub balance: Cent,
     currency: String,
 }
 
@@ -20,28 +43,10 @@ impl Display for Money {
         write!(
             f,
             "{}.{:02}{}",
-            self.value.0 / 100,
-            self.value.0 % 100,
+            self.balance.0 / 100,
+            self.balance.0 % 100,
             self.currency
         )
-    }
-}
-
-impl Cent {
-    pub fn default() -> Cent {
-        Cent(0)
-    }
-    pub fn new(value: u32) -> Cent {
-        Cent(value)
-    }
-}
-
-impl Money {
-    pub fn new(value: Cent, currency: String) -> Money {
-        Money { value, currency }
-    }
-    pub fn get_currency(&self) -> &str {
-        &self.currency
     }
 }
 
@@ -49,8 +54,8 @@ impl Into<String> for Money {
     fn into(self) -> String {
         format!(
             "{}.{:02}{}",
-            self.value.0 / 100,
-            self.value.0 % 100,
+            self.balance.0 / 100,
+            self.balance.0 % 100,
             self.currency
         )
     }

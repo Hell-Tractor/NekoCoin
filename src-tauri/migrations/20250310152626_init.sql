@@ -4,5 +4,7 @@ CREATE TABLE wallets (
     name TEXT,
     remark TEXT,
     balance INTEGER NOT NULL DEFAULT 0,
-    currency TEXT NOT NULL
+    currency TEXT NOT NULL,
+    color TEXT,
+    icon TEXT
 );

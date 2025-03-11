@@ -1,4 +1,4 @@
-use std::{fs, sync::OnceLock};
+use std::sync::OnceLock;
 
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use tracing::{debug, error, info};

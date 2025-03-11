@@ -6,10 +6,6 @@ export default {
     income: '收入',
     expense: '支出',
     WIP: '开发中...',
-    add_account: '添加账户',
-    enter_account_name: '输入账户名称',
-    enter_amount: '输入金额',
-    enter_remark: '输入备注',
     select_icon: '选择图标',
     save: '保存',
     page: {
@@ -24,5 +20,15 @@ export default {
         required: '必填',
         isValidMoney: '请输入正确的金额。(至多两位小数)',
         maxLength: '最多{max}个字符',
+    },
+    account: {
+        add: '添加账户',
+        enter: {
+            name: '输入账户名',
+            amount: '输入金额',
+            remark: '输入备注',
+        },
+        no_account: '暂无账户',
+        no_account_tip: '点击右下角按钮添加一个账户吧！',
     }
 }

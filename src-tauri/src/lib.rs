@@ -19,7 +19,11 @@ pub fn run() {
     tauri::async_runtime::block_on(migrate_database());
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![wallet::controller::create_wallet])
+        .invoke_handler(tauri::generate_handler![
+            wallet::controller::create_wallet,
+            wallet::controller::retrieve_wallets,
+            wallet::controller::delete_wallet,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

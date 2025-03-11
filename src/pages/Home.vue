@@ -3,11 +3,12 @@ import { ref } from 'vue';
 import { Money } from '../common/Money';
 import { useI18n } from 'vue-i18n';
 import SummaryBar from '../common/SummaryBar.vue';
+import Constants from '../common/Constants';
 const { t } = useI18n();
 
-const totalBalance = ref(new Money(1234567.89, '￥'));
-const currentMonthIncome = ref(new Money(1234567.89, '￥'));
-const currentMonthExpense = ref(new Money(1234567.89, '￥'));
+const totalBalance = ref(new Money(12345678, Constants.CURRENCIES[0]));
+const currentMonthIncome = ref(new Money(12345678, Constants.CURRENCIES[0]));
+const currentMonthExpense = ref(new Money(12345678, Constants.CURRENCIES[0]));
 const today = function() {
     return `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
 }
