@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-sql": "^2.2.0",
     "vue": "^3.3.4",
     "vue-i18n": "^11.1.1",
     "vuetify": "^3.7.12"
