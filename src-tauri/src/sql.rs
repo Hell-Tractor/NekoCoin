@@ -11,6 +11,14 @@ pub fn db() -> &'static Pool<Sqlite> {
         debug!("Connecting to database");
         let Ok(db) = SqlitePoolOptions::new()
             .max_connections(constants::DB_CONNECTIONS)
+            .after_connect(|conn, _| {
+                Box::pin(async move {
+                    sqlx::query("PRAGMA foreign_keys = ON")
+                        .execute(conn)
+                        .await?;
+                    Ok(())
+                })
+            })
             .connect_lazy(format!("sqlite:{}", constants::DB_NAME).as_str())
         else {
             error!("Failed to connect to database");

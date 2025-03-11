@@ -20,6 +20,7 @@ export default {
         required: 'Required',
         isValidMoney: 'Not a valid amount.(Up to 2 decimal places)',
         maxLength: 'At most {max} characters',
+        isValidSearchText: 'Only letters, numbers, and Chinese characters are allowed',
     },
     account: {
         add: 'Add Account',
@@ -33,6 +34,7 @@ export default {
     },
     tag: {
         add: 'Add Tag',
+        no_available_parent: 'No available parent tag',
         enter: {
             name: 'Enter Tag Name',
             remark: 'Enter Remark',

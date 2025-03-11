@@ -10,6 +10,7 @@ mod constants;
 mod money;
 mod sql;
 mod wallet;
+mod tag;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,6 +24,10 @@ pub fn run() {
             wallet::controller::create_wallet,
             wallet::controller::retrieve_wallets,
             wallet::controller::delete_wallet,
+
+            tag::controller::create_tag,
+            tag::controller::retrieve_tags,
+            tag::controller::delete_tag,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

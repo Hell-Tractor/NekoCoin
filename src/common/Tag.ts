@@ -4,6 +4,17 @@ export enum TagType {
     TRANSFER,
 }
 
+export const TagTypeToString = (type: TagType): string => {
+    switch (type) {
+        case TagType.EXPENSE:
+            return 'Expense';
+        case TagType.INCOME:
+            return 'Income';
+        case TagType.TRANSFER:
+            return 'Transfer';
+    }
+}
+
 export const TagTypeNames = [
     { type: TagType.EXPENSE, name: 'expense' },
     { type: TagType.INCOME, name: 'income' },
@@ -16,6 +27,6 @@ export default interface Tag {
     remark?: string;
     color: string;
     icon: string;
-    type: TagType;
+    type: string;
     parentId: number | null;
 };

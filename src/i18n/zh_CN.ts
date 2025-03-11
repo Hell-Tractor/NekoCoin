@@ -20,6 +20,7 @@ export default {
         required: '必填',
         isValidMoney: '请输入正确的金额。(至多两位小数)',
         maxLength: '最多{max}个字符',
+        isValidSearchText: '只允许输入字母、数字和中文',
     },
     account: {
         add: '添加账户',
@@ -33,6 +34,7 @@ export default {
     },
     tag: {
         add: '添加标签',
+        no_available_parent: '没有可用的父标签',
         enter: {
             name: '输入标签名',
             remark: '输入备注',
