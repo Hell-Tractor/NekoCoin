@@ -1,19 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, Ref } from 'vue';
 import ConfirmDialog from '../common/ConfirmDialog.vue';
-import AddTagDialog from '../common/AddTagDialog.vue';
+import Tag from '../common/Tag';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 
-export interface Tag {
-    name: string;
-    color: string;
-};
+const emits = defineEmits<{
+    createTag: []
+}>();
 
-const tags: Ref<Tag[]> = ref([
-    { name: "衣", color: "#FF0000" },
-    { name: "食", color: "#00FF00" },
-    { name: "住", color: "#0000FF" },
-    { name: "行", color: "#FFFF00" },
-]);
+const tags: Ref<Tag[]> = ref([]);
 const filter_key: Ref<string> = ref('');
 
 const filtered_tags = computed<Tag[]>(() => {
@@ -32,14 +28,10 @@ const addTag = function(tag: Tag) {
 </script>
 <template>
     <v-card id="card">
-        <v-text-field height="50px" clearable density="compact" placeholder="搜索..." append-inner-icon="mdi-magnify" v-model="filter_key" variant="solo"></v-text-field>
+        <v-text-field height="50px" clearable density="compact" :placeholder="t('tag.search.hint')" append-inner-icon="mdi-magnify" v-model="filter_key" variant="outlined"></v-text-field>
         <div id="summary">
-            <span>找到 {{ filtered_tags.length }} 个标签</span>
-            <AddTagDialog @confirm="addTag">
-                <template v-slot:activator="{ props: addTagDialogActivatorProps }">
-                    <v-btn v-bind="addTagDialogActivatorProps" icon="mdi-plus" density="compact" class="right" variant="flat" size="medium"></v-btn>
-                </template>
-            </AddTagDialog>
+            <span>{{ t('tag.search.count', filtered_tags.length) }}</span>
+            <v-btn @click="emits('createTag')" icon="mdi-plus" density="compact" class="right" variant="flat" size="medium"></v-btn>
         </div>
         <v-divider></v-divider>
         <v-list density="compact">

@@ -30,5 +30,21 @@ export default {
         },
         no_account: 'No Account',
         no_account_tip: 'Click the button in the bottom right corner to add an account!',
+    },
+    tag: {
+        add: 'Add Tag',
+        enter: {
+            name: 'Enter Tag Name',
+            remark: 'Enter Remark',
+        },
+        search: {
+            hint: 'Search...',
+            count: 'Found {count} tags',
+        },
+        type: {
+            income: 'Income',
+            expense: 'Expense',
+            transfer: 'Transfer',
+        }
     }
 }

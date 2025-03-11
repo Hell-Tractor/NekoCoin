@@ -30,5 +30,21 @@ export default {
         },
         no_account: '暂无账户',
         no_account_tip: '点击右下角按钮添加一个账户吧！',
+    },
+    tag: {
+        add: '添加标签',
+        enter: {
+            name: '输入标签名',
+            remark: '输入备注',
+        },
+        search: {
+            hint: '搜索...',
+            count: '找到{count}个标签',
+        },
+        type: {
+            income: '收入',
+            expense: '支出',
+            transfer: '转账',
+        }
     }
 }
