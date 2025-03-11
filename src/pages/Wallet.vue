@@ -14,6 +14,8 @@ export interface Wallet {
     remark?: string;
     balance: number;
     currency: string;
+    icon: string;
+    color: string;
 };
 
 const wallets: Ref<Wallet[]> = ref([]);
@@ -45,8 +47,9 @@ onMounted(() => {
 <template>
     <v-row v-if="wallets.length > 0">
         <v-col v-for="wallet in wallets">
-            <v-card :min-width="CARD_MIN_WIDTH" :min-height="CARD_MIN_HEIGHT" class="fill-height d-flex flex-column">
+            <v-card :min-width="CARD_MIN_WIDTH" :min-height="CARD_MIN_HEIGHT" class="fill-height d-flex flex-column" :color="wallet.color">
                 <v-card-title>
+                    <v-icon style="margin-right: 10px;">{{ wallet.icon }}</v-icon>
                     <span>{{ wallet.name }}</span>
                     <span style="float: right;">{{ wallet.balance.toFixed(2) }}</span>
                 </v-card-title>
@@ -55,7 +58,7 @@ onMounted(() => {
                     <v-spacer></v-spacer>
                     <ConfirmDialog title="确认删除？" @confirm="deleteWallet(wallet.id)">
                         <template v-slot:activator="{ props: confirmDialogActivatorProps }">
-                            <v-btn v-bind="confirmDialogActivatorProps" density="comfortable" border="thin error" color="error">删除</v-btn>
+                            <v-btn v-bind="confirmDialogActivatorProps" density="comfortable" border="thin error">删除</v-btn>
                         </template>
                         <template v-slot:default>
                             <span>删除后将删除所有关联的收支记录且<span style="color: red;">无法恢复</span></span>
