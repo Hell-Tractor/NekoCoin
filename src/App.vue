@@ -6,6 +6,7 @@ import Tags from './pages/Tags.vue';
 import { useI18n } from 'vue-i18n';
 import AddWallet from './pages/AddWallet.vue';
 import AddTag from './pages/AddTag.vue';
+import AddTransaction from './pages/AddTransaction.vue';
 const { t } = useI18n();
 
 interface Page {
@@ -16,7 +17,7 @@ interface Page {
 }
 
 const allPages: Page[] = [
-    { name: 'home', indexInBottom: 0, icon: 'mdi-home' },
+    { name: 'home', indexInBottom: 0, icon: 'mdi-home', nextPage: 'add_transaction' },
     { name: 'accounts', indexInBottom: 1, icon: 'mdi-credit-card', nextPage: 'add_account' },
     { name: 'tags' },
     { name: 'transactions' },
@@ -64,6 +65,7 @@ const showMenuBar = computed(() => allPages.map(page => page.name).includes(curr
             <Tags v-else-if="currentPage.name === 'tags'" @create-tag="currentPage = { name: 'add_tag' }" />
             <AddWallet v-else-if="currentPage.name === 'add_account'" @back="changePageByName('accounts')"/>
             <AddTag v-else-if="currentPage.name === 'add_tag'" @back="changePageByName('tags')"/>
+            <AddTransaction v-else-if="currentPage.name === 'add_transaction'" @back="changePageByName('home')"/>
             <span v-else>{{ t("WIP") }}</span>
             <v-btn v-if="!!currentPage.nextPage" color="secondary" @click="globalButtonClick" icon="mdi-paw" size="large" class="right-0 bottom-0" style="margin: 10px; margin-bottom: 65px; position: absolute;"></v-btn>
         </v-main>

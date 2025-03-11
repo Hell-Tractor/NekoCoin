@@ -23,6 +23,7 @@ thiserror = "2.0.12"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt", "json"] }
 tracing-appender = "0.2.3"
+chrono = { version = "0.4.40", features = ["serde"] }
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

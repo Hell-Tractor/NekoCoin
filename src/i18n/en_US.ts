@@ -8,6 +8,8 @@ export default {
     WIP: 'Work in Progress...',
     select_icon: 'Select Icon',
     save: 'Save',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
     page: {
         home: 'Home',
         transactions: 'Transactions',
@@ -48,6 +50,14 @@ export default {
             income: 'Income',
             expense: 'Expense',
             transfer: 'Transfer',
+        }
+    },
+    transaction: {
+        add: 'Add Transaction',
+        datetime: 'Date & Time',
+        enter: {
+            remark: 'Enter Remark',
+            amount: 'Enter Amount',
         }
     }
 }

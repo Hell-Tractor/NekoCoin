@@ -8,6 +8,8 @@ export default {
     WIP: '开发中...',
     select_icon: '选择图标',
     save: '保存',
+    confirm: '确认',
+    cancel: '取消',
     page: {
         home: '首页',
         transactions: '交易',
@@ -48,6 +50,14 @@ export default {
             income: '收入',
             expense: '支出',
             transfer: '转账',
+        }
+    },
+    transaction: {
+        add: '添加交易',
+        datetime: '日期 & 时间',
+        enter: {
+            remark: '输入备注',
+            amount: '输入金额',
         }
     }
 }

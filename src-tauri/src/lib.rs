@@ -11,6 +11,7 @@ mod money;
 mod sql;
 mod wallet;
 mod tag;
+mod transaction;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -28,6 +29,12 @@ pub fn run() {
             tag::controller::create_tag,
             tag::controller::retrieve_tags,
             tag::controller::delete_tag,
+
+            transaction::controller::create_transaction,
+            transaction::controller::retrieve_transactions,
+            transaction::controller::retrieve_transactions_in_wallet,
+            transaction::controller::retrieve_transactions_with_tag,
+            transaction::controller::delete_transaction,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

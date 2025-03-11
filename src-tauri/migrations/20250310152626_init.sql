@@ -27,7 +27,7 @@ CREATE TABLE transactions (
     wallet_id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL,
     amount INTEGER NOT NULL,
-    date TEXT NOT NULL,
+    time TEXT NOT NULL,
     FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
     FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
