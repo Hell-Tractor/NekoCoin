@@ -1,3 +1,5 @@
+use tracing::{debug, info};
+
 use crate::sql::db;
 
 use super::Wallet;
@@ -11,7 +13,7 @@ type Result<T> = std::result::Result<T, Error>;
 
 #[tauri::command]
 pub async fn create_wallet(name: String, remark: String, balance: u32, currency: String, color: String, icon: String) -> Result<()> {
-    println!("Creating wallet: {} {} {} {} {} {}", name, remark, balance, currency, color, icon);
+    debug!("Creating wallet: {} {} {} {} {} {}", name, remark, balance, currency, color, icon);
     sqlx::query(
         r#"
         INSERT INTO wallets (name, remark, balance, currency, color, icon)
@@ -20,6 +22,7 @@ pub async fn create_wallet(name: String, remark: String, balance: u32, currency:
         .bind(name).bind(remark).bind(balance).bind(currency).bind(color).bind(icon)
         .execute(db())
         .await?;
+    info!("Wallet created");
     Ok(())
 }
 
@@ -32,7 +35,7 @@ pub async fn retrieve_wallets() -> Result<Vec<Wallet>> {
         "#)
         .fetch_all(db())
         .await?;
-    println!("Retrieved wallets: {:?}", wallets);
+    info!("Retrieved {} wallets.", wallets.len());
     Ok(wallets)
 }
 
@@ -46,6 +49,7 @@ pub async fn delete_wallet(id: u32) -> Result<()> {
         .bind(id)
         .execute(db())
         .await?;
+    info!("Wallet deleted");
     Ok(())
 }
 

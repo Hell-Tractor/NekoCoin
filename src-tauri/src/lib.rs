@@ -48,11 +48,12 @@ fn init_database() {
 
 fn init_logger() {
     let file_appender = rolling::daily("logs", "latest.log");
-    let (file_writer, _guard) = tracing_appender::non_blocking(file_appender);
+    let (file_writer, guard) = tracing_appender::non_blocking(file_appender);
+    std::mem::forget(guard);
     let subscriber = tracing_subscriber::fmt()
         .with_writer(file_writer.and(std::io::stdout))
         .with_max_level(tracing::Level::DEBUG)
-        .with_env_filter(EnvFilter::from_default_env())
+        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("nekocoin_lib=debug")))
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
