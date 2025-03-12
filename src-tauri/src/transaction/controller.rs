@@ -9,12 +9,15 @@ use super::Transaction;
 pub enum Error {
     #[error(transparent)]
     SqlxError(#[from] sqlx::Error),
+    #[error(transparent)]
+    ChronoError(#[from] chrono::ParseError),
 }
 type Result<T> = std::result::Result<T, Error>;
 
 #[tauri::command]
-pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amount: i32, time: NaiveDateTime) -> Result<()> {
+pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amount: i32, time: String) -> Result<()> {
     debug!("Creating transaction: {} {} {} {} {}", remark, wallet_id, tag_id, amount, time);
+    let time = NaiveDateTime::parse_from_str(&time, super::DATETIME_FORMAT)?;
     sqlx::query(
         r#"
         INSERT INTO transactions (remark, wallet_id, tag_id, amount, time)

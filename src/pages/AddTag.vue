@@ -14,7 +14,6 @@ const emits = defineEmits<{
 }>();
 
 const form: Ref<boolean> = ref(false);
-const selected_tag_type_id: Ref<number> = ref(0);
 const tag_name: Ref<string> = ref('');
 const tag_remark: Ref<string> = ref('');
 const icon: Ref<string> = ref('mdi-tag');
@@ -24,9 +23,7 @@ const parent_tag: Ref<Tag | null> = ref(null);
 
 const tag_search_text: Ref<string> = ref('');
 
-const selected_tag_type = computed<{ name: string, type: TagType }>(() => {
-    return TagTypeNames[selected_tag_type_id.value];
-});
+const selected_tag_type: Ref<{ type: TagType, name: string }> = ref(TagTypeNames[0]);
 const tags: Ref<Tag[]> = ref([]);
 
 const retrieve_tags = async function() {
@@ -62,8 +59,8 @@ onMounted(() => {
 <template>
     <BackTitleBar :title="t('tag.add')" @back="emits('back')"></BackTitleBar>
     <v-form class="fill-height" v-model="form">
-        <v-chip-group mandatory v-model="selected_tag_type_id" return-object @update:model-value="parent_tag = null; retrieve_tags()">
-            <v-chip v-for="tag in TagTypeNames" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
+        <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()">
+            <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
         </v-chip-group>
         <v-text-field v-model="tag_name" :placeholder="t('tag.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_TAG_NAME_LENGTH)]"></v-text-field>
         <v-text-field v-model="tag_remark" :placeholder="t('tag.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TAG_REMARK_LENGTH)]"></v-text-field>

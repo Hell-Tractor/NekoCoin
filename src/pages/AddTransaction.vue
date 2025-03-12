@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, Ref } from 'vue';
+import { onMounted, ref, Ref } from 'vue';
 import BackTitleBar from '../common/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { rules } from '../common/Rules';
 import Constants from '../common/Constants';
-import Tag, { TagTypeNames } from '../common/Tag';
+import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
 import { useDate } from 'vuetify';
 import { Wallet } from './Wallet.vue';
 import { invoke } from '@tauri-apps/api/core';
 import AddWallet from './AddWallet.vue';
 import AddTag from './AddTag.vue';
+import { formatDatetime } from '../common/Utils';
 const { t } = useI18n();
 
 const emits = defineEmits<{
@@ -20,20 +21,18 @@ const form: Ref<boolean> = ref(false);
 const remark: Ref<string> = ref('');
 const amount: Ref<number | null> = ref(null);
 const time: Ref<Date> = ref(new Date());
-const selected_tag_type_id: Ref<number> = ref(0);
+const selected_tag_type: Ref<string> = ref(TagTypeToString(TagTypeNames[0].type));
 const show_time_picker: Ref<boolean> = ref(false);
 const show_calendar_picker: Ref<boolean> = ref(false);
 const selecting_date: Ref<Date> = ref(new Date());
 const selecting_time: Ref<string> = ref(`${new Date().getHours()}:${new Date().getMinutes()}`);
 const wallets: Ref<Wallet[]> = ref([]);
 const selected_wallet: Ref<number | null> = ref(null); // index in array
+const selected_tag: Ref<number | null> = ref(null); // index in array
 const page: Ref<string> = ref('main');
 const tags: Ref<Tag[]> = ref([]);
 
 const formatter = new Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
-const addTransaction = function() {
-    emits('back');
-}
 const updateDate = function() {
     time.value.setFullYear(
         selecting_date.value.getFullYear(),
@@ -81,7 +80,7 @@ const retrieve_wallets = async function() {
 }
 const retrieve_tags = async function() {
     try {
-        tags.value = await invoke('retrieve_tags', { filter: '' });
+        tags.value = await invoke('retrieve_tags', { filter: '', kind: selected_tag_type.value });
     } catch (error) {
         // TODO: handle error
         console.error(error);
@@ -95,6 +94,27 @@ const backFromAddTag = async function() {
     page.value = 'main';
     await retrieve_tags();
 }
+const offsetColor = function(color: string, offset: number, alpha: number) {
+    // format: rgb(r,g,b)
+    var [r, g, b] = color.substring(4, color.length - 1).split(',');
+    return `rgba(${Math.min(255, parseInt(r) + offset)}, ${Math.min(255, parseInt(g) + offset)}, ${Math.min(255, parseInt(b) + offset)}, ${alpha})`;
+}
+const addTransaction = async function() {
+    try {
+        let params = {
+            remark: remark.value,
+            walletId: wallets.value[selected_wallet.value!].id,
+            tagId: tags.value[selected_tag.value!].id,
+            amount: amount.value!,
+            time: formatDatetime(time.value)
+        };
+        await invoke('create_transaction', params);
+        emits('back');
+    } catch (error) {
+        // TODO: handle error
+        console.error(error);
+    }
+}
 onMounted(() => {
     retrieve_wallets();
     retrieve_tags();
@@ -104,11 +124,11 @@ onMounted(() => {
     <div v-if="page == 'main'">
         <BackTitleBar :title="t('transaction.add')" @back="emits('back')"></BackTitleBar>
         <v-form class="fill-height" v-model="form">
-            <v-chip-group mandatory v-model="selected_tag_type_id" return-object :rules="[rules.required]">
-                <v-chip v-for="tag in TagTypeNames" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
+            <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]" @update:model-value="selected_tag = null; retrieve_tags()">
+                <v-chip v-for="tag in TagTypeNames" :value="TagTypeToString(tag.type)" :key="tag.type" variant="flat" color="secondary" :disabled="tag.type == TagType.TRANSFER">{{ t(`tag.type.${tag.name}`) }}</v-chip>
             </v-chip-group>
-            <v-text-field v-model="remark" :placeholder="t('transaction.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TRANSACTION_REMARK_LENGTH)]"></v-text-field>
             <v-text-field v-model.number="amount" :placeholder="t('transaction.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
+            <v-text-field v-model="remark" :placeholder="t('transaction.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TRANSACTION_REMARK_LENGTH)]"></v-text-field>
             <v-card variant="text" density="compact">
                 <v-card-text>
                     <div style="margin: -10px 0px 5px -10px;">{{ t('transaction.datetime') }}</div>
@@ -162,7 +182,7 @@ onMounted(() => {
                     </v-row>
                     <v-slide-group class="pa-4" style="margin-left: -20px;" mandatory v-model="selected_wallet">
                         <v-slide-group-item v-for="wallet in wallets" :key="wallet.id" v-slot="{ isSelected, toggle }">
-                            <v-card @click="toggle" :border="isSelected ? 'opacity-100 primary lg' : ''" width="100" height="100" class="ma-1">
+                            <v-card @click="toggle" :border="isSelected ? 'opacity-100 primary md' : ''" width="100" height="100" class="ma-1">
                                 <v-card-text style="padding: 10px;">
                                     <v-icon :color="wallet.color">{{ wallet.icon }}</v-icon>
                                     <div>{{ (wallet.remark?.length ?? 0) > 5 ? (wallet.remark!.substring(0, 4) + '...') : (wallet.remark?.substring(0, 5) || '') }}</div>
@@ -183,12 +203,12 @@ onMounted(() => {
                             <v-btn icon="mdi-plus" size="medium" density="compact" variant="text" @click="page = 'add_tag'"></v-btn>
                         </v-col>
                     </v-row>
-                    <v-chip-group mandatory v-slot="{ isSelected }">
-                        <v-chip v-for="tag in tags" :key="tag.id" color="primary" label :prepend-icon="tag.icon">{{ tag.name }}</v-chip>
+                    <v-chip-group mandatory column v-model="selected_tag">
+                        <v-chip v-for="tag in tags" :key="tag.id" :color="tag.color" :style="(!selected_tag || tags[selected_tag].id != tag.id) ? { backgroundColor: offsetColor(tag.color, 50, 0.7) } : { borderWidth: '1px', borderColor: offsetColor(tag.color, -50, 1) }" label :prepend-icon="tag.icon">{{ tag.name }}</v-chip>
                     </v-chip-group>
                 </v-card-text>
             </v-card>
-            <v-btn @click="addTransaction" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form || selected_wallet == null">{{ t('save') }}</v-btn>
+            <v-btn @click="addTransaction" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form || selected_wallet == null || selected_tag == null">{{ t('save') }}</v-btn>
         </v-form>
     </div>
     <AddWallet v-else-if="page == 'add_wallet'" @back="backFromAddWallet"></AddWallet>
