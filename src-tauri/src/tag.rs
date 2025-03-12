@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 pub mod controller;
+pub mod service;
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TagKind {
     Expense,

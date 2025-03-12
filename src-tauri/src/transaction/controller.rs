@@ -2,30 +2,39 @@ use chrono::{NaiveDate, NaiveDateTime};
 use tracing::{debug, info};
 
 use crate::sql::db;
+use crate::{tag, wallet, Error, Result};
 
 use super::Transaction;
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error(transparent)]
-    SqlxError(#[from] sqlx::Error),
-    #[error(transparent)]
-    ChronoError(#[from] chrono::ParseError),
-}
-type Result<T> = std::result::Result<T, Error>;
 
 #[tauri::command]
 pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amount: i32, time: String) -> Result<()> {
     debug!("Creating transaction: {} {} {} {} {}", remark, wallet_id, tag_id, amount, time);
     let time = NaiveDateTime::parse_from_str(&time, super::DATETIME_FORMAT)?;
-    sqlx::query(
+    let mut tx = db().begin().await?;
+
+    let tag = tag::service::get_tag_by_id(tag_id).await?;
+    if tag.kind != tag::TagKind::Expense && tag.kind != tag::TagKind::Income {
+        return Err(Error::InvalidTagType {
+            given: tag.kind,
+            allow: vec![tag::TagKind::Expense, tag::TagKind::Income]
+        });
+    }
+
+    let amount_modify_task = if tag.kind == tag::TagKind::Expense {
+        wallet::service::modify_currency(wallet_id, -amount)
+    } else {  // tag.kind == tag::TagKind::Income
+        wallet::service::modify_currency(wallet_id, amount)
+    };
+
+    let record_task = sqlx::query(
         r#"
         INSERT INTO transactions (remark, wallet_id, tag_id, amount, time)
         VALUES ($1, $2, $3, $4, $5)
         "#)
         .bind(remark).bind(wallet_id).bind(tag_id).bind(amount).bind(time.format(super::DATETIME_FORMAT).to_string())
-        .execute(db())
-        .await?;
+        .execute(&mut *tx);
+    try_join!(amount_modify_task, record_task)?;
+    tx.commit().await?;
     info!("Transaction created");
     Ok(())
 }
@@ -110,13 +119,4 @@ pub async fn delete_transaction(id: u32) -> Result<()> {
         .await?;
     info!("Transaction deleted");
     Ok(())
-}
-
-impl serde::Serialize for Error {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        serializer.serialize_str(self.to_string().as_ref())
-    }
 }

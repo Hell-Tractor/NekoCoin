@@ -7,6 +7,12 @@ use std::fmt::Display;
     Serialize)]
 pub struct Cent(u32);
 
+impl Into<u32> for Cent {
+    fn into(self) -> u32 {
+        self.0
+    }
+}
+
 impl Display for Cent {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -36,6 +42,12 @@ impl<'r> Decode<'r, Sqlite> for Cent {
 pub struct Money {
     pub balance: Cent,
     currency: String,
+}
+
+impl Money {
+    pub fn get_currency(&self) -> &str {
+        &self.currency
+    }
 }
 
 impl Display for Money {

@@ -4,6 +4,7 @@ use sqlx::FromRow;
 use crate::money::Money;
 
 pub mod controller;
+pub mod service;
 
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct Wallet {

@@ -1,15 +1,9 @@
 use tracing::{debug, info};
 
 use crate::sql::db;
+use crate::Result;
 
 use super::{Tag, TagKind};
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error(transparent)]
-    SqlxError(#[from] sqlx::Error),
-}
-type Result<T> = std::result::Result<T, Error>;
 
 #[tauri::command]
 pub async fn create_tag(name: String, remark: String, color: String, icon: String, kind: TagKind, parent_id: Option<u32>) -> Result<()> {
@@ -65,13 +59,4 @@ pub async fn delete_tag(id: u32) -> Result<()> {
         .await?;
     info!("Tag deleted");
     Ok(())
-}
-
-impl serde::Serialize for Error {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        serializer.serialize_str(self.to_string().as_ref())
-    }
 }

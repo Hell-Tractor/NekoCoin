@@ -2,6 +2,7 @@ use std::{fs, path::Path};
 
 use sql::db;
 use sqlx::migrate::Migrator;
+use tag::TagKind;
 use tracing::info;
 use tracing_appender::rolling;
 use tracing_subscriber::{fmt::writer::MakeWriterExt, EnvFilter};
@@ -12,6 +13,29 @@ mod sql;
 mod wallet;
 mod tag;
 mod transaction;
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    SqlxError(#[from] sqlx::Error),
+    #[error(transparent)]
+    ChronoError(#[from] chrono::ParseError),
+    #[error("Invalid tag type `{given:?}`. Allow: {allow:?}")]
+    InvalidTagType {
+        given: TagKind,
+        allow: Vec<TagKind>
+    },
+}
+type Result<T> = std::result::Result<T, Error>;
+
+impl serde::Serialize for Error {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        serializer.serialize_str(self.to_string().as_ref())
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
