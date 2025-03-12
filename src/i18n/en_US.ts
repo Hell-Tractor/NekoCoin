@@ -55,6 +55,8 @@ export default {
     transaction: {
         add: 'Add Transaction',
         datetime: 'Date & Time',
+        accounts: 'Select Account',
+        tags: 'Select Tag',
         enter: {
             remark: 'Enter Remark',
             amount: 'Enter Amount',

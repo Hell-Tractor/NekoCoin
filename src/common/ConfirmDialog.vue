@@ -4,7 +4,7 @@ const emits = defineEmits<{
 }>();
 
 const props = defineProps<{
-    title: string;
+    title?: string;
     content?: string;
 }>();
 </script>
@@ -15,7 +15,8 @@ const props = defineProps<{
             <slot name="activator" :props="props"></slot>
         </template>
         <template v-slot:default="{ isActive }">
-            <v-card :title="props.title">
+            <v-card>
+                <v-card-title v-if="props.title">{{ props.title }}</v-card-title>
                 <v-card-text v-if="props.content != undefined">{{ props.content }}</v-card-text>
                 <v-card-text v-else>
                     <slot></slot>

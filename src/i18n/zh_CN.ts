@@ -55,6 +55,8 @@ export default {
     transaction: {
         add: '添加交易',
         datetime: '日期 & 时间',
+        accounts: '选择账户',
+        tags: '选择标签',
         enter: {
             remark: '输入备注',
             amount: '输入金额',
