@@ -51,7 +51,7 @@ onMounted(() => {
                 <v-card-title>
                     <v-icon style="margin-right: 10px;">{{ wallet.icon }}</v-icon>
                     <span>{{ wallet.name }}</span>
-                    <span style="float: right;">{{ wallet.balance.toFixed(2) }}</span>
+                    <span style="float: right;">{{ (wallet.balance / 100).toFixed(2) + ' ' + wallet.currency }}</span>
                 </v-card-title>
                 <v-card-text>{{ wallet.remark }}</v-card-text>
                 <v-card-actions id="actions">

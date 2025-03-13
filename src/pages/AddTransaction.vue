@@ -105,7 +105,7 @@ const addTransaction = async function() {
             remark: remark.value,
             walletId: wallets.value[selected_wallet.value!].id,
             tagId: tags.value[selected_tag.value!].id,
-            amount: amount.value!,
+            amount: Math.round(amount.value! * 100),
             time: formatDatetime(time.value)
         };
         await invoke('create_transaction', params);

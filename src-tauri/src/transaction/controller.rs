@@ -19,22 +19,24 @@ pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amo
             allow: vec![tag::TagKind::Expense, tag::TagKind::Income]
         });
     }
+    debug!("Tag kind is valid, modifying wallet amount and recording transaction simultaneously...");
 
-    let amount_modify_task = if tag.kind == tag::TagKind::Expense {
-        wallet::service::modify_currency(wallet_id, -amount)
+    if tag.kind == tag::TagKind::Expense {
+        wallet::service::modify_currency(wallet_id, -amount).await?;
     } else {  // tag.kind == tag::TagKind::Income
-        wallet::service::modify_currency(wallet_id, amount)
+        wallet::service::modify_currency(wallet_id, amount).await?;
     };
 
-    let record_task = sqlx::query(
+    sqlx::query(
         r#"
         INSERT INTO transactions (remark, wallet_id, tag_id, amount, time)
         VALUES ($1, $2, $3, $4, $5)
         "#)
         .bind(remark).bind(wallet_id).bind(tag_id).bind(amount).bind(time.format(super::DATETIME_FORMAT).to_string())
-        .execute(&mut *tx);
-    try_join!(amount_modify_task, record_task)?;
+        .execute(&mut *tx)
+        .await?;
     tx.commit().await?;
+
     info!("Transaction created");
     Ok(())
 }

@@ -28,7 +28,7 @@ const addWallet = async function() {
         await invoke('create_wallet', {
             name: wallet_name.value,
             remark: wallet_remark.value,
-            balance: wallet_amount.value,
+            balance: Math.round(wallet_amount.value! * 100),
             currency: selected_currency.value.symbol,
             icon: icon.value,
             color: selected_color.value

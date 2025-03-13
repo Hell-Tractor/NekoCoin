@@ -7,7 +7,7 @@ use super::Tag;
 pub async fn get_tag_by_id(id: u32) -> Result<Tag> {
     let tag = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, name, parent_id
+        SELECT *
         FROM tags
         WHERE id = $1
         "#)
