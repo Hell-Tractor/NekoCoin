@@ -26,6 +26,7 @@ export default {
     },
     account: {
         add: '添加账户',
+        select: '选择账户',
         enter: {
             name: '输入账户名',
             amount: '输入金额',
@@ -36,6 +37,7 @@ export default {
     },
     tag: {
         add: '添加标签',
+        select: '选择标签',
         no_available_parent: '没有可用的父标签',
         enter: {
             name: '输入标签名',
@@ -55,8 +57,6 @@ export default {
     transaction: {
         add: '添加交易',
         datetime: '日期 & 时间',
-        accounts: '选择账户',
-        tags: '选择标签',
         enter: {
             remark: '输入备注',
             amount: '输入金额',

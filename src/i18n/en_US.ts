@@ -26,6 +26,7 @@ export default {
     },
     account: {
         add: 'Add Account',
+        select: 'Select Account',
         enter: {
             name: 'Enter Account Name',
             amount: 'Enter Amount',
@@ -36,6 +37,7 @@ export default {
     },
     tag: {
         add: 'Add Tag',
+        select: 'Select Tag',
         no_available_parent: 'No available parent tag',
         enter: {
             name: 'Enter Tag Name',
@@ -55,8 +57,6 @@ export default {
     transaction: {
         add: 'Add Transaction',
         datetime: 'Date & Time',
-        accounts: 'Select Account',
-        tags: 'Select Tag',
         enter: {
             remark: 'Enter Remark',
             amount: 'Enter Amount',
