@@ -6,8 +6,7 @@ use crate::sql::db;
 use crate::tag::TagKind;
 use crate::{tag, wallet, Error, Result};
 
-use super::dto::BalanceWithTypeDto;
-use super::Transaction;
+use super::dto::{BalanceWithTypeDto, TransactionDto};
 
 #[tauri::command]
 pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amount: i32, time: String) -> Result<()> {
@@ -45,54 +44,61 @@ pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amo
 }
 
 #[tauri::command]
-pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<Transaction>> {
-    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
-    let transactions = sqlx::query_as::<_, Transaction>(
+pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let transactions = sqlx::query(
         r#"
-        SELECT id, remark, wallet_id, tag_id, amount, time
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time
         FROM transactions
-        WHERE date between $1 and $2
-        ORDER BY date DESC
+        JOIN wallets ON transactions.wallet_id = wallets.id
+        WHERE time between $1 and $2
+        ORDER BY time DESC
         LIMIT $3 OFFSET $4
         "#)
         .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
         .bind(page_size).bind(page * page_size)
         .fetch_all(db())
         .await?;
+    let transactions = transactions.iter().map(|row| TransactionDto::try_from_row(row));
+    let transactions = futures::future::try_join_all(transactions).await?;
     info!("Retrieved {} transactions.", transactions.len());
     Ok(transactions)
 }
 
 #[tauri::command]
-pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<Transaction>> {
-    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
-    let transactions = sqlx::query_as::<_, Transaction>(
+pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let transactions = sqlx::query(
         r#"
-        SELECT id, remark, wallet_id, tag_id, amount, time
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time
         FROM transactions
-        WHERE wallet_id = $1 AND date between $2 and $3
-        ORDER BY date DESC
+        JOIN wallets ON transactions.wallet_id = wallet.id
+        WHERE wallet_id = $1 AND time between $2 and $3
+        ORDER BY time DESC
         LIMIT $4 OFFSET $5
         "#)
         .bind(wallet_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
         .bind(page_size).bind(page * page_size)
         .fetch_all(db())
         .await?;
+    let transactions = transactions.iter().map(|row| TransactionDto::try_from_row(row));
+    let transactions = futures::future::try_join_all(transactions).await?;
     info!("Retrieved {} transactions in wallet `{}`.", transactions.len(), wallet_id);
     Ok(transactions)
 }
 
 #[tauri::command]
-pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<Transaction>> {
-    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
+pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     // retrieve transactions with tag_id or its children
-    let transactions = sqlx::query_as::<_, Transaction>(
+    let transactions = sqlx::query(
         r#"
-        SELECT id, remark, wallet_id, tag_id, amount, time
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time
         FROM transactions
+        JOIN wallets ON transactions.wallet_id = wallet.id
         WHERE tag_id IN (
             WITH RECURSIVE tag_tree(id) AS (
                 SELECT id FROM tags WHERE id = $1
@@ -108,6 +114,8 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
         .bind(page_size).bind(page * page_size)
         .fetch_all(db())
         .await?;
+    let transactions = transactions.iter().map(|row| TransactionDto::try_from_row(row));
+    let transactions = futures::future::try_join_all(transactions).await?;
     info!("Retrieved {} transactions with tag `{}`.", transactions.len(), tag_id);
     Ok(transactions)
 }

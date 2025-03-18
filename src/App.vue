@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 import AddWallet from './pages/AddWallet.vue';
 import AddTag from './pages/AddTag.vue';
 import AddTransaction from './pages/AddTransaction.vue';
+import Transaction from './pages/Transaction.vue';
 const { t } = useI18n();
 
 interface Page {
@@ -63,6 +64,7 @@ const showMenuBar = computed(() => allPages.map(page => page.name).includes(curr
             <Home v-if="currentPage.name === 'home'" />
             <Wallet v-else-if="currentPage.name === 'accounts'" />
             <Tags v-else-if="currentPage.name === 'tags'" @create-tag="currentPage = { name: 'add_tag' }" />
+            <Transaction v-else-if="currentPage.name === 'transactions'" />
             <AddWallet v-else-if="currentPage.name === 'add_account'" @back="changePageByName('accounts')"/>
             <AddTag v-else-if="currentPage.name === 'add_tag'" @back="changePageByName('tags')"/>
             <AddTransaction v-else-if="currentPage.name === 'add_transaction'" @back="changePageByName('home')"/>
