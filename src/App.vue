@@ -67,8 +67,8 @@ const showMenuBar = computed(() => allPages.map(page => page.name).includes(curr
             <AddTag v-else-if="currentPage.name === 'add_tag'" @back="changePageByName('tags')"/>
             <AddTransaction v-else-if="currentPage.name === 'add_transaction'" @back="changePageByName('home')"/>
             <span v-else>{{ t("WIP") }}</span>
-            <v-btn v-if="!!currentPage.nextPage" color="secondary" @click="globalButtonClick" icon="mdi-paw" size="large" class="right-0 bottom-0" style="margin: 10px; margin-bottom: 65px; position: absolute;"></v-btn>
         </v-main>
+        <v-btn v-if="!!currentPage.nextPage" color="secondary" @click="globalButtonClick" icon="mdi-paw" size="large" class="right-0 bottom-0" style="margin: 10px; margin-bottom: 65px; position: fixed;"></v-btn>
 
         <v-bottom-navigation grow mandatory bg-color="primary" v-if="showMenuBar">
             <v-btn v-for="page in bottomPages" :key="page.indexInBottom as number" @click="changePage(page)">

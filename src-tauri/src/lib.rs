@@ -49,6 +49,7 @@ pub fn run() {
             wallet::controller::create_wallet,
             wallet::controller::retrieve_wallets,
             wallet::controller::delete_wallet,
+            wallet::controller::get_sum_balance,
 
             tag::controller::create_tag,
             tag::controller::retrieve_tags,
