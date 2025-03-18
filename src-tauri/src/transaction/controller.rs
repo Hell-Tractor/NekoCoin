@@ -1,9 +1,12 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use tracing::{debug, info};
+use sqlx::Row;
 
 use crate::sql::db;
+use crate::tag::TagKind;
 use crate::{tag, wallet, Error, Result};
 
+use super::dto::BalanceWithTypeDto;
 use super::Transaction;
 
 #[tauri::command]
@@ -121,4 +124,36 @@ pub async fn delete_transaction(id: u32) -> Result<()> {
         .await?;
     info!("Transaction deleted");
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_sum_balance_with_type(currency: String, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<BalanceWithTypeDto> {
+    debug!("Getting sum of transactions with kind...");
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
+    let begin = begin.and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
+    let end = end.and_hms_opt(23, 59, 59).unwrap();
+    let sum = sqlx::query(
+        r#"
+        SELECT SUM(amount), tags.kind FROM transactions
+        JOIN tags ON transactions.tag_id = tags.id
+        JOIN wallets ON transactions.wallet_id = wallets.id
+        WHERE tags.kind != $1 AND wallets.currency = $2 AND time between $3 and $4
+        GROUP BY tags.kind
+        "#)
+        .bind(TagKind::Transfer as u8).bind(currency).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .fetch_all(db())
+        .await?;
+    let mut result = BalanceWithTypeDto::default();
+    for row in sum {
+        let amount: i32 = row.get(0);
+        let kind: TagKind = row.get(1);
+        match kind {
+            TagKind::Expense => result.expense = amount,
+            TagKind::Income => result.income = amount,
+            _ => unreachable!(),
+        }
+    }
+    info!("Sum of balance with type in transactions: {:?}", result);
+    Ok(result)
 }

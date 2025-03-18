@@ -23,15 +23,14 @@ const wallets: Ref<Wallet[]> = ref([]);
 const retrieveWallets = async function() {
     try {
         wallets.value = await invoke('retrieve_wallets');
-        console.log(wallets.value);
     } catch (error) {
         // TODO: handle error
         console.error(error);
     }
 }
-const deleteWallet = function(id: number) {
+const deleteWallet = async function(id: number) {
     try {
-        invoke('delete_wallet', { id });
+        await invoke('delete_wallet', { id });
         wallets.value = wallets.value.filter(wallet => wallet.id !== id);
     } catch (error) {
         // TODO: handle error

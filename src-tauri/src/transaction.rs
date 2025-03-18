@@ -3,6 +3,7 @@ use serde::Serialize;
 use sqlx::{sqlite::SqliteRow, FromRow, Row};
 
 pub mod controller;
+pub mod dto;
 
 pub const DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 

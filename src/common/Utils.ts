@@ -20,3 +20,11 @@ export const formatDatetime = function(naive_date: Date) : string {
     const second = naive_date.getSeconds().toString().padStart(2, '0');
     return `${year}-${month}-${date} ${hour}:${minute}:${second}`;
 }
+
+export const formatDate = function(naive_date: Date) : string {
+    // format: %Y-%m-%d
+    const year = naive_date.getFullYear();
+    const month = (naive_date.getMonth() + 1).toString().padStart(2, '0');
+    const date = naive_date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${date}`;
+}
