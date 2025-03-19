@@ -25,6 +25,8 @@ pub enum Error {
         given: TagKind,
         allow: Vec<TagKind>
     },
+    #[error("Invalid parameter: {0}")]
+    InvalidParameter(String),
 }
 type Result<T> = std::result::Result<T, Error>;
 

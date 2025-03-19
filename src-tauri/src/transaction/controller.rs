@@ -9,32 +9,39 @@ use crate::{tag, wallet, Error, Result};
 use super::dto::{BalanceWithTypeDto, TransactionDto};
 
 #[tauri::command]
-pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amount: i32, time: String) -> Result<()> {
+pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amount: i32, time: String, to_wallet_id: Option<u32>) -> Result<()> {
     debug!("Creating transaction: {} {} {} {} {}", remark, wallet_id, tag_id, amount, time);
     let time = NaiveDateTime::parse_from_str(&time, super::DATETIME_FORMAT)?;
     let mut tx = db().begin().await?;
 
     let tag = tag::service::get_tag_by_id(tag_id).await?;
-    if tag.kind != tag::TagKind::Expense && tag.kind != tag::TagKind::Income {
-        return Err(Error::InvalidTagType {
-            given: tag.kind,
-            allow: vec![tag::TagKind::Expense, tag::TagKind::Income]
-        });
-    }
-    debug!("Tag kind is valid, modifying wallet amount and recording transaction simultaneously...");
-
     if tag.kind == tag::TagKind::Expense {
         wallet::service::modify_currency(wallet_id, -amount).await?;
-    } else {  // tag.kind == tag::TagKind::Income
+    } else if tag.kind == tag::TagKind::Income {
         wallet::service::modify_currency(wallet_id, amount).await?;
-    };
+    } else { // tag.kind == tag::TagKind::Transfer
+        if to_wallet_id.is_none() {
+            return Err(Error::InvalidParameter("to_wallet_id is required for transfer".to_string()));
+        }
+        let to_wallet_id = to_wallet_id.unwrap();
+        if to_wallet_id == wallet_id {
+            return Err(Error::InvalidParameter("to_wallet_id cannot be the same as wallet_id".to_string()));
+        }
+        let from_wallet = wallet::service::get_wallet_by_id(wallet_id).await?;
+        let to_wallet = wallet::service::get_wallet_by_id(to_wallet_id).await?;
+        if from_wallet.balance.get_currency() != to_wallet.balance.get_currency() {
+            return Err(Error::InvalidParameter("from_wallet and to_wallet must have the same currency".to_string()));
+        }
+        wallet::service::modify_currency(wallet_id, -amount).await?;
+        wallet::service::modify_currency(to_wallet_id, amount).await?;
+    }
 
     sqlx::query(
         r#"
-        INSERT INTO transactions (remark, wallet_id, tag_id, amount, time)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time)
+        VALUES ($1, $2, $3, $4, $5, $6)
         "#)
-        .bind(remark).bind(wallet_id).bind(tag_id).bind(amount).bind(time.format(super::DATETIME_FORMAT).to_string())
+        .bind(remark).bind(wallet_id).bind(to_wallet_id).bind(tag_id).bind(amount).bind(time.format(super::DATETIME_FORMAT).to_string())
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;

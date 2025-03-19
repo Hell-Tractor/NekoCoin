@@ -27,6 +27,8 @@ export default {
     account: {
         add: 'Add Account',
         select: 'Select Account',
+        select_from: 'Transfer account from',
+        select_to: 'Transfer account to',
         enter: {
             name: 'Enter Account Name',
             amount: 'Enter Amount',

@@ -27,6 +27,8 @@ export default {
     account: {
         add: '添加账户',
         select: '选择账户',
+        select_from: '选择转出账户',
+        select_to: '选择转入账户',
         enter: {
             name: '输入账户名',
             amount: '输入金额',

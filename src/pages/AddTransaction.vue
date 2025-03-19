@@ -23,13 +23,14 @@ const form: Ref<boolean> = ref(false);
 const remark: Ref<string> = ref('');
 const amount: Ref<number | null> = ref(null);
 const time: Ref<Date> = ref(new Date());
-const selected_tag_type: Ref<string> = ref(TagTypeToString(TagTypeNames[0].type));
+const selected_tag_type: Ref<TagType> = ref(TagType.EXPENSE);
 const show_time_picker: Ref<boolean> = ref(false);
 const show_calendar_picker: Ref<boolean> = ref(false);
 const selecting_date: Ref<Date> = ref(new Date());
 const selecting_time: Ref<string> = ref(`${new Date().getHours()}:${new Date().getMinutes()}`);
 const wallets: Ref<Wallet[]> = ref([]);
 const selected_wallet: Ref<Wallet | undefined> = ref(undefined);
+const selected_to_wallet: Ref<Wallet | undefined> = ref(undefined);
 const selected_tag: Ref<Tag | undefined> = ref(undefined);
 const page: Ref<string> = ref('main');
 const tags: Ref<Tag[]> = ref([]);
@@ -82,7 +83,7 @@ const retrieve_wallets = async function() {
 }
 const retrieve_tags = async function() {
     try {
-        tags.value = await invoke('retrieve_tags', { filter: '', kind: selected_tag_type.value });
+        tags.value = await invoke('retrieve_tags', { filter: '', kind: TagTypeToString(selected_tag_type.value) });
     } catch (error) {
         // TODO: handle error
         console.error(error);
@@ -101,6 +102,7 @@ const addTransaction = async function() {
         let params = {
             remark: remark.value,
             walletId: selected_wallet.value!.id,
+            toWalletId: selected_to_wallet.value?.id,
             tagId: selected_tag.value!.id,
             amount: Math.round(amount.value! * 100),
             time: formatDatetime(time.value)
@@ -112,6 +114,10 @@ const addTransaction = async function() {
         console.error(error);
     }
 }
+const isFormValid = function() {
+    return form.value && selected_wallet.value != undefined && selected_tag.value != undefined &&
+        (selected_tag.value.type != 'Transfer' || selected_to_wallet.value != undefined);
+}
 onMounted(() => {
     retrieve_wallets();
     retrieve_tags();
@@ -122,7 +128,7 @@ onMounted(() => {
         <BackTitleBar :title="t('transaction.add')" @back="emits('back')"></BackTitleBar>
         <v-form class="fill-height" v-model="form">
             <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]" @update:model-value="selected_tag = undefined; retrieve_tags()">
-                <v-chip v-for="tag in TagTypeNames" :value="TagTypeToString(tag.type)" :key="tag.type" variant="flat" color="secondary" :disabled="tag.type == TagType.TRANSFER">{{ t(`tag.type.${tag.name}`) }}</v-chip>
+                <v-chip v-for="tag in TagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
             </v-chip-group>
             <v-text-field v-model.number="amount" :placeholder="t('transaction.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
             <v-text-field v-model="remark" :placeholder="t('transaction.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TRANSACTION_REMARK_LENGTH)]"></v-text-field>
@@ -167,9 +173,10 @@ onMounted(() => {
                     </v-row>
                 </v-card-text>
             </v-card>
-            <WalletSelector v-model="selected_wallet" :wallets="wallets" @create="page = 'add_wallet'"></WalletSelector>
+            <WalletSelector :title="selected_tag_type == TagType.TRANSFER ? t('account.select_from') : undefined" v-model="selected_wallet" :wallets="wallets" @create="page = 'add_wallet'"></WalletSelector>
+            <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="t('account.select_to')" v-model="selected_to_wallet" :wallets="wallets" @create="page = 'add_wallet'"></WalletSelector>
             <TagSelector v-model="selected_tag" :tags="tags" @create="page = 'add_tag'"></TagSelector>
-            <v-btn @click="addTransaction" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form || selected_wallet == undefined || selected_tag == undefined">{{ t('save') }}</v-btn>
+            <v-btn @click="addTransaction" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('save') }}</v-btn>
         </v-form>
     </div>
     <AddWallet v-else-if="page == 'add_wallet'" @back="backFromAddWallet"></AddWallet>

@@ -6,6 +6,7 @@ const { t } = useI18n();
 const selected_wallet = defineModel<Wallet>();
 const props = defineProps<{
     wallets: Wallet[];
+    title?: string;
 }>();
 const emits = defineEmits<{
     create: [];
@@ -17,7 +18,7 @@ const emits = defineEmits<{
         <v-card-text style="padding-bottom: 0;">
             <v-row class="flex-nowarp">
                 <v-col style="padding-left: 3px;">
-                    <span>{{ t('account.select') }}</span>
+                    <span>{{ t(props.title ?? 'account.select') }}</span>
                 </v-col>
                 <v-col class="d-flex justify-end">
                     <v-btn icon="mdi-plus" size="medium" density="compact" variant="text" @click="emits('create')"></v-btn>

@@ -25,9 +25,11 @@ CREATE TABLE transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     remark TEXT,
     wallet_id INTEGER NOT NULL,
+    to_wallet_id INTEGER DEFAULT NULL,
     tag_id INTEGER NOT NULL,
     amount INTEGER NOT NULL,
     time TEXT NOT NULL,
     FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
+    FOREIGN KEY(to_wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
     FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
