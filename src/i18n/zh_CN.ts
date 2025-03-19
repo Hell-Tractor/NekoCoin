@@ -60,6 +60,16 @@ export default {
         enter: {
             remark: '输入备注',
             amount: '输入金额',
+        },
+        list: {
+            title: '近期交易',
         }
+    },
+    list: {
+        no_more_data: '没有更多数据',
+    },
+    date: {
+        today: '今天',
+        yesterday: '昨天',
     }
 }

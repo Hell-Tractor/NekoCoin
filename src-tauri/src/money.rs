@@ -5,10 +5,10 @@ use std::fmt::Display;
     PartialEq, Eq,
     PartialOrd, Ord,
     Serialize)]
-pub struct Cent(u32);
+pub struct Cent(i32);
 
-impl Into<u32> for Cent {
-    fn into(self) -> u32 {
+impl Into<i32> for Cent {
+    fn into(self) -> i32 {
         self.0
     }
 }
@@ -33,7 +33,7 @@ impl Type<Sqlite> for Cent {
 
 impl<'r> Decode<'r, Sqlite> for Cent {
     fn decode(value: SqliteValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
-        let int_value: u32 = Decode::<Sqlite>::decode(value)?;
+        let int_value: i32 = Decode::<Sqlite>::decode(value)?;
         Ok(Cent(int_value))
     }
 }

@@ -27,7 +27,7 @@ pub async fn update_wallet(wallet: Wallet) -> Result<()> {
         SET name = $1, remark = $2, balance = $3, currency = $4, color = $5, icon = $6
         WHERE id = $7
         "#)
-        .bind(wallet.name).bind(wallet.remark).bind::<u32>(wallet.balance.balance.into()).bind(wallet.balance.get_currency()).bind(wallet.color).bind(wallet.icon).bind(wallet.id)
+        .bind(wallet.name).bind(wallet.remark).bind::<i32>(wallet.balance.balance.into()).bind(wallet.balance.get_currency()).bind(wallet.color).bind(wallet.icon).bind(wallet.id)
         .execute(db())
         .await?;
     info!("Wallet `{}` updated", wallet.id);

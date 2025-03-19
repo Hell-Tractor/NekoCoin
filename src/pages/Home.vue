@@ -6,6 +6,7 @@ import SummaryBar from '../common/SummaryBar.vue';
 import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDate } from '../common/Utils';
+import TransactionList from '../common/TransactionList.vue';
 const { t } = useI18n();
 
 const totalBalance: Ref<Money | undefined> = ref(undefined);
@@ -50,7 +51,7 @@ onMounted(() => {
             <div>{{ t('welcome') }}</div>
         </v-col>
     </v-row>
-    <v-card>
+    <v-card variant="flat">
         <v-card-text>
             <div>{{ t('total_balance') }}</div>
             <div style="height: 10px;"></div>
@@ -58,4 +59,5 @@ onMounted(() => {
         </v-card-text>
     </v-card>
     <SummaryBar v-if="!!currentMonthExpense && !! currentMonthIncome" :title="t('this_month')" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money"></SummaryBar>
+    <TransactionList variant="flat" :title="t('transaction.list.title')"></TransactionList>
 </template>

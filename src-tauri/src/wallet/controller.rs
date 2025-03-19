@@ -22,6 +22,7 @@ pub async fn create_wallet(name: String, remark: String, balance: u32, currency:
 
 #[tauri::command]
 pub async fn retrieve_wallets() -> Result<Vec<Wallet>> {
+    debug!("Retrieving wallets...");
     let wallets = sqlx::query_as::<_, Wallet>(
         r#"
         SELECT id, name, remark, balance, currency, color, icon

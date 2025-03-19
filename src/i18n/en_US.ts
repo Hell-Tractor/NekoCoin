@@ -60,6 +60,16 @@ export default {
         enter: {
             remark: 'Enter Remark',
             amount: 'Enter Amount',
+        },
+        list: {
+            title: 'Recent transactions',
         }
+    },
+    list: {
+        no_more_data: 'No more data',
+    },
+    date: {
+        today: 'Today',
+        yesterday: 'Yesterday',
     }
 }
