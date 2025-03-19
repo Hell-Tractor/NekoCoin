@@ -20,7 +20,7 @@ interface Page {
 const allPages: Page[] = [
     { name: 'home', indexInBottom: 0, icon: 'mdi-home', nextPage: 'add_transaction' },
     { name: 'accounts', indexInBottom: 1, icon: 'mdi-credit-card', nextPage: 'add_account' },
-    { name: 'tags' },
+    { name: 'tags', nextPage: 'add_tag' },
     { name: 'transactions' },
     { name: 'reports', indexInBottom: 2, icon: 'mdi-chart-multiple' },
     { name: 'settings' },
@@ -63,7 +63,7 @@ const showMenuBar = computed(() => allPages.map(page => page.name).includes(curr
         <v-main class="page">
             <Home v-if="currentPage.name === 'home'" />
             <Wallet v-else-if="currentPage.name === 'accounts'" />
-            <Tags v-else-if="currentPage.name === 'tags'" @create-tag="currentPage = { name: 'add_tag' }" />
+            <Tags v-else-if="currentPage.name === 'tags'" />
             <Transaction v-else-if="currentPage.name === 'transactions'" />
             <AddWallet v-else-if="currentPage.name === 'add_account'" @back="changePageByName('accounts')"/>
             <AddTag v-else-if="currentPage.name === 'add_tag'" @back="changePageByName('tags')"/>

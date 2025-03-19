@@ -1,4 +1,4 @@
-use tracing::info;
+use tracing::debug;
 
 use crate::{sql::db, Result};
 
@@ -14,6 +14,6 @@ pub async fn get_tag_by_id(id: u32) -> Result<Tag> {
         .bind(id)
         .fetch_one(db())
         .await?;
-    info!("Get tag `{}`.", tag.id);
+    debug!("Get tag `{}`.", tag.id);
     Ok(tag)
 }

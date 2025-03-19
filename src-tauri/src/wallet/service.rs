@@ -1,4 +1,4 @@
-use tracing::info;
+use tracing::{debug, info};
 
 use crate::{sql::db, Result};
 
@@ -15,7 +15,7 @@ pub async fn get_wallet_by_id(id: u32) -> Result<Wallet> {
         .bind(id)
         .fetch_one(db())
         .await?;
-    info!("Get wallet `{}`.", wallet.id);
+    debug!("Get wallet `{}`.", wallet.id);
     Ok(wallet)
 }
 

@@ -40,7 +40,7 @@ const retrieve_transactions = async function(page: number, pageSize: number): Pr
 
 const load_transactions = async function({ done } : { done: (arg0: any) => void }) {
     const result = await retrieve_transactions(current_page.value, PAGE_SIZE);
-    console.log(result);
+    // console.log(result);
     current_page.value += 1;
     transactions.value = transactions.value.concat(result);
     if (result.length != PAGE_SIZE) {

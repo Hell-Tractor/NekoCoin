@@ -2,7 +2,7 @@
 import BackTitleBar from '../common/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { rules } from '../common/Rules';
-import { computed, onMounted, Ref, ref } from 'vue';
+import { onMounted, Ref, ref } from 'vue';
 import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
 import Constants from '../common/Constants';
 import { getRandomColor } from '../common/Utils';
