@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use sql::db;
 use sqlx::migrate::Migrator;
 use tag::TagKind;
-use tracing::info;
+use tracing::{info, warn};
 use tracing_appender::rolling;
 use tracing_subscriber::{fmt::writer::MakeWriterExt, EnvFilter};
 
@@ -34,6 +34,12 @@ impl serde::Serialize for Error {
         S: serde::ser::Serializer,
     {
         serializer.serialize_str(self.to_string().as_ref())
+    }
+}
+
+impl Drop for Error {
+    fn drop(&mut self) {
+        warn!("error occurred: {}", *self);
     }
 }
 
