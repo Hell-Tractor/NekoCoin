@@ -73,5 +73,20 @@ export default {
     date: {
         today: 'Today',
         yesterday: 'Yesterday',
+    },
+    icon: {
+        select: 'Select Icon',
+        foodAndDrink: 'Food & Drink',
+        dailyLife: 'Daily Life',
+        shopping: 'Shopping',
+        bank: 'Bank',
+        transportation: 'Transportation',
+        travel: 'Travel',
+        education: 'Education',
+        pets: 'Pets',
+        hobbies: 'Hobbies',
+        gifts: 'Gifts',
+        health: 'Health',
+        sports: 'Sports',
     }
 }

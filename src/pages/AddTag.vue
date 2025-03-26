@@ -7,6 +7,7 @@ import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
 import Constants from '../common/Constants';
 import { getRandomColor } from '../common/Utils';
 import { invoke } from '@tauri-apps/api/core';
+import IconSelector from '../common/IconSelector.vue';
 const { t } = useI18n();
 
 const emits = defineEmits<{
@@ -17,7 +18,6 @@ const form: Ref<boolean> = ref(false);
 const tag_name: Ref<string> = ref('');
 const tag_remark: Ref<string> = ref('');
 const icon: Ref<string> = ref('mdi-tag');
-const showMdiSelector: Ref<boolean> = ref(false);
 const selected_color: Ref<string> = ref(getRandomColor('rgb'));
 const parent_tag: Ref<Tag | null> = ref(null);
 
@@ -25,6 +25,7 @@ const tag_search_text: Ref<string> = ref('');
 
 const selected_tag_type: Ref<{ type: TagType, name: string }> = ref(TagTypeNames[0]);
 const tags: Ref<Tag[]> = ref([]);
+const page: Ref<string> = ref('main');
 
 const retrieve_tags = async function() {
     try {
@@ -57,21 +58,23 @@ onMounted(() => {
 });
 </script>
 <template>
-    <BackTitleBar :title="t('tag.add')" @back="emits('back')"></BackTitleBar>
-    <v-form class="fill-height" v-model="form">
-        <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()">
-            <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
-        </v-chip-group>
-        <v-text-field v-model="tag_name" :placeholder="t('tag.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_TAG_NAME_LENGTH)]"></v-text-field>
-        <v-text-field v-model="tag_remark" :placeholder="t('tag.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TAG_REMARK_LENGTH)]"></v-text-field>
-        <v-select :no-data-text="t('tag.no_available_parent')" :placeholder="t('tag.enter.parent_tag')" :items="tags" variant="outlined" item-title="name" clearable v-model="parent_tag" return-object>
-            <template v-slot:prepend-item>
-                <v-text-field v-model="tag_search_text" :placeholder="t('tag.search.hint')" dense @update:model-value="retrieve_tags"></v-text-field>
-            </template>
-        </v-select>
-        <!-- TODO create icon select page -->
-        <v-btn :prepend-icon="icon" variant="text" @click="showMdiSelector=true" width="100%" class="justify-start">{{ t('select_icon') }}</v-btn>
-        <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
-        <v-btn @click="addTag" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('save') }}</v-btn>
-    </v-form>
+    <div v-if="page == 'main'">
+        <BackTitleBar :title="t('tag.add')" @back="emits('back')"></BackTitleBar>
+        <v-form class="fill-height" v-model="form">
+            <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()">
+                <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
+            </v-chip-group>
+            <v-text-field v-model="tag_name" :placeholder="t('tag.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_TAG_NAME_LENGTH)]"></v-text-field>
+            <v-text-field v-model="tag_remark" :placeholder="t('tag.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TAG_REMARK_LENGTH)]"></v-text-field>
+            <v-select :no-data-text="t('tag.no_available_parent')" :placeholder="t('tag.enter.parent_tag')" :items="tags" variant="outlined" item-title="name" clearable v-model="parent_tag" return-object>
+                <template v-slot:prepend-item>
+                    <v-text-field v-model="tag_search_text" :placeholder="t('tag.search.hint')" dense @update:model-value="retrieve_tags"></v-text-field>
+                </template>
+            </v-select>
+            <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('select_icon') }}</v-btn>
+            <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
+            <v-btn @click="addTag" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('save') }}</v-btn>
+        </v-form>
+    </div>
+    <IconSelector v-else-if="page == 'select_icon'" @back="page = 'main'" @confirm="selected_icon => icon = selected_icon"></IconSelector>
 </template>

@@ -73,5 +73,20 @@ export default {
     date: {
         today: '今天',
         yesterday: '昨天',
+    },
+    icon: {
+        select: '选择图标',
+        foodAndDrink: '饮食',
+        shopping: '购物',
+        transportation: '交通',
+        bank: '银行',
+        dailyLife: '日常',
+        travel: '旅行',
+        education: '教育',
+        pets: '宠物',
+        hobbies: '爱好',
+        gifts: '礼物',
+        health: '健康',
+        sports: '运动',
     }
 }
