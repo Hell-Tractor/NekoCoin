@@ -3,18 +3,23 @@ import { ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Tag from '../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
-import { formatDatetimeRelative, formatTime } from '../common/Utils';
+import { formatDate, formatDatetimeRelative, formatTime } from '../common/Utils';
 const { t } = useI18n();
 
 const props = defineProps<{
     title?: string,
     variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain"
 }>();
+const emits = defineEmits<{
+    edit: [Transaction],
+    copy: [Transaction],
+}>();
 
 export interface Transaction {
-    id: number;
+    id?: number;
     remark?: string;
     wallet_name: string;
+    to_wallet_name?: string;
     currency: string;
     tag: Tag;
     amount: number;
@@ -23,6 +28,7 @@ export interface Transaction {
 
 const transactions: Ref<Transaction[]> = ref([]);
 const current_page: Ref<number> = ref(0);
+const show_confirm_sheet: Ref<boolean> = ref(false);
 const PAGE_SIZE = 20;
 
 const retrieve_transactions = async function(page: number, pageSize: number): Promise<Transaction[]> {
@@ -49,6 +55,25 @@ const load_transactions = async function({ done } : { done: (arg0: any) => void 
         done('ok');
     }
 }
+
+const delete_transaction = async function(transaction: Transaction) {
+    try {
+        await invoke('delete_transaction', { id: transaction.id });
+        transactions.value = transactions.value.filter(t => t.id != transaction.id);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+const get_color_with_type = function(type: string) {
+    if (type == 'Expense') {
+        return '#ff3333';
+    } else if (type == 'Income') {
+        return '#009900';
+    } else {
+        return '#3399ff';
+    }
+}
 </script>
 <template>
     <v-card :variant="variant">
@@ -56,26 +81,80 @@ const load_transactions = async function({ done } : { done: (arg0: any) => void 
             <div v-if="!!props.title" style="padding-top: 0px; padding-bottom: 0px; padding-left: 10px;">{{ props.title }}</div>
             <v-infinite-scroll :items="transactions" @load="load_transactions">
                 <template v-for="transaction in transactions" :key="transaction.id">
-                    <v-card variant="text">
-                        <v-card-text>
-                            <v-row class="flex-nowrap">
-                                <v-col class="flex-grow-0" style="padding-left: 0px;">
-                                    <v-icon :color="transaction.tag.color">{{ transaction.tag.icon }}</v-icon>
-                                </v-col>
-                                <v-col style="padding-bottom: 0px;">
+                    <v-bottom-sheet>
+                        <template v-slot:activator="{ props }">
+                            <v-card variant="text" v-bind="props">
+                                <v-card-text>
                                     <v-row class="flex-nowrap">
-                                        <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
-                                        <v-col class="no-pad" :style="{ textAlign: 'right', color: transaction.tag.type == 'Expense' ? '#ff3333' : '#009900' }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                        <v-col class="flex-grow-0" style="padding-left: 0px;">
+                                            <v-icon :color="transaction.tag.color">{{ transaction.tag.icon }}</v-icon>
+                                        </v-col>
+                                        <v-col style="padding-bottom: 0px;">
+                                            <v-row class="flex-nowrap">
+                                                <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
+                                                <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                            </v-row>
+                                            <v-row class="flex-nowrap">
+                                                <v-col class="no-pad" style="color: #666666;">{{ formatDatetimeRelative(transaction.time, new Date()) }}</v-col>
+                                                <v-col class="no-pad" style="text-align: right; color: #666666;">{{ formatTime(transaction.time) }}</v-col>
+                                            </v-row>
+                                            <v-divider style="margin-top: 20px;"></v-divider>
+                                        </v-col>
                                     </v-row>
-                                    <v-row class="flex-nowrap">
-                                        <v-col class="no-pad" style="color: #666666;">{{ formatDatetimeRelative(transaction.time, new Date()) }}</v-col>
-                                        <v-col class="no-pad" style="text-align: right; color: #666666;">{{ formatTime(transaction.time) }}</v-col>
-                                    </v-row>
-                                    <v-divider style="margin-top: 20px;"></v-divider>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
+                                </v-card-text>
+                            </v-card>
+                        </template>
+                        <v-card style="padding: 10px">
+                            <v-card-text>
+                                <v-row class="flex-nowrap">
+                                    <v-col class="flex-grow-0" style="padding-left: 0px;">
+                                        <v-icon :color="transaction.tag.color">{{ transaction.tag.icon }}</v-icon>
+                                    </v-col>
+                                    <v-col style="padding-bottom: 0px;">
+                                        <v-row class="flex-nowrap">
+                                            <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
+                                            <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                        </v-row>
+                                        <v-row class="flex-nowrap">
+                                            <v-col class="no-pad" style="color: #666666;">{{ formatDate(transaction.time) }}</v-col>
+                                        </v-row>
+                                    </v-col>
+                                </v-row>
+                                <v-divider style="margin-top: 20px; margin-bottom: 20px;"></v-divider>
+                                <v-row class="flex-nowrap">
+                                    <v-col class="flex-grow-0" style="padding-left: 0px;">
+                                        <v-icon color="#444444">mdi-bank</v-icon>
+                                    </v-col>
+                                    <v-col>
+                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('account.text') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad">{{ transaction.wallet_name }}</v-col></v-row>
+                                    </v-col>
+                                    <v-col v-if="transaction.tag.type == 'Transfer'">
+                                        <v-icon>mdi-chevron-double-right</v-icon>
+                                    </v-col>
+                                    <v-col v-if="transaction.tag.type == 'Transfer'">
+                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('account.text') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad">{{ transaction.to_wallet_name! }}</v-col></v-row>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                            <v-card-actions class="d-flex justify-space-around">
+                                <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-pencil" variant="tonal" color="primary-darken-1" @click="emits('edit', transaction)">{{ t('actions.edit') }}</v-btn>
+                                <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-content-copy" variant="tonal" color="primary-darken-1" @click="emits('copy', transaction)">{{ t('actions.copy') }}</v-btn>
+                                <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-delete" variant="outlined" color="error" @click="show_confirm_sheet = true">{{ t('actions.delete') }}</v-btn>
+                                <v-bottom-sheet v-model="show_confirm_sheet" >
+                                    <template>
+                                    </template>
+                                    <v-card :title="t('warning.irrevertible.title')" :text="t('warning.irrevertible.content')">
+                                        <v-card-actions>
+                                            <v-btn rounded="xl" @click="delete_transaction(transaction)">{{ t('actions.confirm') }}</v-btn>
+                                            <v-btn rounded="xl" variant="tonal" @click="show_confirm_sheet = false">{{ t('actions.cancel') }}</v-btn>
+                                        </v-card-actions>
+                                    </v-card>
+                                </v-bottom-sheet>
+                            </v-card-actions>
+                        </v-card>
+                    </v-bottom-sheet>
                 </template>
                 <template v-slot:empty>
                     {{ t('list.no_more_data') }}

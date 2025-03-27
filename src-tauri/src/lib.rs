@@ -69,6 +69,7 @@ pub fn run() {
             transaction::controller::retrieve_transactions_with_tag,
             transaction::controller::delete_transaction,
             transaction::controller::get_sum_balance_with_type,
+            transaction::controller::update_transaction,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

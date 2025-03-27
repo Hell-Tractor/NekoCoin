@@ -13,7 +13,11 @@ const { t } = useI18n();
 const emits = defineEmits<{
     back: []
 }>();
+const props = defineProps<{
+    init?: Tag
+}>();
 
+const id: Ref<number | undefined> = ref(undefined);
 const form: Ref<boolean> = ref(false);
 const tag_name: Ref<string> = ref('');
 const tag_remark: Ref<string> = ref('');
@@ -53,13 +57,23 @@ const addTag = async function() {
     }
 }
 
-onMounted(() => {
-    retrieve_tags();
+onMounted(async () => {
+    await retrieve_tags();
+
+    if (props.init) {
+        id.value = props.init.id;
+        tag_name.value = props.init.name;
+        tag_remark.value = props.init.remark || '';
+        icon.value = props.init.icon;
+        selected_color.value = props.init.color;
+        parent_tag.value = tags.value.find(tag => tag.id == props.init!.parentId) || null;
+        selected_tag_type.value = TagTypeNames.find(tag => tag.name == props.init!.type) || TagTypeNames[0];
+    }
 });
 </script>
 <template>
     <div v-if="page == 'main'">
-        <BackTitleBar :title="t('tag.add')" @back="emits('back')"></BackTitleBar>
+        <BackTitleBar :title="t(id == undefined ? 'tag.add' : 'tag.update')" @back="emits('back')"></BackTitleBar>
         <v-form class="fill-height" v-model="form">
             <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()">
                 <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
@@ -71,9 +85,9 @@ onMounted(() => {
                     <v-text-field v-model="tag_search_text" :placeholder="t('tag.search.hint')" dense @update:model-value="retrieve_tags"></v-text-field>
                 </template>
             </v-select>
-            <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('select_icon') }}</v-btn>
+            <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('icon.select') }}</v-btn>
             <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
-            <v-btn @click="addTag" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('save') }}</v-btn>
+            <v-btn @click="addTag" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
         </v-form>
     </div>
     <IconSelector v-else-if="page == 'select_icon'" @back="page = 'main'" @confirm="selected_icon => icon = selected_icon"></IconSelector>

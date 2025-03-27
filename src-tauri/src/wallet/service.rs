@@ -1,10 +1,10 @@
+use sqlx::{Executor, Sqlite};
 use tracing::{debug, info};
 
 use crate::{sql::db, Result};
 
 use super::Wallet;
 
-#[allow(dead_code)]
 pub async fn get_wallet_by_id(id: u32) -> Result<Wallet> {
     let wallet = sqlx::query_as::<_, Wallet>(
         r#"
@@ -20,7 +20,9 @@ pub async fn get_wallet_by_id(id: u32) -> Result<Wallet> {
 }
 
 #[allow(dead_code)]
-pub async fn update_wallet(wallet: Wallet) -> Result<()> {
+pub async fn update_wallet<'c, E>(executor: E, wallet: Wallet) -> Result<()>
+    where E: Executor<'c, Database = Sqlite>
+{
     sqlx::query(
         r#"
         UPDATE wallets
@@ -28,13 +30,15 @@ pub async fn update_wallet(wallet: Wallet) -> Result<()> {
         WHERE id = $7
         "#)
         .bind(wallet.name).bind(wallet.remark).bind::<i32>(wallet.balance.balance.into()).bind(wallet.balance.get_currency()).bind(wallet.color).bind(wallet.icon).bind(wallet.id)
-        .execute(db())
+        .execute(executor)
         .await?;
     info!("Wallet `{}` updated", wallet.id);
     Ok(())
 }
 
-pub async fn modify_currency(wallet_id: u32, amount: i32) -> Result<()> {
+pub async fn modify_currency<'c, E>(executor: E, wallet_id: u32, amount: i32) -> Result<()>
+    where E: Executor<'c, Database = Sqlite>
+{
     sqlx::query(
         r#"
         UPDATE wallets
@@ -42,7 +46,7 @@ pub async fn modify_currency(wallet_id: u32, amount: i32) -> Result<()> {
         WHERE id = $2
         "#)
         .bind(amount).bind(wallet_id)
-        .execute(db())
+        .execute(executor)
         .await?;
     info!("Wallet `{}` balance modified", wallet_id);
     Ok(())

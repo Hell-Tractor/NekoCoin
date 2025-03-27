@@ -13,12 +13,17 @@ import AddTag from './AddTag.vue';
 import { formatDatetime } from '../common/Utils';
 import WalletSelector from '../common/WalletSelector.vue';
 import TagSelector from '../common/TagSelector.vue';
+import { Transaction } from '../common/TransactionList.vue';
 const { t } = useI18n();
 
 const emits = defineEmits<{
     back: []
 }>();
+const props = defineProps<{
+    init?: Transaction
+}>();
 
+const id: Ref<number | undefined> = ref(undefined);
 const form: Ref<boolean> = ref(false);
 const remark: Ref<string> = ref('');
 const amount: Ref<number | null> = ref(null);
@@ -118,14 +123,26 @@ const isFormValid = function() {
     return form.value && selected_wallet.value != undefined && selected_tag.value != undefined &&
         (selected_tag.value.type != 'Transfer' || selected_to_wallet.value != undefined);
 }
-onMounted(() => {
-    retrieve_wallets();
-    retrieve_tags();
+onMounted(async () => {
+    await retrieve_wallets();
+    await retrieve_tags();
+
+    if (props.init) {
+        id.value = props.init.id;
+        amount.value = props.init.amount / 100;
+        remark.value = props.init.remark || '';
+        time.value = props.init.time;
+        selected_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.wallet_name);
+        selected_tag.value = tags.value.find(tag => tag.id == props.init!.tag.id);
+        if (props.init!.to_wallet_name) {
+            selected_to_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.to_wallet_name);
+        }
+    }
 });
 </script>
 <template>
     <div v-if="page == 'main'">
-        <BackTitleBar :title="t('transaction.add')" @back="emits('back')"></BackTitleBar>
+        <BackTitleBar :title="t(id == undefined ? 'transaction.add' : 'transaction.update')" @back="emits('back')"></BackTitleBar>
         <v-form class="fill-height" v-model="form">
             <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]" @update:model-value="selected_tag = undefined; retrieve_tags()">
                 <v-chip v-for="tag in TagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
@@ -176,7 +193,7 @@ onMounted(() => {
             <WalletSelector :title="selected_tag_type == TagType.TRANSFER ? t('account.select_from') : undefined" v-model="selected_wallet" :wallets="wallets" @create="page = 'add_wallet'"></WalletSelector>
             <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="t('account.select_to')" v-model="selected_to_wallet" :wallets="wallets" @create="page = 'add_wallet'"></WalletSelector>
             <TagSelector v-model="selected_tag" :tags="tags" @create="page = 'add_tag'"></TagSelector>
-            <v-btn @click="addTransaction" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('save') }}</v-btn>
+            <v-btn @click="addTransaction" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
         </v-form>
     </div>
     <AddWallet v-else-if="page == 'add_wallet'" @back="backFromAddWallet"></AddWallet>

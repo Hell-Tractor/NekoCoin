@@ -6,10 +6,14 @@ export default {
     income: 'Income',
     expense: 'Expense',
     WIP: 'Work in Progress...',
-    select_icon: 'Select Icon',
-    save: 'Save',
-    confirm: 'Confirm',
-    cancel: 'Cancel',
+    actions: {
+        save: 'Save',
+        confirm: 'Confirm',
+        cancel: 'Cancel',
+        edit: 'Edit',
+        delete: 'Delete',
+        copy: 'Copy',
+    },
     page: {
         home: 'Home',
         transactions: 'Transactions',
@@ -25,6 +29,8 @@ export default {
         isValidSearchText: 'Only letters, numbers, and Chinese characters are allowed',
     },
     account: {
+        text: 'Account',
+        update: 'Update Account',
         add: 'Add Account',
         select: 'Select Account',
         select_from: 'Transfer account from',
@@ -39,6 +45,7 @@ export default {
     },
     tag: {
         add: 'Add Tag',
+        update: 'Update Tag',
         select: 'Select Tag',
         no_available_parent: 'No available parent tag',
         enter: {
@@ -58,6 +65,7 @@ export default {
     },
     transaction: {
         add: 'Add Transaction',
+        update: 'Update Transaction',
         datetime: 'Date & Time',
         enter: {
             remark: 'Enter Remark',
@@ -88,5 +96,11 @@ export default {
         gifts: 'Gifts',
         health: 'Health',
         sports: 'Sports',
+    },
+    warning: {
+        irrevertible: {
+            title: 'Warning',
+            content: 'This action is IRREVERTIBLE, confirm to proceed?',
+        }
     }
 }

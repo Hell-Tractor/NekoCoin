@@ -169,14 +169,14 @@ const iconGroups: IconGroup[] = [
 <template>
     <BackTitleBar :title="t('icon.select')" @back="emits('back')"></BackTitleBar>
     <v-card v-for="group in iconGroups" :key="group.name" class="mx-2 my-2" variant="flat">
-        <v-item-group class="d-flex align-content-start flex-wrap" v-model="selected_icon" mandatory>
         <v-card-text>
             <div>{{ t(group.name) }}</div>
+            <v-item-group class="d-flex flex-wrap" v-model="selected_icon" mandatory>
                 <v-item v-for="icon in group.icons" :key="icon" :value="icon" v-slot="{ isSelected, toggle }">
                     <v-btn variant="text" size="large" :icon="icon" @click="toggle" :active="isSelected"></v-btn>
                 </v-item>
-            </v-card-text>
-        </v-item-group>
+            </v-item-group>
+        </v-card-text>
     </v-card>
-    <v-btn color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!selected_icon" @click="emits('confirm', selected_icon!); emits('back');">{{ t('save') }}</v-btn>
+    <v-btn color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!selected_icon" @click="emits('confirm', selected_icon!); emits('back');">{{ t('actions.save') }}</v-btn>
 </template>

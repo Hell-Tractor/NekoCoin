@@ -6,10 +6,14 @@ export default {
     income: '收入',
     expense: '支出',
     WIP: '开发中...',
-    select_icon: '选择图标',
-    save: '保存',
-    confirm: '确认',
-    cancel: '取消',
+    actions: {
+        save: '保存',
+        confirm: '确认',
+        cancel: '取消',
+        edit: '编辑',
+        delete: '删除',
+        copy: '复制',
+    },
     page: {
         home: '首页',
         transactions: '交易',
@@ -25,6 +29,8 @@ export default {
         isValidSearchText: '只允许输入字母、数字和中文',
     },
     account: {
+        text: '账户',
+        update: '更新账户',
         add: '添加账户',
         select: '选择账户',
         select_from: '选择转出账户',
@@ -39,6 +45,7 @@ export default {
     },
     tag: {
         add: '添加标签',
+        update: '更新标签',
         select: '选择标签',
         no_available_parent: '没有可用的父标签',
         enter: {
@@ -58,6 +65,7 @@ export default {
     },
     transaction: {
         add: '添加交易',
+        update: '更新交易',
         datetime: '日期 & 时间',
         enter: {
             remark: '输入备注',
@@ -88,5 +96,11 @@ export default {
         gifts: '礼物',
         health: '健康',
         sports: '运动',
+    },
+    warning: {
+        irrevertible: {
+            title: '警告',
+            content: '该操作不可逆，确认继续？',
+        }
     }
 }
