@@ -29,7 +29,6 @@ export default {
         isValidSearchText: '只允许输入字母、数字和中文',
     },
     account: {
-        text: '账户',
         update: '更新账户',
         add: '添加账户',
         select: '选择账户',
@@ -67,6 +66,8 @@ export default {
         add: '添加交易',
         update: '更新交易',
         datetime: '日期 & 时间',
+        remark: '备注',
+        account: '账户',
         enter: {
             remark: '输入备注',
             amount: '输入金额',

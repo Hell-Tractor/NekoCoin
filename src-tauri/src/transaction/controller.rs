@@ -4,10 +4,11 @@ use sqlx::{Row, SqliteConnection};
 
 use crate::sql::db;
 use crate::tag::TagKind;
+use crate::transaction::Transaction;
 use crate::{tag, wallet, Error, Result};
 
 use super::dto::{BalanceWithTypeDto, TransactionDto};
-use super::Transaction;
+use super::vo::TransactionVo;
 
 async fn modify_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wallet_id: u32, to_wallet_id: Option<u32>, amount: i32) -> Result<()> {
     debug!("Modifying currency...");
@@ -75,9 +76,10 @@ pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amo
 }
 
 #[tauri::command]
-pub async fn update_transaction(mut transaction: Transaction) -> Result<()> {
+pub async fn update_transaction(transaction: TransactionVo) -> Result<()> {
     debug!("Updating transaction(id = {})", transaction.id);
     let mut tx = db().begin().await?;
+    let mut transaction: Transaction = transaction.into();
     let mut old_transaction = super::service::get_transaction_by_id(transaction.id).await?;
     let old_tag_kind = old_transaction.get_tag().await?.kind.clone(); // * remove clone in the future
     revert_currency(&mut *tx, &old_tag_kind, old_transaction.wallet_id, old_transaction.to_wallet_id, old_transaction.amount).await?;

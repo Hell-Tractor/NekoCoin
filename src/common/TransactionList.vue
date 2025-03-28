@@ -4,15 +4,14 @@ import { useI18n } from 'vue-i18n';
 import Tag from '../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDate, formatDatetimeRelative, formatTime } from '../common/Utils';
+import { useRouter } from 'vue-router';
+import AddTransaction from '../pages/AddTransaction.vue';
 const { t } = useI18n();
+const router = useRouter();
 
 const props = defineProps<{
     title?: string,
     variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain"
-}>();
-const emits = defineEmits<{
-    edit: [Transaction],
-    copy: [Transaction],
 }>();
 
 export interface Transaction {
@@ -74,6 +73,15 @@ const get_color_with_type = function(type: string) {
         return '#3399ff';
     }
 }
+
+const operate_transaction = async function(transaction: Transaction, operation: 'copy' | 'edit') {
+    if (operation == 'copy') {
+        transaction.id = undefined;
+    }
+    let removeRoute = router.addRoute({ path: '/transaction/operate', component: AddTransaction, props: { init: transaction } });
+    await router.push({ path: '/transaction/operate' });
+    removeRoute();
+}
 </script>
 <template>
     <v-card :variant="variant">
@@ -126,28 +134,37 @@ const get_color_with_type = function(type: string) {
                                         <v-icon color="#444444">mdi-bank</v-icon>
                                     </v-col>
                                     <v-col>
-                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('account.text') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.wallet_name }}</v-col></v-row>
                                     </v-col>
                                     <v-col v-if="transaction.tag.type == 'Transfer'">
                                         <v-icon>mdi-chevron-double-right</v-icon>
                                     </v-col>
                                     <v-col v-if="transaction.tag.type == 'Transfer'">
-                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('account.text') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.to_wallet_name! }}</v-col></v-row>
+                                    </v-col>
+                                </v-row>
+                                <v-row class="flex-nowrap" v-if="!!transaction.remark">
+                                    <v-col class="flex-grow-0" style="padding-left: 0px;">
+                                        <v-icon color="#444444">mdi-file-document</v-icon>
+                                    </v-col>
+                                    <v-col>
+                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.remark') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad">{{ transaction.remark }}</v-col></v-row>
                                     </v-col>
                                 </v-row>
                             </v-card-text>
                             <v-card-actions class="d-flex justify-space-around">
-                                <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-pencil" variant="tonal" color="primary-darken-1" @click="emits('edit', transaction)">{{ t('actions.edit') }}</v-btn>
-                                <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-content-copy" variant="tonal" color="primary-darken-1" @click="emits('copy', transaction)">{{ t('actions.copy') }}</v-btn>
+                                <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-pencil" variant="tonal" color="primary-darken-1" @click="operate_transaction(transaction, 'edit')">{{ t('actions.edit') }}</v-btn>
+                                <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-content-copy" variant="tonal" color="primary-darken-1" @click="operate_transaction(transaction, 'copy')">{{ t('actions.copy') }}</v-btn>
                                 <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-delete" variant="outlined" color="error" @click="show_confirm_sheet = true">{{ t('actions.delete') }}</v-btn>
                                 <v-bottom-sheet v-model="show_confirm_sheet" >
                                     <template>
                                     </template>
                                     <v-card :title="t('warning.irrevertible.title')" :text="t('warning.irrevertible.content')">
                                         <v-card-actions>
-                                            <v-btn rounded="xl" @click="delete_transaction(transaction)">{{ t('actions.confirm') }}</v-btn>
+                                            <v-btn rounded="xl" @click="delete_transaction(transaction); show_confirm_sheet = false;">{{ t('actions.confirm') }}</v-btn>
                                             <v-btn rounded="xl" variant="tonal" @click="show_confirm_sheet = false">{{ t('actions.cancel') }}</v-btn>
                                         </v-card-actions>
                                     </v-card>

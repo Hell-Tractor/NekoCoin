@@ -34,7 +34,6 @@ const wallets: Ref<Wallet[]> = ref([]);
 const selected_wallet: Ref<Wallet | undefined> = ref(undefined);
 const selected_to_wallet: Ref<Wallet | undefined> = ref(undefined);
 const selected_tag: Ref<Tag | undefined> = ref(undefined);
-const page: Ref<string> = ref('main');
 const tags: Ref<Tag[]> = ref([]);
 
 const formatter = new Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
@@ -91,9 +90,10 @@ const retrieve_tags = async function() {
         console.error(error);
     }
 }
-const addTransaction = async function() {
+const confirm = async function() {
     try {
         let params = {
+            id: id.value,
             remark: remark.value,
             walletId: selected_wallet.value!.id,
             toWalletId: selected_to_wallet.value?.id,
@@ -101,7 +101,11 @@ const addTransaction = async function() {
             amount: Math.round(amount.value! * 100),
             time: formatDatetime(time.value)
         };
-        await invoke('create_transaction', params);
+        console.log('params:', params);
+        if (!params.id)
+            await invoke('create_transaction', params);
+        else
+            await invoke('update_transaction', { transaction: params });
         router.back();
     } catch (error) {
         // TODO: handle error
@@ -183,7 +187,7 @@ onMounted(async () => {
             <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="'account.select_to'" v-model="selected_to_wallet" :wallets="wallets"></WalletSelector>
             <TagSelector v-model="selected_tag" :tags="tags"></TagSelector>
             <div style="height: 50px;"></div>
-            <v-btn @click="addTransaction" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
+            <v-btn @click="confirm" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
         </v-form>
     </v-main>
 </template>

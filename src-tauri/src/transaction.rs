@@ -1,29 +1,25 @@
 use chrono::NaiveDateTime;
-use serde::Deserialize;
 use sqlx::{sqlite::SqliteRow, FromRow, Row};
 
 use crate::{tag::{self, Tag}, wallet::{self, Wallet}};
 
 pub mod controller;
 pub mod dto;
+pub mod vo;
 pub mod service;
 
 pub const DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Transaction {
     pub id: u32,
     pub remark: String,
     pub wallet_id: u32,
-    #[serde(skip)]
     wallet: Option<Wallet>,
-    #[serde(default)]
     pub to_wallet_id: Option<u32>,
-    #[serde(skip)]
     to_wallet: Option<Wallet>,
     pub tag_id: u32,
-    #[serde(skip)]
     tag: Option<Tag>,
     pub amount: i32,
     pub time: NaiveDateTime,

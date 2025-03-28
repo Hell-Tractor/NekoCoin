@@ -29,7 +29,6 @@ export default {
         isValidSearchText: 'Only letters, numbers, and Chinese characters are allowed',
     },
     account: {
-        text: 'Account',
         update: 'Update Account',
         add: 'Add Account',
         select: 'Select Account',
@@ -67,6 +66,8 @@ export default {
         add: 'Add Transaction',
         update: 'Update Transaction',
         datetime: 'Date & Time',
+        remark: 'Remark',
+        account: 'Account',
         enter: {
             remark: 'Enter Remark',
             amount: 'Enter Amount',
