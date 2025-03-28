@@ -168,15 +168,18 @@ const iconGroups: IconGroup[] = [
 
 <template>
     <BackTitleBar :title="t('icon.select')" @back="emits('back')"></BackTitleBar>
-    <v-card v-for="group in iconGroups" :key="group.name" class="mx-2 my-2" variant="flat">
-        <v-card-text>
-            <div>{{ t(group.name) }}</div>
-            <v-item-group class="d-flex flex-wrap" v-model="selected_icon" mandatory>
-                <v-item v-for="icon in group.icons" :key="icon" :value="icon" v-slot="{ isSelected, toggle }">
-                    <v-btn variant="text" size="large" :icon="icon" @click="toggle" :active="isSelected"></v-btn>
-                </v-item>
-            </v-item-group>
-        </v-card-text>
-    </v-card>
-    <v-btn color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!selected_icon" @click="emits('confirm', selected_icon!); emits('back');">{{ t('actions.save') }}</v-btn>
+    <v-main>
+        <v-card v-for="group in iconGroups" :key="group.name" class="mx-2 my-2" variant="flat">
+            <v-card-text>
+                <div>{{ t(group.name) }}</div>
+                <v-item-group class="d-flex flex-wrap" v-model="selected_icon" mandatory>
+                    <v-item v-for="icon in group.icons" :key="icon" :value="icon" v-slot="{ isSelected, toggle }">
+                        <v-btn variant="text" size="large" :icon="icon" @click="toggle" :active="isSelected"></v-btn>
+                    </v-item>
+                </v-item-group>
+            </v-card-text>
+        </v-card>
+        <div style="height: 50px;"></div>
+        <v-btn color="primary" width="95%" style="position: fixed; bottom: 10px; transform: translateX(2.5%);" :disabled="!selected_icon" @click="emits('confirm', selected_icon!); emits('back');">{{ t('actions.save') }}</v-btn>
+    </v-main>
 </template>

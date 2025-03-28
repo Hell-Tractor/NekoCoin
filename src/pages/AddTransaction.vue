@@ -8,17 +8,14 @@ import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
 import { useDate } from 'vuetify';
 import { Wallet } from './Wallet.vue';
 import { invoke } from '@tauri-apps/api/core';
-import AddWallet from './AddWallet.vue';
-import AddTag from './AddTag.vue';
 import { formatDatetime } from '../common/Utils';
 import WalletSelector from '../common/WalletSelector.vue';
 import TagSelector from '../common/TagSelector.vue';
 import { Transaction } from '../common/TransactionList.vue';
+import { useRouter } from 'vue-router';
 const { t } = useI18n();
+const router = useRouter();
 
-const emits = defineEmits<{
-    back: []
-}>();
 const props = defineProps<{
     init?: Transaction
 }>();
@@ -94,14 +91,6 @@ const retrieve_tags = async function() {
         console.error(error);
     }
 }
-const backFromAddWallet = async function() {
-    page.value = 'main';
-    await retrieve_wallets();
-}
-const backFromAddTag = async function() {
-    page.value = 'main';
-    await retrieve_tags();
-}
 const addTransaction = async function() {
     try {
         let params = {
@@ -113,7 +102,7 @@ const addTransaction = async function() {
             time: formatDatetime(time.value)
         };
         await invoke('create_transaction', params);
-        emits('back');
+        router.back();
     } catch (error) {
         // TODO: handle error
         console.error(error);
@@ -141,8 +130,8 @@ onMounted(async () => {
 });
 </script>
 <template>
-    <div v-if="page == 'main'">
-        <BackTitleBar :title="t(id == undefined ? 'transaction.add' : 'transaction.update')" @back="emits('back')"></BackTitleBar>
+    <BackTitleBar :title="t(id == undefined ? 'transaction.add' : 'transaction.update')" @back="router.back()"></BackTitleBar>
+    <v-main class="main">
         <v-form class="fill-height" v-model="form">
             <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]" @update:model-value="selected_tag = undefined; retrieve_tags()">
                 <v-chip v-for="tag in TagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
@@ -190,12 +179,11 @@ onMounted(async () => {
                     </v-row>
                 </v-card-text>
             </v-card>
-            <WalletSelector :title="selected_tag_type == TagType.TRANSFER ? t('account.select_from') : undefined" v-model="selected_wallet" :wallets="wallets" @create="page = 'add_wallet'"></WalletSelector>
-            <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="t('account.select_to')" v-model="selected_to_wallet" :wallets="wallets" @create="page = 'add_wallet'"></WalletSelector>
-            <TagSelector v-model="selected_tag" :tags="tags" @create="page = 'add_tag'"></TagSelector>
-            <v-btn @click="addTransaction" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
+            <WalletSelector :title="selected_tag_type == TagType.TRANSFER ? 'account.select_from' : undefined" v-model="selected_wallet" :wallets="wallets"></WalletSelector>
+            <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="'account.select_to'" v-model="selected_to_wallet" :wallets="wallets"></WalletSelector>
+            <TagSelector v-model="selected_tag" :tags="tags"></TagSelector>
+            <div style="height: 50px;"></div>
+            <v-btn @click="addTransaction" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
         </v-form>
-    </div>
-    <AddWallet v-else-if="page == 'add_wallet'" @back="backFromAddWallet"></AddWallet>
-    <AddTag v-else-if="page == 'add_tag'" @back="backFromAddTag"></AddTag>
+    </v-main>
 </template>

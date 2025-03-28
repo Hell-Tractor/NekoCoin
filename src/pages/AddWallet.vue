@@ -9,11 +9,10 @@ import { invoke } from '@tauri-apps/api/core';
 import { Currency } from '../common/Money';
 import IconSelector from '../common/IconSelector.vue';
 import { Wallet } from './Wallet.vue';
+import { useRouter } from 'vue-router';
 const { t } = useI18n();
+const router = useRouter();
 
-const emits = defineEmits<{
-    back: []
-}>();
 const props = defineProps<{
     init?: Wallet
 }>();
@@ -39,7 +38,7 @@ const addWallet = async function() {
             icon: icon.value,
             color: selected_color.value
         });
-        emits('back');
+        router.back();
     } catch (error) {
         // TODO: handle error
         console.error(error);
@@ -68,18 +67,21 @@ onMounted(() => {
 
 <template>
     <div v-if="page == 'main'">
-        <BackTitleBar :title="t(id == undefined ? 'account.add' : 'account.update')" @back="emits('back')"></BackTitleBar>
-        <v-form class="fill-height" v-model="form">
-            <v-text-field v-model="wallet_name" :placeholder="t('account.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_WALLET_NAME_LENGTH)]"></v-text-field>
-            <v-text-field v-model="wallet_remark" :placeholder="t('account.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_WALLET_REMARK_LENGTH)]"></v-text-field>
-            <div class="d-flex">
-                <v-text-field v-model.number="wallet_amount" :placeholder="t('account.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
-                <v-select max-width="80" :items="Constants.CURRENCIES" v-model="selected_currency" :item-props="currencyItemProps" return-object density="comfortable" variant="outlined"></v-select>
-            </div>
-            <v-btn :prepend-icon="icon" variant="text" @click="page = 'icon_selector'" block size="large" class="justify-start">{{ t('icon.select') }}</v-btn>
-            <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
-            <v-btn @click="addWallet" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
-        </v-form>
+        <BackTitleBar :title="t(id == undefined ? 'account.add' : 'account.update')" @back="router.back()"></BackTitleBar>
+        <v-main class="main">
+            <v-form class="fill-height" v-model="form">
+                <v-text-field v-model="wallet_name" :placeholder="t('account.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_WALLET_NAME_LENGTH)]"></v-text-field>
+                <v-text-field v-model="wallet_remark" :placeholder="t('account.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_WALLET_REMARK_LENGTH)]"></v-text-field>
+                <div class="d-flex">
+                    <v-text-field v-model.number="wallet_amount" :placeholder="t('account.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
+                    <v-select max-width="80" :items="Constants.CURRENCIES" v-model="selected_currency" :item-props="currencyItemProps" return-object density="comfortable" variant="outlined"></v-select>
+                </div>
+                <v-btn :prepend-icon="icon" variant="text" @click="page = 'icon_selector'" block size="large" class="justify-start">{{ t('icon.select') }}</v-btn>
+                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
+                <div style="height: 50px;"></div>
+                <v-btn @click="addWallet" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
+            </v-form>
+        </v-main>
     </div>
     <IconSelector v-else-if="page == 'icon_selector'" @confirm="selected_icon => icon = selected_icon" @back="page = 'main'"></IconSelector>
 </template>

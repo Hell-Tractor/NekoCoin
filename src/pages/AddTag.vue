@@ -8,11 +8,10 @@ import Constants from '../common/Constants';
 import { getRandomColor } from '../common/Utils';
 import { invoke } from '@tauri-apps/api/core';
 import IconSelector from '../common/IconSelector.vue';
+import { useRouter } from 'vue-router';
 const { t } = useI18n();
+const router = useRouter();
 
-const emits = defineEmits<{
-    back: []
-}>();
 const props = defineProps<{
     init?: Tag
 }>();
@@ -50,7 +49,7 @@ const addTag = async function() {
             kind: TagTypeToString(selected_tag_type.value.type),
             parentId: parent_tag.value?.id
         });
-        emits('back');
+        router.back();
     } catch (error) {
         // TODO: handle error
         console.error(error);
@@ -73,22 +72,25 @@ onMounted(async () => {
 </script>
 <template>
     <div v-if="page == 'main'">
-        <BackTitleBar :title="t(id == undefined ? 'tag.add' : 'tag.update')" @back="emits('back')"></BackTitleBar>
-        <v-form class="fill-height" v-model="form">
-            <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()">
-                <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
-            </v-chip-group>
-            <v-text-field v-model="tag_name" :placeholder="t('tag.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_TAG_NAME_LENGTH)]"></v-text-field>
-            <v-text-field v-model="tag_remark" :placeholder="t('tag.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TAG_REMARK_LENGTH)]"></v-text-field>
-            <v-select :no-data-text="t('tag.no_available_parent')" :placeholder="t('tag.enter.parent_tag')" :items="tags" variant="outlined" item-title="name" clearable v-model="parent_tag" return-object>
-                <template v-slot:prepend-item>
-                    <v-text-field v-model="tag_search_text" :placeholder="t('tag.search.hint')" dense @update:model-value="retrieve_tags"></v-text-field>
-                </template>
-            </v-select>
-            <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('icon.select') }}</v-btn>
-            <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
-            <v-btn @click="addTag" color="primary" width="93%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
-        </v-form>
+        <BackTitleBar :title="t(id == undefined ? 'tag.add' : 'tag.update')" @back="router.back()"></BackTitleBar>
+        <v-main class="main">
+            <v-form class="fill-height" v-model="form">
+                <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()">
+                    <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
+                </v-chip-group>
+                <v-text-field v-model="tag_name" :placeholder="t('tag.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_TAG_NAME_LENGTH)]"></v-text-field>
+                <v-text-field v-model="tag_remark" :placeholder="t('tag.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TAG_REMARK_LENGTH)]"></v-text-field>
+                <v-select :no-data-text="t('tag.no_available_parent')" :placeholder="t('tag.enter.parent_tag')" :items="tags" variant="outlined" item-title="name" clearable v-model="parent_tag" return-object>
+                    <template v-slot:prepend-item>
+                        <v-text-field v-model="tag_search_text" :placeholder="t('tag.search.hint')" dense @update:model-value="retrieve_tags"></v-text-field>
+                    </template>
+                </v-select>
+                <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('icon.select') }}</v-btn>
+                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
+                <div style="height: 50px;"></div>
+                <v-btn @click="addTag" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
+            </v-form>
+        </v-main>
     </div>
     <IconSelector v-else-if="page == 'select_icon'" @back="page = 'main'" @confirm="selected_icon => icon = selected_icon"></IconSelector>
 </template>

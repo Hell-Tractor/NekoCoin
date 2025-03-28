@@ -157,7 +157,7 @@ const get_color_with_type = function(type: string) {
                     </v-bottom-sheet>
                 </template>
                 <template v-slot:empty>
-                    {{ t('list.no_more_data') }}
+                    {{ t('list.summary', [transactions.length]) }}
                 </template>
             </v-infinite-scroll>
         </v-card-text>

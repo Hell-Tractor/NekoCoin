@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { Wallet } from '../pages/Wallet.vue';
+import { useRouter } from 'vue-router';
 const { t } = useI18n();
+const router = useRouter();
 
 const selected_wallet = defineModel<Wallet>();
 const props = defineProps<{
     wallets: Wallet[];
     title?: string;
 }>();
-const emits = defineEmits<{
-    create: [];
-}>()
 </script>
 
 <template>
@@ -21,7 +20,7 @@ const emits = defineEmits<{
                     <span>{{ t(props.title ?? 'account.select') }}</span>
                 </v-col>
                 <v-col class="d-flex justify-end">
-                    <v-btn icon="mdi-plus" size="medium" density="compact" variant="text" @click="emits('create')"></v-btn>
+                    <v-btn icon="mdi-plus" size="medium" density="compact" variant="text" @click="router.push({ path: '/account/add' })"></v-btn>
                 </v-col>
             </v-row>
             <v-slide-group class="pa-4" style="margin-left: -20px;" mandatory v-model="selected_wallet">

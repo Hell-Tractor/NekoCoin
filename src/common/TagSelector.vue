@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import Tag from './Tag';
+import { useRouter } from 'vue-router';
 const { t } = useI18n();
+const router = useRouter();
 
 const props = defineProps<{
     tags: Tag[],
 }>();
 const selected_tag = defineModel<Tag>();
-const emits = defineEmits<{
-    create: [],
-}>();
 
 const offsetColor = function(color: string, offset: number, alpha: number) {
     // format: rgb(r,g,b)
@@ -26,7 +25,7 @@ const offsetColor = function(color: string, offset: number, alpha: number) {
                     <span>{{ t('tag.select') }}</span>
                 </v-col>
                 <v-col class="d-flex justify-end">
-                    <v-btn icon="mdi-plus" size="medium" density="compact" variant="text" @click="emits('create')"></v-btn>
+                    <v-btn icon="mdi-plus" size="medium" density="compact" variant="text" @click="router.push({ path: '/tag/add' })"></v-btn>
                 </v-col>
             </v-row>
             <v-chip-group mandatory column v-model="selected_tag">

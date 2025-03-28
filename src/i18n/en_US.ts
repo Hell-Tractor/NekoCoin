@@ -76,7 +76,7 @@ export default {
         }
     },
     list: {
-        no_more_data: 'No more data',
+        summary: 'Found {0} records',
     },
     date: {
         today: 'Today',

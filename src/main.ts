@@ -12,6 +12,7 @@ import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 import theme from "./themes";
 import { VTimePicker } from "vuetify/labs/VTimePicker";
+import router from "./router";
 
 const vuetify = createVuetify({
     components: {
@@ -28,4 +29,5 @@ const vuetify = createVuetify({
 createApp(App)
     .use(vuetify)
     .use(i18n)
+    .use(router)
     .mount("#app");

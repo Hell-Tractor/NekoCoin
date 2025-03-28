@@ -76,7 +76,7 @@ export default {
         }
     },
     list: {
-        no_more_data: '没有更多数据',
+        summary: '共 {0} 条记录',
     },
     date: {
         today: '今天',
