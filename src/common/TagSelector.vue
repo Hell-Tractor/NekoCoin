@@ -10,10 +10,14 @@ const props = defineProps<{
 }>();
 const selected_tag = defineModel<Tag>();
 
+const clamp = function(value: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, value));
+}
+
 const offsetColor = function(color: string, offset: number, alpha: number) {
     // format: rgb(r,g,b)
     var [r, g, b] = color.substring(4, color.length - 1).split(',');
-    return `rgba(${Math.min(255, parseInt(r) + offset)}, ${Math.min(255, parseInt(g) + offset)}, ${Math.min(255, parseInt(b) + offset)}, ${alpha})`;
+    return `rgba(${clamp(parseInt(r) + offset, 0, 255)}, ${clamp(parseInt(g) + offset, 0, 255)}, ${clamp(parseInt(b) + offset, 0, 255)}, ${alpha})`;
 }
 </script>
 
