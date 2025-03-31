@@ -72,10 +72,12 @@ export default {
         account: 'Account',
         has_split: 'Split Bill?',
         split: {
+            title: 'Split Bill',
             count: 'Number of Splits(Including yourself)',
             your: 'Your Split',
             other: 'Others each: {each}, Total: {total}',
             select_wallet: 'Select Recieve Wallet',
+            people: '{count} people',
         },
         enter: {
             remark: 'Enter Remark',

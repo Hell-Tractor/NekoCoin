@@ -72,10 +72,12 @@ export default {
         account: '账户',
         has_split: '分账？',
         split: {
+            title: '分账',
             count: '分账人数(包括你)',
             your: '你的金额',
             other: '其他人每人 {each}, 共 {total}',
             select_wallet: '选择收款账户',
+            people: '{count} 人',
         },
         enter: {
             remark: '输入备注',

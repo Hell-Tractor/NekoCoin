@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { computed, ref, Ref } from 'vue';
+import { ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Tag from '../common/Tag';
+import Tag, { TagType, TagTypeToString } from '../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDate, formatDatetimeRelative, formatTime } from '../common/Utils';
 import { useRouter } from 'vue-router';
@@ -145,7 +145,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                     </v-col>
                                 </v-row>
                                 <v-divider style="margin-top: 20px; margin-bottom: 20px;"></v-divider>
-                                <v-row class="flex-nowrap">
+                                <v-row class="flex-nowrap align-center">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">
                                         <v-icon color="#444444">mdi-bank</v-icon>
                                     </v-col>
@@ -153,13 +153,33 @@ const get_actual_expense = function(transaction: Transaction) {
                                         <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.wallet_name }}</v-col></v-row>
                                     </v-col>
+
                                     <v-col v-if="transaction.tag.type == 'Transfer'">
-                                        <v-icon>mdi-chevron-double-right</v-icon>
+                                        <v-icon color="#444444">mdi-chevron-double-right</v-icon>
                                     </v-col>
                                     <v-col v-if="transaction.tag.type == 'Transfer'">
                                         <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.to_wallet_name! }}</v-col></v-row>
                                     </v-col>
+
+                                    <v-col v-if="transaction.split" class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(TagTypeToString(TagType.EXPENSE)) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                </v-row>
+                                <v-row class="flex-nowrap align-center" v-if="transaction.split">
+                                    <v-col class="flex-grow-0" style="padding-left: 0px;">
+                                        <v-icon color="#444444">mdi-account-multiple</v-icon>
+                                    </v-col>
+                                    <v-col>
+                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.split.title') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad">{{ t('transaction.split.people', transaction.split!.count) }}</v-col></v-row>
+                                    </v-col>
+                                    <v-col>
+                                        <v-icon color="#444444">mdi-arrow-right-bold</v-icon>
+                                    </v-col>
+                                    <v-col>
+                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad">{{ transaction.split!.recieve_wallet_name }}</v-col></v-row>
+                                    </v-col>
+                                    <v-col v-if="transaction.split" class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(TagTypeToString(TagType.INCOME)) }">{{ `${transaction.currency}${((transaction.amount - transaction.split!.expense) / 100).toFixed(2)}` }}</v-col>
                                 </v-row>
                                 <v-row class="flex-nowrap" v-if="!!transaction.remark">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">
