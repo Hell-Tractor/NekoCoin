@@ -84,9 +84,11 @@ const operate_transaction = async function(transaction: Transaction, operation: 
     if (operation == 'copy') {
         transaction.id = undefined;
     }
-    let removeRoute = router.addRoute({ path: '/transaction/operate', component: AddTransaction, props: { init: transaction } });
+    if (router.hasRoute('transaction_operate')) {
+        router.removeRoute('transaction_operate');
+    }
+    router.addRoute({ path: '/transaction/operate', name: 'transaction_operate', component: AddTransaction, props: { init: transaction } });
     await router.push({ path: '/transaction/operate' });
-    removeRoute();
 }
 
 const get_actual_expense = function(transaction: Transaction) {
