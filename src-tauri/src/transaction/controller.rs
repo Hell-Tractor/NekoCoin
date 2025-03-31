@@ -65,6 +65,12 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
         if tag.kind != TagKind::Expense {
             return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
         }
+        // receive wallet should have same currency as original wallet
+        let receive_wallet = wallet::service::get_wallet_by_id(split.recieve_wallet_id).await?;
+        let original_wallet = wallet::service::get_wallet_by_id(vo.wallet_id).await?;
+        if receive_wallet.balance.get_currency() != original_wallet.balance.get_currency() {
+            return Err(Error::InvalidParameter("receive wallet and original wallet must have same currency".to_string()));
+        }
         modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, vo.amount - split.expense).await?;
         let split_id: u32 = sqlx::query(
             r#"
@@ -120,6 +126,12 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
         debug!("Updating with new transaction split: {:?}", split);
         if tag_kind != TagKind::Expense {
             return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
+        }
+        let receive_wallet = wallet::service::get_wallet_by_id(split.recieve_wallet_id).await?;
+        let original_wallet = wallet::service::get_wallet_by_id(vo.wallet_id).await?;
+        // receive wallet should have same currency as original wallet
+        if receive_wallet.balance.get_currency() != original_wallet.balance.get_currency() {
+            return Err(Error::InvalidParameter("receive wallet and original wallet must have same currency".to_string()));
         }
         // if no split id provided, it's a new split
         let split_id = if split.id.is_none() {
