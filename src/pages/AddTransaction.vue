@@ -105,7 +105,7 @@ const confirm = async function() {
             id: split_id.value,
             count: split_count.value,
             expense: Math.round(split_expense.value * 100),
-            recieveWalletId: selected_wallet.value!.id,
+            recieveWalletId: split_recieve_wallet.value?.id,
         };
         let params = {
             id: id.value,
@@ -115,13 +115,13 @@ const confirm = async function() {
             tagId: selected_tag.value!.id,
             amount: Math.round(amount.value! * 100),
             time: formatDatetime(time.value),
-            split: has_split.value ? spilt : undefined,
+            split: has_split.value && selected_tag_type.value == TagType.EXPENSE ? spilt : undefined,
         };
         console.log('params:', params);
         if (!params.id)
             await invoke('create_transaction', { vo: params });
         else
-            await invoke('update_transaction', { transaction: params });
+            await invoke('update_transaction', { vo: params });
         router.back();
     } catch (error) {
         // TODO: handle error
@@ -143,6 +143,9 @@ watch(split_count, function(newValue) {
 watch(has_split, function(newValue) {
     if (newValue) {
         update_split_expense(split_count.value);
+        if (split_recieve_wallet.value == undefined) {
+            split_recieve_wallet.value = selected_wallet.value;
+        }
     }
 });
 watch(amount, function(_newValue) {
@@ -163,7 +166,7 @@ onMounted(async () => {
             selected_to_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.to_wallet_name);
         }
         has_split.value = props.init!.split != undefined;
-        console.log(props.init);
+        // console.log(props.init);
         if (props.init!.split) {
             split_id.value = props.init!.split.id;
             split_count.value = props.init!.split.count;

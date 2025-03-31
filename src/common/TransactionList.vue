@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, Ref } from 'vue';
+import { computed, ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Tag from '../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
@@ -88,6 +88,14 @@ const operate_transaction = async function(transaction: Transaction, operation: 
     await router.push({ path: '/transaction/operate' });
     removeRoute();
 }
+
+const get_actual_expense = function(transaction: Transaction) {
+    if (transaction.split) {
+        return transaction.split.expense;
+    } else {
+        return transaction.amount;
+    }
+}
 </script>
 <template>
     <v-card :variant="variant">
@@ -106,7 +114,7 @@ const operate_transaction = async function(transaction: Transaction, operation: 
                                         <v-col style="padding-bottom: 0px;">
                                             <v-row class="flex-nowrap">
                                                 <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
-                                                <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                                <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                             </v-row>
                                             <v-row class="flex-nowrap">
                                                 <v-col class="no-pad" style="color: #666666;">{{ formatDatetimeRelative(transaction.time, new Date()) }}</v-col>
@@ -127,7 +135,7 @@ const operate_transaction = async function(transaction: Transaction, operation: 
                                     <v-col style="padding-bottom: 0px;">
                                         <v-row class="flex-nowrap">
                                             <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
-                                            <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                            <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                         </v-row>
                                         <v-row class="flex-nowrap">
                                             <v-col class="no-pad" style="color: #666666;">{{ formatDate(transaction.time) }}</v-col>

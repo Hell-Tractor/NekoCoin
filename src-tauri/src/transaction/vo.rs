@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 
-use super::{Transaction, TransactionSplit, DATETIME_FORMAT};
+use super::{Transaction, DATETIME_FORMAT};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -14,7 +14,16 @@ pub struct TransactionVo {
     pub tag_id: u32,
     pub amount: i32,
     pub time: String,
-    pub split: Option<TransactionSplit>,
+    pub split: Option<TransactionSplitVo>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionSplitVo {
+    pub id: Option<u32>,
+    pub count: u32,
+    pub expense: i32,
+    pub recieve_wallet_id: u32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -45,13 +54,13 @@ impl Into<Transaction> for TransactionVo {
             wallet_id: self.wallet_id,
             to_wallet_id: self.to_wallet_id,
             tag_id: self.tag_id,
-            split_id: self.split.as_ref().map(|s| s.id),
+            split_id: self.split.iter().flat_map(|s| s.id).next(),
             amount: self.amount,
             time: NaiveDateTime::parse_from_str(&self.time, DATETIME_FORMAT).unwrap(),
             wallet: None,
             to_wallet: None,
             tag: None,
-            split: self.split,
+            split: None,
         }
     }
 }

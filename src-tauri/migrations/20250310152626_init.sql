@@ -33,12 +33,13 @@ CREATE TABLE transactions (
     FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
     FOREIGN KEY(to_wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
     FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE,
-    FOREIGN KEY(split_id) REFERENCES transactions(id) ON DELETE SET NULL
+    FOREIGN KEY(split_id) REFERENCES transaction_splits(id) ON DELETE SET NULL
 );
 
 CREATE TABLE transaction_splits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     count INTEGER NOT NULL,
     expense INTEGER NOT NULL,
-    recieve_wallet_id INTEGER NOT NULL
+    recieve_wallet_id INTEGER NOT NULL,
+    FOREIGN KEY(recieve_wallet_id) REFERENCES wallets(id) ON DELETE CASCADE
 );

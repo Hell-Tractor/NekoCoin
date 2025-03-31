@@ -45,9 +45,9 @@ impl<'r> FromRow<'r, SqliteRow> for Transaction {
             id: row.try_get("id")?,
             remark: row.try_get("remark")?,
             wallet_id: row.try_get("wallet_id")?,
-            to_wallet_id: row.try_get("to_wallet_id").ok(),
+            to_wallet_id: row.try_get("to_wallet_id").ok().map(|id| if id > 0 { Some(id) } else { None }).flatten(),
             tag_id: row.try_get("tag_id")?,
-            split_id: row.try_get("split_id").ok(),
+            split_id: row.try_get("split_id").ok().map(|id| if id > 0 { Some(id) } else { None }).flatten(),
             amount: row.try_get("amount")?,
             time: NaiveDateTime::parse_from_str(&time_str, DATETIME_FORMAT).map_err(|e| sqlx::Error::ColumnDecode { index: "time".to_string(), source: Box::new(e) })?,
             wallet: None,
@@ -97,5 +97,12 @@ impl Transaction {
             self.split = Some(service::get_split_by_id(self.split_id.unwrap()).await?);
         }
         Ok(self.split.as_ref())
+    }
+
+    pub fn get_actual_amount(&self) -> i32 {
+        if self.split.is_none() {
+            return self.amount;
+        }
+        self.split.as_ref().unwrap().expense
     }
 }

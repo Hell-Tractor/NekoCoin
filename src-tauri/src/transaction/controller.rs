@@ -4,7 +4,6 @@ use sqlx::{Row, SqliteConnection};
 
 use crate::sql::db;
 use crate::tag::TagKind;
-use crate::transaction::Transaction;
 use crate::{tag, wallet, Error, Result};
 
 use super::dto::{BalanceWithTypeDto, TransactionDto};
@@ -61,7 +60,7 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
     let tag = tag::service::get_tag_by_id(vo.tag_id).await?;
     modify_currency(&mut *tx, &tag.kind, vo.wallet_id, vo.to_wallet_id, vo.amount).await?;
 
-    if let Some(split) = vo.split {
+    let split_id = if let Some(split) = vo.split {
         debug!("Creating transaction split: {:?}", split);
         if tag.kind != TagKind::Expense {
             return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
@@ -77,26 +76,28 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
             .fetch_one(&mut *tx)
             .await?
             .get(0);
-        sqlx::query(
-            r#"
-            INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time, split_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#)
-            .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(split.expense).bind(time.format(super::DATETIME_FORMAT).to_string()).bind(split_id)
-            .execute(&mut *tx)
-            .await?;
+        // sqlx::query(
+        //     r#"
+        //     INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time, split_id)
+        //     VALUES ($1, $2, $3, $4, $5, $6, $7)
+        //     "#)
+        //     .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(split.expense).bind(time.format(super::DATETIME_FORMAT).to_string()).bind(split_id)
+        //     .execute(&mut *tx)
+        //     .await?;
         debug!("Transaction split(id = {}) created.", split_id);
+        Some(split_id)
     } else {
-        sqlx::query(
-            r#"
-            INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            "#)
-            .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(vo.amount).bind(time.format(super::DATETIME_FORMAT).to_string())
-            .execute(&mut *tx)
-            .await?;
+        None
     };
 
+    sqlx::query(
+        r#"
+        INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time, split_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        "#)
+        .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(vo.amount).bind(time.format(super::DATETIME_FORMAT).to_string()).bind(split_id)
+        .execute(&mut *tx)
+        .await?;
     tx.commit().await?;
 
     info!("Transaction created");
@@ -104,45 +105,103 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
 }
 
 #[tauri::command]
-pub async fn update_transaction(transaction: TransactionVo) -> Result<()> {
-    debug!("Updating transaction(id = {})", transaction.id);
+pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
+    debug!("Updating transaction(id = {})", vo.id);
     let mut tx = db().begin().await?;
-    let mut transaction: Transaction = transaction.into();
-    let mut old_transaction = super::service::get_transaction_by_id(transaction.id).await?;
+    // let mut bo: Transaction = vo.into();
+    let mut old_transaction = super::service::get_transaction_by_id(vo.id).await?;
+    debug!("Old transaction: {:?}", old_transaction);
     let old_tag_kind = old_transaction.get_tag().await?.kind.clone(); // * remove clone in the future
     revert_currency(&mut *tx, &old_tag_kind, old_transaction.wallet_id, old_transaction.to_wallet_id, old_transaction.amount).await?;
-    let tag_kind = transaction.get_tag().await?.kind.clone();   // * remove clone in the future
-    modify_currency(&mut *tx, &tag_kind, transaction.wallet_id, transaction.to_wallet_id, transaction.amount).await?;
+    let tag_kind = tag::service::get_tag_by_id(vo.tag_id).await?.kind;  // * remove clone in the future
+    modify_currency(&mut *tx, &tag_kind, vo.wallet_id, vo.to_wallet_id, vo.amount).await?;
 
-    if let Some(split) = transaction.split {
-        debug!("Updating transaction split: {:?}", split);
+    let split_id = if let Some(split) = vo.split {
+        debug!("Updating with new transaction split: {:?}", split);
         if tag_kind != TagKind::Expense {
             return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
         }
-        modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, transaction.amount - split.expense).await?;
-        sqlx::query(
-            r#"
-            UPDATE transaction_splits
-            SET count = $1, expense = $2, recieve_wallet_id = $3
-            WHERE id = $4
-            "#)
-            .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id).bind(split.id)
-            .execute(&mut *tx)
-            .await?;
-        debug!("Transaction split(id = {}) updated.", split.id);
-    }
+        // if no split id provided, it's a new split
+        let split_id = if split.id.is_none() {
+            // then it should not have old split
+            if old_transaction.split_id.is_some() {
+                return Err(Error::InvalidParameter(format!("data mismatch: split id not provided but found old split(id={})", old_transaction.split_id.unwrap())));
+            }
+            // modify currency for new split
+            modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, vo.amount - split.expense).await?;
+            let split_id: u32 = sqlx::query(
+                r#"
+                INSERT INTO transaction_splits (count, expense, recieve_wallet_id)
+                VALUES ($1, $2, $3)
+                RETURNING id
+                "#)
+                .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id)
+                .fetch_one(&mut *tx)
+                .await?
+                .get(0);
+            Some(split_id)
+        } else {    // it's a old split
+            // old split should not be None
+            if old_transaction.split_id.is_none() {
+                return Err(Error::InvalidParameter("data mismatch: split id provided but not found old split".to_string()));
+            }
+            // split id should be same as old transaction split id
+            if split.id.unwrap() != old_transaction.split_id.unwrap() {
+                return Err(Error::InvalidParameter("data mismatch: split id not match".to_string()));
+            }
+            // revert old split currency
+            let old_amount = old_transaction.amount; // * remove clone in the future
+            let old_split = old_transaction.get_split().await?.unwrap(); // split with given id should always exists
+            revert_currency(&mut *tx, &TagKind::Income, old_split.recieve_wallet_id, None, old_amount - old_split.expense).await?;
+            // modify currency for new split
+            modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, vo.amount - split.expense).await?;
+            // update split
+            sqlx::query(
+                r#"
+                UPDATE transaction_splits
+                SET count = $1, expense = $2, recieve_wallet_id = $3
+                WHERE id = $4
+                "#)
+                .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id).bind(split.id.unwrap())
+                .execute(&mut *tx)
+                .await?;
+            Some(split.id.unwrap())
+        };
+        debug!("Transaction split(id = {}) updated.", split_id.unwrap());
+        split_id
+    } else { // no split provided
+        debug!("Updating without transaction split");
+        // if old transaction has split, it should be removed
+        if old_transaction.split_id.is_some() {
+            debug!("Removing old transaction split: {}", old_transaction.split_id.unwrap());
+            // revert old split currency
+            let old_amount = old_transaction.amount; // * remove clone in the future
+            let old_split = old_transaction.get_split().await?.unwrap(); // split with given id should always exists
+            revert_currency(&mut *tx, &TagKind::Income, old_split.recieve_wallet_id, None, old_amount - old_split.expense).await?;
+            // delete split
+            sqlx::query(
+                r#"
+                DELETE FROM transaction_splits
+                WHERE id = $1
+                "#)
+                .bind(old_transaction.split_id.unwrap())
+                .execute(&mut *tx)
+                .await?;
+        }
+        None
+    };
 
     sqlx::query(
         r#"
         UPDATE transactions
-        SET remark = $1, wallet_id = $2, to_wallet_id = $3, tag_id = $4, amount = $5, time = $6
-        WHERE id = $7
+        SET remark = $1, wallet_id = $2, to_wallet_id = $3, tag_id = $4, amount = $5, time = $6, split_id = $7
+        WHERE id = $8
         "#)
-        .bind(transaction.remark).bind(transaction.wallet_id).bind(transaction.to_wallet_id).bind(transaction.tag_id).bind(transaction.amount).bind(transaction.time.format(super::DATETIME_FORMAT).to_string()).bind(transaction.id)
+        .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(vo.amount).bind(vo.time).bind(split_id).bind(vo.id)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
-    info!("Transaction(id = {}) updated", transaction.id);
+    info!("Transaction(id = {}) updated", vo.id);
     Ok(())
 }
 
@@ -232,7 +291,13 @@ pub async fn delete_transaction(id: u32) -> Result<()> {
     let mut transaction = super::service::get_transaction_by_id(id).await?;
     let mut tx = db().begin().await?;
     let tag_kind = transaction.get_tag().await?.kind.clone(); // * remove clone in the future
+    // revert currency payed from original wallet
     revert_currency(&mut *tx, &tag_kind, transaction.wallet_id, transaction.to_wallet_id, transaction.amount).await?;
+    // revert income from transaction split
+    let amount = transaction.amount; // * remove clone in the future
+    if let Some(split) = transaction.get_split().await? {
+        revert_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, amount - split.expense).await?;
+    }
     // currency have been reverted, now delete transaction
     sqlx::query(
         r#"
