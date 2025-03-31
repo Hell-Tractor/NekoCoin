@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, Ref } from 'vue';
+import { computed, ComputedRef, onMounted, ref, Ref, watch } from 'vue';
 import BackTitleBar from '../common/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { rules } from '../common/Rules';
@@ -21,6 +21,7 @@ const props = defineProps<{
 }>();
 
 const id: Ref<number | undefined> = ref(undefined);
+const split_id: Ref<number | undefined> = ref(undefined);
 const form: Ref<boolean> = ref(false);
 const remark: Ref<string> = ref('');
 const amount: Ref<number | null> = ref(null);
@@ -35,6 +36,14 @@ const selected_wallet: Ref<Wallet | undefined> = ref(undefined);
 const selected_to_wallet: Ref<Wallet | undefined> = ref(undefined);
 const selected_tag: Ref<Tag | undefined> = ref(undefined);
 const tags: Ref<Tag[]> = ref([]);
+const has_split: Ref<boolean> = ref(false);
+const split_count: Ref<number> = ref(2);
+const split_expense: Ref<number> = ref(0);
+const split_recieve_wallet: Ref<Wallet | undefined> = ref(undefined);
+
+const others_expense: ComputedRef<number> = computed(() => {
+    return Number.parseInt(Math.ceil((amount.value ?? 0) * 100 / split_count.value).toFixed(0)) / 100;
+});
 
 const formatter = new Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
 const updateDate = function() {
@@ -92,6 +101,12 @@ const retrieve_tags = async function() {
 }
 const confirm = async function() {
     try {
+        let spilt = {
+            id: split_id.value,
+            count: split_count.value,
+            expense: Math.round(split_expense.value * 100),
+            recieveWalletId: selected_wallet.value!.id,
+        };
         let params = {
             id: id.value,
             remark: remark.value,
@@ -99,11 +114,12 @@ const confirm = async function() {
             toWalletId: selected_to_wallet.value?.id,
             tagId: selected_tag.value!.id,
             amount: Math.round(amount.value! * 100),
-            time: formatDatetime(time.value)
+            time: formatDatetime(time.value),
+            split: has_split.value ? spilt : undefined,
         };
         console.log('params:', params);
         if (!params.id)
-            await invoke('create_transaction', params);
+            await invoke('create_transaction', { vo: params });
         else
             await invoke('update_transaction', { transaction: params });
         router.back();
@@ -113,9 +129,25 @@ const confirm = async function() {
     }
 }
 const isFormValid = function() {
-    return form.value && selected_wallet.value != undefined && selected_tag.value != undefined &&
+    let basic = form.value && selected_wallet.value != undefined && selected_tag.value != undefined &&
         (selected_tag.value.type != 'Transfer' || selected_to_wallet.value != undefined);
+    let split = !has_split.value || split_recieve_wallet.value != undefined;
+    return basic && split;
 }
+const update_split_expense = function(count: number) {
+    split_expense.value = Number.parseFloat(((amount.value ?? 0) - (count - 1) * others_expense.value).toFixed(2));
+}
+watch(split_count, function(newValue) {
+    update_split_expense(newValue);
+});
+watch(has_split, function(newValue) {
+    if (newValue) {
+        update_split_expense(split_count.value);
+    }
+});
+watch(amount, function(_newValue) {
+    update_split_expense(split_count.value);
+})
 onMounted(async () => {
     await retrieve_wallets();
     await retrieve_tags();
@@ -129,6 +161,14 @@ onMounted(async () => {
         selected_tag.value = tags.value.find(tag => tag.id == props.init!.tag.id);
         if (props.init!.to_wallet_name) {
             selected_to_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.to_wallet_name);
+        }
+        has_split.value = props.init!.split != undefined;
+        console.log(props.init);
+        if (props.init!.split) {
+            split_id.value = props.init!.split.id;
+            split_count.value = props.init!.split.count;
+            split_expense.value = props.init!.split.expense;
+            split_recieve_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.split!.recieve_wallet_name);
         }
     }
 });
@@ -186,6 +226,34 @@ onMounted(async () => {
             <WalletSelector :title="selected_tag_type == TagType.TRANSFER ? 'account.select_from' : undefined" v-model="selected_wallet" :wallets="wallets"></WalletSelector>
             <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="'account.select_to'" v-model="selected_to_wallet" :wallets="wallets"></WalletSelector>
             <TagSelector v-model="selected_tag" :tags="tags"></TagSelector>
+            <v-card v-if="selected_tag_type == TagType.EXPENSE" :variant="has_split ? 'flat' : 'text'" density="compact" color="surface-lighten-1">
+                <v-card-text style="padding: 0px;">
+                    <v-row class="d-flex align-center">
+                        <v-col class="flex-grow-0">
+                            <v-checkbox class="text-body-2" v-model="has_split" hide-details density="compact" color="secondary" base-color="black"></v-checkbox>
+                        </v-col>
+                        <v-col style="margin-left: 5px; color: black">{{ t('transaction.has_split') }}</v-col>
+                    </v-row>
+                    <v-sheet v-if="has_split" style="margin: 0px 7px 0px 7px;" color="surface-lighten-1">
+                        <v-row class="d-flex align-center">
+                            <v-col>{{ t('transaction.split.count') }}</v-col>
+                            <v-col>
+                                <v-text-field v-model.number="split_count" variant="outlined" type="number" min="2" :rules="[rules.required, rules.min(2)]" density="compact" hide-details="auto"></v-text-field>
+                            </v-col>
+                        </v-row>
+                        <v-row class="d-flex align-center">
+                            <v-col>{{ t('transaction.split.your') }}</v-col>
+                            <v-col>
+                                <v-text-field v-model.number="split_expense" variant="outlined" type="number" min="0" :max="amount ?? 0" :rules="[rules.required, rules.min(0), rules.max(amount ?? 0)]" density="compact" hide-details="auto"></v-text-field>
+                            </v-col>
+                        </v-row>
+                        <v-row class="d-flex align-center">
+                            <v-col class="text-end">{{ t('transaction.split.other', { each: (Math.ceil(((amount ?? 0) - split_expense) / (split_count - 1) * 100) / 100).toFixed(2), total: ((amount ?? 0) - split_expense).toFixed(2) }) }}</v-col>
+                        </v-row>
+                    </v-sheet>
+                    <WalletSelector v-if="has_split" :title="t('transaction.split.select_wallet')" v-model="split_recieve_wallet" :wallets="wallets"></WalletSelector>
+                </v-card-text>
+            </v-card>
             <div style="height: 50px;"></div>
             <v-btn @click="confirm" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
         </v-form>

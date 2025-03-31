@@ -27,6 +27,8 @@ export default {
         isValidMoney: '请输入正确的金额。(至多两位小数)',
         maxLength: '最多{max}个字符',
         isValidSearchText: '只允许输入字母、数字和中文',
+        min: '至少{min}',
+        max: '至多{max}',
     },
     account: {
         update: '更新账户',
@@ -68,6 +70,13 @@ export default {
         datetime: '日期 & 时间',
         remark: '备注',
         account: '账户',
+        has_split: '分账？',
+        split: {
+            count: '分账人数(包括你)',
+            your: '你的金额',
+            other: '其他人每人 {each}, 共 {total}',
+            select_wallet: '选择收款账户',
+        },
         enter: {
             remark: '输入备注',
             amount: '输入金额',

@@ -2,7 +2,9 @@ use serde::Serialize;
 use chrono::NaiveDateTime;
 use sqlx::{sqlite::SqliteRow, Row};
 
-use crate::{tag::{service::get_tag_by_id, Tag}, Error};
+use crate::tag::{service::get_tag_by_id, Tag};
+
+use super::TransactionSplit;
 
 #[derive(Serialize, Debug, Default)]
 pub struct BalanceWithTypeDto {
@@ -20,10 +22,11 @@ pub struct TransactionDto {
     pub tag: Tag,
     pub amount: i32,
     pub time: NaiveDateTime,
+    pub split: Option<TransactionSplit>,
 }
 
 impl TransactionDto {
-    pub async fn try_from_row(row: &SqliteRow) -> Result<Self, Error> {
+    pub async fn try_from_row(row: &SqliteRow) -> crate::Result<Self> {
         Ok(TransactionDto {
             id: row.try_get("id")?,
             remark: row.try_get("remark")?,
@@ -33,6 +36,14 @@ impl TransactionDto {
             tag: get_tag_by_id(row.try_get("tag_id")?).await?,
             amount: row.try_get("amount")?,
             time: NaiveDateTime::parse_from_str(row.try_get("time")?, super::DATETIME_FORMAT)?,
+            split: {
+                let id: Option<u32> = row.try_get("split_id")?;
+                if let Some(id) = id {
+                    Some(super::service::get_split_by_id(id).await?)
+                } else {
+                    None
+                }
+            }
         })
     }
 }

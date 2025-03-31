@@ -23,6 +23,12 @@ export interface Transaction {
     tag: Tag;
     amount: number;
     time: Date;
+    split?: {
+        id?: number;
+        count: number;
+        expense: number;
+        recieve_wallet_name: string;
+    }
 }
 
 const transactions: Ref<Transaction[]> = ref([]);

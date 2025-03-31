@@ -27,9 +27,18 @@ CREATE TABLE transactions (
     wallet_id INTEGER NOT NULL,
     to_wallet_id INTEGER DEFAULT NULL,
     tag_id INTEGER NOT NULL,
+    split_id INTEGER DEFAULT NULL,
     amount INTEGER NOT NULL,
     time TEXT NOT NULL,
     FOREIGN KEY(wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
     FOREIGN KEY(to_wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
-    FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY(split_id) REFERENCES transactions(id) ON DELETE SET NULL
+);
+
+CREATE TABLE transaction_splits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    count INTEGER NOT NULL,
+    expense INTEGER NOT NULL,
+    recieve_wallet_id INTEGER NOT NULL
 );

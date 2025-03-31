@@ -27,6 +27,8 @@ export default {
         isValidMoney: 'Not a valid amount.(Up to 2 decimal places)',
         maxLength: 'At most {max} characters',
         isValidSearchText: 'Only letters, numbers, and Chinese characters are allowed',
+        min: 'At least {min}',
+        max: 'At most {max}',
     },
     account: {
         update: 'Update Account',
@@ -68,6 +70,13 @@ export default {
         datetime: 'Date & Time',
         remark: 'Remark',
         account: 'Account',
+        has_split: 'Split Bill?',
+        split: {
+            count: 'Number of Splits(Including yourself)',
+            your: 'Your Split',
+            other: 'Others each: {each}, Total: {total}',
+            select_wallet: 'Select Recieve Wallet',
+        },
         enter: {
             remark: 'Enter Remark',
             amount: 'Enter Amount',

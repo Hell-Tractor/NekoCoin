@@ -5,6 +5,7 @@ const pinkPad: ThemeDefinition = {
     colors: {
         background: '#FFDAC1',
         surface: '#FFF5E6',
+        'surface-lighten-1': '#FFEBE8',
         primary: '#FFB3C1',
         'primary-darken-1': '#FF8FA3',
         secondary: '#A8D8B9',

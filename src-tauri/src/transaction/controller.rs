@@ -8,7 +8,7 @@ use crate::transaction::Transaction;
 use crate::{tag, wallet, Error, Result};
 
 use super::dto::{BalanceWithTypeDto, TransactionDto};
-use super::vo::TransactionVo;
+use super::vo::{CreateTransactionVo, TransactionVo};
 
 async fn modify_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wallet_id: u32, to_wallet_id: Option<u32>, amount: i32) -> Result<()> {
     debug!("Modifying currency...");
@@ -53,22 +53,50 @@ async fn revert_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wa
 }
 
 #[tauri::command]
-pub async fn create_transaction(remark: String, wallet_id: u32, tag_id: u32, amount: i32, time: String, to_wallet_id: Option<u32>) -> Result<()> {
-    debug!("Creating transaction: {} {} {} {} {}", remark, wallet_id, tag_id, amount, time);
-    let time = NaiveDateTime::parse_from_str(&time, super::DATETIME_FORMAT)?;
+pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
+    debug!("Creating transaction: {} {} {} {}", vo.wallet_id, vo.tag_id, vo.amount, vo.time);
+    let time = NaiveDateTime::parse_from_str(&vo.time, super::DATETIME_FORMAT)?;
     let mut tx = db().begin().await?;
 
-    let tag = tag::service::get_tag_by_id(tag_id).await?;
-    modify_currency(&mut *tx, &tag.kind, wallet_id, to_wallet_id, amount).await?;
+    let tag = tag::service::get_tag_by_id(vo.tag_id).await?;
+    modify_currency(&mut *tx, &tag.kind, vo.wallet_id, vo.to_wallet_id, vo.amount).await?;
 
-    sqlx::query(
-        r#"
-        INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        "#)
-        .bind(remark).bind(wallet_id).bind(to_wallet_id).bind(tag_id).bind(amount).bind(time.format(super::DATETIME_FORMAT).to_string())
-        .execute(&mut *tx)
-        .await?;
+    if let Some(split) = vo.split {
+        debug!("Creating transaction split: {:?}", split);
+        if tag.kind != TagKind::Expense {
+            return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
+        }
+        modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, vo.amount - split.expense).await?;
+        let split_id: u32 = sqlx::query(
+            r#"
+            INSERT INTO transaction_splits (count, expense, recieve_wallet_id)
+            VALUES ($1, $2, $3)
+            RETURNING id
+            "#)
+            .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id)
+            .fetch_one(&mut *tx)
+            .await?
+            .get(0);
+        sqlx::query(
+            r#"
+            INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time, split_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            "#)
+            .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(split.expense).bind(time.format(super::DATETIME_FORMAT).to_string()).bind(split_id)
+            .execute(&mut *tx)
+            .await?;
+        debug!("Transaction split(id = {}) created.", split_id);
+    } else {
+        sqlx::query(
+            r#"
+            INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            "#)
+            .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(vo.amount).bind(time.format(super::DATETIME_FORMAT).to_string())
+            .execute(&mut *tx)
+            .await?;
+    };
+
     tx.commit().await?;
 
     info!("Transaction created");
@@ -85,6 +113,25 @@ pub async fn update_transaction(transaction: TransactionVo) -> Result<()> {
     revert_currency(&mut *tx, &old_tag_kind, old_transaction.wallet_id, old_transaction.to_wallet_id, old_transaction.amount).await?;
     let tag_kind = transaction.get_tag().await?.kind.clone();   // * remove clone in the future
     modify_currency(&mut *tx, &tag_kind, transaction.wallet_id, transaction.to_wallet_id, transaction.amount).await?;
+
+    if let Some(split) = transaction.split {
+        debug!("Updating transaction split: {:?}", split);
+        if tag_kind != TagKind::Expense {
+            return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
+        }
+        modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, transaction.amount - split.expense).await?;
+        sqlx::query(
+            r#"
+            UPDATE transaction_splits
+            SET count = $1, expense = $2, recieve_wallet_id = $3
+            WHERE id = $4
+            "#)
+            .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id).bind(split.id)
+            .execute(&mut *tx)
+            .await?;
+        debug!("Transaction split(id = {}) updated.", split.id);
+    }
+
     sqlx::query(
         r#"
         UPDATE transactions
@@ -105,7 +152,7 @@ pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDa
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -129,7 +176,7 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallet.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -154,7 +201,7 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
     // retrieve transactions with tag_id or its children
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallet.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id

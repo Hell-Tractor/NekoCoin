@@ -5,6 +5,7 @@ const neon: ThemeDefinition = {
     colors: {
         background: '#2A2A2A',
         surface: '#1E1E1E',
+        'surface-lighten-1': '#2A2A2A',
         primary: '#FF6AC6',
         'primary-darken-1': '#FF3DAC',
         secondary: '#00E5FF',
