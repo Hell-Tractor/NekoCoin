@@ -10,7 +10,7 @@ use super::dto::{BalanceWithTypeDto, TransactionDto};
 use super::vo::{CreateTransactionVo, TransactionVo};
 
 async fn modify_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wallet_id: u32, to_wallet_id: Option<u32>, amount: i32) -> Result<()> {
-    debug!("Modifying currency...");
+    debug!("Modifying currency with {:?} for wallet(id = {}) to wallet(id = {:?})...", tag_kind, wallet_id, to_wallet_id);
     match *tag_kind {
         tag::TagKind::Expense => wallet::service::modify_currency(executor, wallet_id, -amount).await?,
         tag::TagKind::Income => wallet::service::modify_currency(executor, wallet_id, amount).await?,
@@ -35,7 +35,7 @@ async fn modify_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wa
 }
 
 async fn revert_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wallet_id: u32, to_wallet_id: Option<u32>, amount: i32) -> Result<()> {
-    debug!("Reverting currency...");
+    debug!("Reverting currency with {:?} for wallet(id = {}) to wallet(id = {:?})...", tag_kind, wallet_id, to_wallet_id);
     match *tag_kind {
         tag::TagKind::Expense => wallet::service::modify_currency(executor, wallet_id, amount).await?,
         tag::TagKind::Income => wallet::service::modify_currency(executor, wallet_id, -amount).await?,
@@ -53,7 +53,7 @@ async fn revert_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wa
 
 #[tauri::command]
 pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
-    debug!("Creating transaction: {} {} {} {}", vo.wallet_id, vo.tag_id, vo.amount, vo.time);
+    debug!("Creating transaction: {:?}", vo);
     let time = NaiveDateTime::parse_from_str(&vo.time, super::DATETIME_FORMAT)?;
     let mut tx = db().begin().await?;
 

@@ -48,6 +48,6 @@ pub async fn modify_currency<'c, E>(executor: E, wallet_id: u32, amount: i32) ->
         .bind(amount).bind(wallet_id)
         .execute(executor)
         .await?;
-    info!("Wallet `{}` balance modified", wallet_id);
+    info!("Wallet(id = {}) balance modified (amount = {})", wallet_id, amount);
     Ok(())
 }

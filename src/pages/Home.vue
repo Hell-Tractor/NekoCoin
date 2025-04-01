@@ -34,6 +34,14 @@ const getMonthBalance = async function() {
         console.error(e);
     }
 }
+const refresh = async function() {
+    try {
+        await getTotalBalance();
+        await getMonthBalance();
+    } catch (e) {
+        console.error(e);
+    }
+}
 
 onMounted(() => {
     getTotalBalance();
@@ -59,5 +67,5 @@ onMounted(() => {
         </v-card-text>
     </v-card>
     <SummaryBar v-if="!!currentMonthExpense && !! currentMonthIncome" :title="t('this_month')" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money"></SummaryBar>
-    <TransactionList variant="flat" :title="t('transaction.list.title')"></TransactionList>
+    <TransactionList variant="flat" :title="t('transaction.list.title')" @deleted="_ => refresh()"></TransactionList>
 </template>

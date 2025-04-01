@@ -14,6 +14,10 @@ const props = defineProps<{
     variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain"
 }>();
 
+const emits = defineEmits<{
+    deleted: [Transaction]
+}>();
+
 export interface Transaction {
     id?: number;
     remark?: string;
@@ -65,6 +69,7 @@ const delete_transaction = async function(transaction: Transaction) {
     try {
         await invoke('delete_transaction', { id: transaction.id });
         transactions.value = transactions.value.filter(t => t.id != transaction.id);
+        emits('deleted', transaction);
     } catch (e) {
         console.error(e);
     }
