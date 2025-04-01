@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ComputedRef, onMounted, ref, Ref, watch } from 'vue';
-import BackTitleBar from '../common/BackTitleBar.vue';
+import BackTitleBar from './components/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { rules } from '../common/Rules';
 import Constants from '../common/Constants';
@@ -9,9 +9,9 @@ import { useDate } from 'vuetify';
 import { Wallet } from './Wallet.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDatetime } from '../common/Utils';
-import WalletSelector from '../common/WalletSelector.vue';
-import TagSelector from '../common/TagSelector.vue';
-import { Transaction } from '../common/TransactionList.vue';
+import WalletSelector from './components/WalletSelector.vue';
+import TagSelector from './components/TagSelector.vue';
+import { Transaction } from './components/TransactionList.vue';
 import { useRouter } from 'vue-router';
 const { t } = useI18n();
 const router = useRouter();

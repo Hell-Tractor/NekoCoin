@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref } from 'vue';
-import ConfirmDialog from '../common/ConfirmDialog.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
@@ -53,17 +52,6 @@ onMounted(() => {
                     <span style="float: right;">{{ (wallet.balance / 100).toFixed(2) + ' ' + wallet.currency }}</span>
                 </v-card-title>
                 <v-card-text>{{ wallet.remark }}</v-card-text>
-                <v-card-actions id="actions">
-                    <v-spacer></v-spacer>
-                    <ConfirmDialog title="确认删除？" @confirm="deleteWallet(wallet.id)">
-                        <template v-slot:activator="{ props: confirmDialogActivatorProps }">
-                            <v-btn v-bind="confirmDialogActivatorProps" density="comfortable" border="thin error">删除</v-btn>
-                        </template>
-                        <template v-slot:default>
-                            <span>删除后将删除所有关联的收支记录且<span style="color: red;">无法恢复</span></span>
-                        </template>
-                    </ConfirmDialog>
-                </v-card-actions>
             </v-card>
         </v-col>
     </v-row>
@@ -76,10 +64,3 @@ onMounted(() => {
         </v-col>
     </v-row>
 </template>
-
-<style scoped>
-#actions {
-    margin-top: -10px;
-    margin-bottom: -5px;
-}
-</style>

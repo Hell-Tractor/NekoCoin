@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BackTitleBar from '../common/BackTitleBar.vue';
+import BackTitleBar from './components/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { rules } from '../common/Rules';
 import { onMounted, Ref, ref } from 'vue';
@@ -7,7 +7,7 @@ import { getRandomColor } from '../common/Utils';
 import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
 import { Currency } from '../common/Money';
-import IconSelector from '../common/IconSelector.vue';
+import IconSelector from './components/IconSelector.vue';
 import { Wallet } from './Wallet.vue';
 import { useRouter } from 'vue-router';
 const { t } = useI18n();
@@ -83,5 +83,5 @@ onMounted(() => {
             </v-form>
         </v-main>
     </div>
-    <IconSelector v-else-if="page == 'icon_selector'" @confirm="selected_icon => icon = selected_icon" @back="page = 'main'"></IconSelector>
+    <IconSelector v-else-if="page == 'icon_selector'" @confirm="(selected_icon: string) => icon = selected_icon" @back="page = 'main'"></IconSelector>
 </template>

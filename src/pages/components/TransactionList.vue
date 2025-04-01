@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import Tag, { TagType, TagTypeToString } from '../common/Tag';
+import Tag, { TagType, TagTypeToString } from '../../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
-import { formatDate, formatDatetimeRelative, formatTime } from '../common/Utils';
+import { formatDate, formatDatetimeRelative, formatTime } from '../../common/Utils';
 import { useRouter } from 'vue-router';
-import AddTransaction from '../pages/AddTransaction.vue';
+import AddTransaction from '../AddTransaction.vue';
 const { t } = useI18n();
 const router = useRouter();
 

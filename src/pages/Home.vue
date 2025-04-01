@@ -2,11 +2,11 @@
 import { onMounted, Ref, ref } from 'vue';
 import { Money } from '../common/Money';
 import { useI18n } from 'vue-i18n';
-import SummaryBar from '../common/SummaryBar.vue';
+import SummaryBar from './components/SummaryBar.vue';
 import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDate } from '../common/Utils';
-import TransactionList from '../common/TransactionList.vue';
+import TransactionList from './components/TransactionList.vue';
 const { t } = useI18n();
 
 const totalBalance: Ref<Money | undefined> = ref(undefined);
