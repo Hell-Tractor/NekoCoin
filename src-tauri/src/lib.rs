@@ -60,6 +60,8 @@ pub fn run() {
             wallet::controller::get_sum_balance,
 
             tag::controller::create_tag,
+            tag::controller::update_tag,
+            tag::controller::get_tag_by_id,
             tag::controller::retrieve_tags,
             tag::controller::delete_tag,
 

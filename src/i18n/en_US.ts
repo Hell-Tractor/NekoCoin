@@ -6,6 +6,7 @@ export default {
     income: 'Income',
     expense: 'Expense',
     WIP: 'Work in Progress...',
+    loading: 'Loading...',
     actions: {
         save: 'Save',
         confirm: 'Confirm',
@@ -59,9 +60,9 @@ export default {
             count: 'Found {count} tags',
         },
         type: {
-            income: 'Income',
-            expense: 'Expense',
-            transfer: 'Transfer',
+            Income: 'Income',
+            Expense: 'Expense',
+            Transfer: 'Transfer',
         }
     },
     transaction: {
@@ -113,6 +114,10 @@ export default {
         irrevertible: {
             title: 'Warning',
             content: 'This action is IRREVERTIBLE, confirm to proceed?',
-        }
+        },
+        cascade_and_irrevertible: {
+            title: 'Warning',
+            content: 'This action is IRREVERTIBLE and will also delete ALL RELATED data, confirm to proceed?',
+        },
     }
 }

@@ -1,9 +1,10 @@
 use tracing::{debug, info};
+use sqlx::Row;
 
 use crate::sql::db;
 use crate::Result;
 
-use super::{Tag, TagKind};
+use super::{vo::UpdateTagVo, Tag, TagKind};
 
 #[tauri::command]
 pub async fn create_tag(name: String, remark: String, color: String, icon: String, kind: TagKind, parent_id: Option<u32>) -> Result<()> {
@@ -18,6 +19,27 @@ pub async fn create_tag(name: String, remark: String, color: String, icon: Strin
         .await?;
     info!("Tag created");
     Ok(())
+}
+
+#[tauri::command]
+pub async fn update_tag(vo: UpdateTagVo) -> Result<()> {
+    debug!("Updating tag(id = {})", vo.id);
+    sqlx::query(
+        r#"
+        UPDATE tags
+        SET name = $1, remark = $2, color = $3, icon = $4, parent_id = $5
+        WHERE id = $6
+        "#)
+        .bind(vo.name).bind(vo.remark).bind(vo.color).bind(vo.icon).bind(vo.parent_id).bind(vo.id)
+        .execute(db())
+        .await?;
+    info!("Tag(id = {}) updated", vo.id);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_tag_by_id(id: u32) -> Result<Tag> {
+    super::service::get_tag_by_id(id).await
 }
 
 #[tauri::command]
@@ -49,14 +71,43 @@ pub async fn retrieve_tags(filter: String, kind: Option<TagKind>) -> Result<Vec<
 
 #[tauri::command]
 pub async fn delete_tag(id: u32) -> Result<()> {
+    debug!("Deleting tag(id = {})", id);
+    let mut tx = db().begin().await?;
+    // delete all related transactions first, including transactions related to child tags
+    let transaction_ids = sqlx::query(
+        r#"
+        SELECT id FROM transactions
+        WHERE tag_id in (
+            WITH RECURSIVE tag_tree(id) AS (
+                SELECT id FROM tags WHERE id = $1
+                UNION ALL
+                SELECT t.id FROM tags t JOIN tag_tree tt ON t.parent_id = tt.id
+            )
+            SELECT id FROM tag_tree
+        )"#)
+        .bind(id)
+        .fetch_all(&mut *tx)
+        .await?
+        .into_iter()
+        .map(|row| row.get("id"))
+        .collect::<Vec<u32>>();
+    debug!("{} transactions to be deleted", transaction_ids.len());
+    for id in transaction_ids {
+        crate::transaction::service::delete_transaction(&mut *tx, id).await?;
+    }
+
+    // delete self directly and all child tags will be deleted automatically(ON DELETE CASCADE)
     sqlx::query(
         r#"
         DELETE FROM tags
         WHERE id = $1
         "#)
         .bind(id)
-        .execute(db())
+        .execute(&mut *tx)
         .await?;
-    info!("Tag deleted");
+
+    // commit the transaction
+    tx.commit().await?;
+    info!("Tag(id = {}) deleted", id);
     Ok(())
 }

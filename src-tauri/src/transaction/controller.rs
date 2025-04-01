@@ -1,55 +1,14 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use tracing::{debug, info};
-use sqlx::{Row, SqliteConnection};
+use sqlx::Row;
 
 use crate::sql::db;
 use crate::tag::TagKind;
 use crate::{tag, wallet, Error, Result};
 
 use super::dto::{BalanceWithTypeDto, TransactionDto};
+use super::service::{modify_currency, revert_currency};
 use super::vo::{CreateTransactionVo, TransactionVo};
-
-async fn modify_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wallet_id: u32, to_wallet_id: Option<u32>, amount: i32) -> Result<()> {
-    debug!("Modifying currency with {:?} for wallet(id = {}) to wallet(id = {:?})...", tag_kind, wallet_id, to_wallet_id);
-    match *tag_kind {
-        tag::TagKind::Expense => wallet::service::modify_currency(executor, wallet_id, -amount).await?,
-        tag::TagKind::Income => wallet::service::modify_currency(executor, wallet_id, amount).await?,
-        tag::TagKind::Transfer => {
-            if to_wallet_id.is_none() {
-                return Err(Error::InvalidParameter("to_wallet_id is required for transfer".to_string()));
-            }
-            let to_wallet_id = to_wallet_id.unwrap();
-            if to_wallet_id == wallet_id {
-                return Err(Error::InvalidParameter("to_wallet_id cannot be the same as wallet_id".to_string()));
-            }
-            let from_wallet = wallet::service::get_wallet_by_id(wallet_id).await?;
-            let to_wallet = wallet::service::get_wallet_by_id(to_wallet_id).await?;
-            if from_wallet.balance.get_currency() != to_wallet.balance.get_currency() {
-                return Err(Error::InvalidParameter("from_wallet and to_wallet must have the same currency".to_string()));
-            }
-            wallet::service::modify_currency(&mut *executor, wallet_id, -amount).await?;
-            wallet::service::modify_currency(executor, to_wallet_id, amount).await?;
-        }
-    }
-    Ok(())
-}
-
-async fn revert_currency(executor: &mut SqliteConnection, tag_kind: &TagKind, wallet_id: u32, to_wallet_id: Option<u32>, amount: i32) -> Result<()> {
-    debug!("Reverting currency with {:?} for wallet(id = {}) to wallet(id = {:?})...", tag_kind, wallet_id, to_wallet_id);
-    match *tag_kind {
-        tag::TagKind::Expense => wallet::service::modify_currency(executor, wallet_id, amount).await?,
-        tag::TagKind::Income => wallet::service::modify_currency(executor, wallet_id, -amount).await?,
-        tag::TagKind::Transfer => {
-            // if tag.kind == TagKind::Transfer, to_wallet_id should not be None
-            // do not handle the case where to_wallet_id is None for now
-            // do not check if wallets have same currency neither
-            let to_wallet_id = to_wallet_id.unwrap();
-            wallet::service::modify_currency(&mut *executor, to_wallet_id, -amount).await?;
-            wallet::service::modify_currency(executor, wallet_id, amount).await?;
-        }
-    }
-    Ok(())
-}
 
 #[tauri::command]
 pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
@@ -249,7 +208,7 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
         r#"
         SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
-        JOIN wallets ON transactions.wallet_id = wallet.id
+        JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
         WHERE wallet_id = $1 AND time between $2 and $3
         ORDER BY time DESC
@@ -274,7 +233,7 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
         r#"
         SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
-        JOIN wallets ON transactions.wallet_id = wallet.id
+        JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
         WHERE tag_id IN (
             WITH RECURSIVE tag_tree(id) AS (
@@ -283,8 +242,8 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
                 SELECT tags.id FROM tags JOIN tag_tree ON tags.parent_id = tag_tree.id
             )
             SELECT id FROM tag_tree
-        ) AND date between $2 and $3
-        ORDER BY date DESC
+        ) AND time between $2 and $3
+        ORDER BY time DESC
         LIMIT $4 OFFSET $5
         "#)
         .bind(tag_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
@@ -300,25 +259,8 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
 #[tauri::command]
 pub async fn delete_transaction(id: u32) -> Result<()> {
     debug!("Deleting transaction: {}", id);
-    let mut transaction = super::service::get_transaction_by_id(id).await?;
     let mut tx = db().begin().await?;
-    let tag_kind = transaction.get_tag().await?.kind.clone(); // * remove clone in the future
-    // revert currency payed from original wallet
-    revert_currency(&mut *tx, &tag_kind, transaction.wallet_id, transaction.to_wallet_id, transaction.amount).await?;
-    // revert income from transaction split
-    let amount = transaction.amount; // * remove clone in the future
-    if let Some(split) = transaction.get_split().await? {
-        revert_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, amount - split.expense).await?;
-    }
-    // currency have been reverted, now delete transaction
-    sqlx::query(
-        r#"
-        DELETE FROM transactions
-        WHERE id = $1
-        "#)
-        .bind(id)
-        .execute(&mut *tx)
-        .await?;
+    super::service::delete_transaction(&mut *tx, id).await?;
     tx.commit().await?;
     info!("Transaction deleted");
     Ok(())

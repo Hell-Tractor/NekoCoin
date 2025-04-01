@@ -41,14 +41,27 @@ const retrieve_tags = async function() {
 
 const addTag = async function() {
     try {
-        await invoke('create_tag', {
-            name: tag_name.value,
-            remark: tag_remark.value,
-            color: selected_color.value,
-            icon: icon.value,
-            kind: TagTypeToString(selected_tag_type.value.type),
-            parentId: parent_tag.value?.id
-        });
+        if (id.value === undefined) {
+            let params = {
+                name: tag_name.value,
+                remark: tag_remark.value,
+                color: selected_color.value,
+                icon: icon.value,
+                kind: TagTypeToString(selected_tag_type.value.type),
+                parentId: parent_tag.value?.id
+            };
+            await invoke('create_tag', params);
+        } else {
+            let params = {
+                id: id.value,
+                name: tag_name.value,
+                remark: tag_remark.value,
+                color: selected_color.value,
+                icon: icon.value,
+                parentId: parent_tag.value?.id
+            };
+            await invoke('update_tag', { vo: params });
+        }
         router.back();
     } catch (error) {
         // TODO: handle error
@@ -65,8 +78,13 @@ onMounted(async () => {
         tag_remark.value = props.init.remark || '';
         icon.value = props.init.icon;
         selected_color.value = props.init.color;
-        parent_tag.value = tags.value.find(tag => tag.id == props.init!.parentId) || null;
+        parent_tag.value = tags.value.find(tag => tag.id == props.init!.parent_id) || null;
         selected_tag_type.value = TagTypeNames.find(tag => tag.name == props.init!.type) || TagTypeNames[0];
+        console.log(TagTypeNames);
+        console.log(props.init.type);
+        console.log(selected_tag_type.value);
+
+        tags.value = tags.value.filter(tag => tag.id != id.value);
     }
 });
 </script>
@@ -75,7 +93,7 @@ onMounted(async () => {
         <BackTitleBar :title="t(id == undefined ? 'tag.add' : 'tag.update')" @back="router.back()"></BackTitleBar>
         <v-main class="main">
             <v-form class="fill-height" v-model="form">
-                <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()">
+                <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()" :disabled="id !== undefined">
                     <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
                 </v-chip-group>
                 <v-text-field v-model="tag_name" :placeholder="t('tag.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_TAG_NAME_LENGTH)]"></v-text-field>

@@ -6,6 +6,7 @@ export default {
     income: '收入',
     expense: '支出',
     WIP: '开发中...',
+    loading: '加载中...',
     actions: {
         save: '保存',
         confirm: '确认',
@@ -59,9 +60,9 @@ export default {
             count: '找到{count}个标签',
         },
         type: {
-            income: '收入',
-            expense: '支出',
-            transfer: '转账',
+            Income: '收入',
+            Expense: '支出',
+            Transfer: '转账',
         }
     },
     transaction: {
@@ -113,6 +114,10 @@ export default {
         irrevertible: {
             title: '警告',
             content: '该操作不可逆，确认继续？',
-        }
+        },
+        cascade_and_irrevertible: {
+            title: '警告',
+            content: '该操作不可逆且会删除所有相关数据，确认继续？',
+        },
     }
 }

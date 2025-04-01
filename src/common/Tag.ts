@@ -16,9 +16,9 @@ export const TagTypeToString = (type: TagType): string => {
 }
 
 export const TagTypeNames = [
-    { type: TagType.EXPENSE, name: 'expense' },
-    { type: TagType.INCOME, name: 'income' },
-    { type: TagType.TRANSFER, name: 'transfer' },
+    { type: TagType.EXPENSE, name: 'Expense' },
+    { type: TagType.INCOME, name: 'Income' },
+    { type: TagType.TRANSFER, name: 'Transfer' },
 ]
 
 export default interface Tag {
@@ -28,5 +28,5 @@ export default interface Tag {
     color: string;
     icon: string;
     type: string;
-    parentId: number | null;
+    parent_id: number | null;
 };

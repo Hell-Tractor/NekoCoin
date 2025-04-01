@@ -3,6 +3,7 @@ use sqlx::FromRow;
 
 pub mod controller;
 pub mod service;
+pub mod vo;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, PartialEq, Eq)]
 #[repr(u8)]

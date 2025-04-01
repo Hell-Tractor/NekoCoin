@@ -6,12 +6,19 @@ import { invoke } from '@tauri-apps/api/core';
 import { formatDate, formatDatetimeRelative, formatTime } from '../../common/Utils';
 import { useRouter } from 'vue-router';
 import AddTransaction from '../AddTransaction.vue';
+import ConfirmSheet from './ConfirmSheet.vue';
 const { t } = useI18n();
 const router = useRouter();
+
+interface TransactionFilter {
+    by: "tag" | "wallet",
+    id: number,
+}
 
 const props = defineProps<{
     title?: string,
     variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain"
+    filter?: TransactionFilter,
 }>();
 
 const emits = defineEmits<{
@@ -42,7 +49,14 @@ const PAGE_SIZE = 20;
 
 const retrieve_transactions = async function(page: number, pageSize: number): Promise<Transaction[]> {
     try {
-        let transactions: Transaction[] = await invoke('retrieve_transactions', { page, pageSize });
+        let transactions: Transaction[];
+        if (props.filter == undefined)
+            transactions = await invoke('retrieve_transactions', { page, pageSize });
+        else if (props.filter!.by === 'tag')
+            transactions = await invoke('retrieve_transactions_with_tag', { page, pageSize, tagId: props.filter!.id });
+        else { // props.filter.by === 'wallet'
+            transactions = await invoke('retrieve_transactions_in_wallet', { page, pageSize, walletId: props.filter!.id });
+        }
         for (let id in transactions) {
             transactions[id].time = new Date(transactions[id].time);
         }
@@ -200,16 +214,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                 <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-pencil" variant="tonal" color="primary-darken-1" @click="operate_transaction(transaction, 'edit')">{{ t('actions.edit') }}</v-btn>
                                 <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-content-copy" variant="tonal" color="primary-darken-1" @click="operate_transaction(transaction, 'copy')">{{ t('actions.copy') }}</v-btn>
                                 <v-btn rounded="xl" class="flex-grow-1" prepend-icon="mdi-delete" variant="outlined" color="error" @click="show_confirm_sheet = true">{{ t('actions.delete') }}</v-btn>
-                                <v-bottom-sheet v-model="show_confirm_sheet" >
-                                    <template>
-                                    </template>
-                                    <v-card :title="t('warning.irrevertible.title')" :text="t('warning.irrevertible.content')">
-                                        <v-card-actions>
-                                            <v-btn rounded="xl" @click="delete_transaction(transaction); show_confirm_sheet = false;">{{ t('actions.confirm') }}</v-btn>
-                                            <v-btn rounded="xl" variant="tonal" @click="show_confirm_sheet = false">{{ t('actions.cancel') }}</v-btn>
-                                        </v-card-actions>
-                                    </v-card>
-                                </v-bottom-sheet>
+                                <ConfirmSheet @confirm="delete_transaction(transaction)" v-model="show_confirm_sheet" :title="t('warning.irrevertible.title')" :text="t('warning.irrevertible.content')"></ConfirmSheet>
                             </v-card-actions>
                         </v-card>
                     </v-bottom-sheet>

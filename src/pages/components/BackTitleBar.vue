@@ -14,5 +14,8 @@ const props = defineProps<{
             <v-icon>mdi-arrow-left</v-icon>
         </v-btn>
         <v-toolbar-title>{{ props.title }}</v-toolbar-title>
+        <template v-slot:append>
+            <slot name="append"></slot>
+        </template>
     </v-app-bar>
 </template>

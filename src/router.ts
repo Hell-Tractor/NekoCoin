@@ -7,6 +7,7 @@ import AddTransaction from "./pages/AddTransaction.vue";
 import Main from "./pages/Main.vue";
 import AddWallet from "./pages/AddWallet.vue";
 import AddTag from "./pages/AddTag.vue";
+import TagDetails from "./pages/TagDetails.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -25,6 +26,7 @@ const router = createRouter({
         { path: "/transaction/add", component: AddTransaction },
         { path: "/account/add", component: AddWallet },
         { path: "/tag/add", component: AddTag },
+        { path: "/tag/:id", component: TagDetails, props: route => ({ id: Number(route.params.id) }) },
     ]
 });
 
