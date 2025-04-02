@@ -34,7 +34,7 @@ onMounted(() => {
                     </v-col>
                     <v-col>
                         <v-row><v-col class="text-body-1" style="padding: 0px;">{{ item.name }}</v-col></v-row>
-                        <v-row v-if="item.remark"><v-col style="padding: 2px 0px 0px 0px; color: #444444;">{{ item.remark }}</v-col></v-row>
+                        <v-row v-if="item.remark"><v-col class="on-surface-lighten-1" style="padding: 2px 0px 0px 0px;">{{ item.remark }}</v-col></v-row>
                     </v-col>
                     <v-col class="flex-grow-0">
                         <v-icon size="large" v-if="item.type == 'Income'" color="green">mdi-chart-line-variant</v-icon>

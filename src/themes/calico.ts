@@ -6,6 +6,8 @@ const calico: ThemeDefinition = {
         background: '#FFF5E6',
         surface: '#F9C4AA',
         'surface-lighten-1': '#F9C4AA',
+        'on-surface-lighten-1': '#444444',
+        'on-surface-lighten-2': '#666666',
         primary: '#EBB471',
         'primary-darken-1': '#D89B5A',
         secondary: '#A8D8B9',

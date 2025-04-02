@@ -6,6 +6,8 @@ const midnight: ThemeDefinition = {
         background: '#2D3047',
         surface: '#3B2F2F',
         'surface-lighten-1': '#4A3C3C',
+        'on-surface-lighten-1': '#D9D9D9',
+        'on-surface-lighten-2': '#B3B3B3',
         primary: '#FF9A8B',
         'primary-darken-1': '#FF7A6B',
         secondary: '#B0E0E6',

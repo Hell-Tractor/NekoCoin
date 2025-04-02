@@ -135,11 +135,11 @@ const get_actual_expense = function(transaction: Transaction) {
                                         <v-col style="padding-bottom: 0px;">
                                             <v-row class="flex-nowrap">
                                                 <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
-                                                <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
+                                                <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                             </v-row>
                                             <v-row class="flex-nowrap">
-                                                <v-col class="no-pad" style="color: #666666;">{{ formatDatetimeRelative(transaction.time, new Date()) }}</v-col>
-                                                <v-col class="no-pad" style="text-align: right; color: #666666;">{{ formatTime(transaction.time) }}</v-col>
+                                                <v-col class="no-pad on-surface-lighten-2">{{ formatDatetimeRelative(transaction.time, new Date()) }}</v-col>
+                                                <v-col class="no-pad text-end on-surface-lighten-2">{{ formatTime(transaction.time) }}</v-col>
                                             </v-row>
                                             <v-divider style="margin-top: 20px;"></v-divider>
                                         </v-col>
@@ -156,56 +156,56 @@ const get_actual_expense = function(transaction: Transaction) {
                                     <v-col style="padding-bottom: 0px;">
                                         <v-row class="flex-nowrap">
                                             <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
-                                            <v-col class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
+                                            <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                         </v-row>
                                         <v-row class="flex-nowrap">
-                                            <v-col class="no-pad" style="color: #666666;">{{ formatDate(transaction.time) }}</v-col>
+                                            <v-col class="no-pad on-surface-lighten-2">{{ formatDate(transaction.time) }}</v-col>
                                         </v-row>
                                     </v-col>
                                 </v-row>
                                 <v-divider style="margin-top: 20px; margin-bottom: 20px;"></v-divider>
                                 <v-row class="flex-nowrap align-center">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">
-                                        <v-icon color="#444444">mdi-bank</v-icon>
+                                        <v-icon color="on-surface-lighten-1">mdi-bank</v-icon>
                                     </v-col>
                                     <v-col>
-                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em;">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.wallet_name }}</v-col></v-row>
                                     </v-col>
 
                                     <v-col v-if="transaction.tag.type == 'Transfer'">
-                                        <v-icon color="#444444">mdi-chevron-double-right</v-icon>
+                                        <v-icon color="on-surface-lighten-1">mdi-chevron-double-right</v-icon>
                                     </v-col>
                                     <v-col v-if="transaction.tag.type == 'Transfer'">
-                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.to_wallet_name! }}</v-col></v-row>
                                     </v-col>
 
-                                    <v-col v-if="transaction.split" class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(TagTypeToString(TagType.EXPENSE)) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                    <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.EXPENSE)) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
                                 </v-row>
                                 <v-row class="flex-nowrap align-center" v-if="transaction.split">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">
-                                        <v-icon color="#444444">mdi-account-multiple</v-icon>
+                                        <v-icon color="on-surface-lighten-1">mdi-account-multiple</v-icon>
                                     </v-col>
                                     <v-col>
-                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.split.title') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em;">{{ t('transaction.split.title') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ t('transaction.split.people', transaction.split!.count) }}</v-col></v-row>
                                     </v-col>
                                     <v-col>
-                                        <v-icon color="#444444">mdi-arrow-right-bold</v-icon>
+                                        <v-icon color="on-surface-lighten-1">mdi-arrow-right-bold</v-icon>
                                     </v-col>
                                     <v-col>
-                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.account') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em;">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.split!.recieve_wallet_name }}</v-col></v-row>
                                     </v-col>
-                                    <v-col v-if="transaction.split" class="no-pad" :style="{ textAlign: 'right', color: get_color_with_type(TagTypeToString(TagType.INCOME)) }">{{ `${transaction.currency}${((transaction.amount - transaction.split!.expense) / 100).toFixed(2)}` }}</v-col>
+                                    <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.INCOME)) }">{{ `${transaction.currency}${((transaction.amount - transaction.split!.expense) / 100).toFixed(2)}` }}</v-col>
                                 </v-row>
                                 <v-row class="flex-nowrap" v-if="!!transaction.remark">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">
-                                        <v-icon color="#444444">mdi-file-document</v-icon>
+                                        <v-icon color="on-surface-lighten-1">mdi-file-document</v-icon>
                                     </v-col>
                                     <v-col>
-                                        <v-row><v-col class="no-pad" style="font-size: 0.9em; color: #444444;">{{ t('transaction.remark') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em;">{{ t('transaction.remark') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.remark }}</v-col></v-row>
                                     </v-col>
                                 </v-row>
