@@ -41,14 +41,6 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
             .fetch_one(&mut *tx)
             .await?
             .get(0);
-        // sqlx::query(
-        //     r#"
-        //     INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time, split_id)
-        //     VALUES ($1, $2, $3, $4, $5, $6, $7)
-        //     "#)
-        //     .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(split.expense).bind(time.format(super::DATETIME_FORMAT).to_string()).bind(split_id)
-        //     .execute(&mut *tx)
-        //     .await?;
         debug!("Transaction split(id = {}) created.", split_id);
         Some(split_id)
     } else {
@@ -274,27 +266,20 @@ pub async fn get_sum_balance_with_type(currency: String, begin: Option<NaiveDate
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
     let end = end.and_hms_opt(23, 59, 59).unwrap();
     // TODO: rewrite sql
-    let sum = sqlx::query(
+    let result = sqlx::query_as::<_, BalanceWithTypeDto>(
         r#"
-        SELECT SUM(amount), tags.kind FROM transactions
+        SELECT
+            SUM(CASE WHEN tags.kind = $1 THEN COALESCE(ts.expense, amount) ELSE 0 END) AS expense,
+            SUM(CASE WHEN tags.kind = $2 THEN amount ELSE 0 END) AS income
+        FROM transactions
+        LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
         JOIN tags ON transactions.tag_id = tags.id
         JOIN wallets ON transactions.wallet_id = wallets.id
-        WHERE tags.kind != $1 AND wallets.currency = $2 AND time between $3 and $4
-        GROUP BY tags.kind
+        WHERE wallets.currency = $3 AND time between $4 and $5
         "#)
-        .bind(TagKind::Transfer as u8).bind(currency).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
-        .fetch_all(db())
+        .bind(TagKind::Expense as u8).bind(TagKind::Income as u8).bind(currency).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .fetch_one(db())
         .await?;
-    let mut result = BalanceWithTypeDto::default();
-    for row in sum {
-        let amount: i32 = row.get(0);
-        let kind: TagKind = row.get(1);
-        match kind {
-            TagKind::Expense => result.expense = amount,
-            TagKind::Income => result.income = amount,
-            _ => unreachable!(),
-        }
-    }
     info!("Sum of balance with type in transactions: {:?}", result);
     Ok(result)
 }
@@ -304,16 +289,16 @@ pub async fn get_sum_balance_in_wallet(wallet_id: u32, begin: Option<NaiveDate>,
     debug!("Getting sum of transactions in wallet(id = {})", wallet_id);
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
-    // TODO: recognize split income as income
     let result = sqlx::query_as::<_, BalanceWithTypeDto>(
         r#"
         SELECT
-            SUM(CASE WHEN tags.kind = $1 THEN COALESCE(ts.expense, amount) ELSE 0 END) AS expense,
-            SUM(CASE WHEN tags.kind = $2 THEN amount ELSE 0 END) AS income
+            SUM(CASE WHEN tags.kind = $1 AND wallet_id = $3 THEN amount ELSE 0 END) AS expense,
+            SUM(CASE WHEN tags.kind = $2 AND wallet_id = $3 THEN amount ELSE 0 END +
+                CASE WHEN ts.recieve_wallet_id = $3 THEN amount - ts.expense ELSE 0 END) AS income
         FROM transactions
         LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
         JOIN tags ON transactions.tag_id = tags.id
-        WHERE wallet_id = $3 AND time BETWEEN $4 AND $5
+        WHERE time BETWEEN $4 AND $5
         "#)
         .bind(TagKind::Expense as u8).bind(TagKind::Income as u8)
         .bind(wallet_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
