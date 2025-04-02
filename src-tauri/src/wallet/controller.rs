@@ -3,6 +3,7 @@ use tracing::{debug, info};
 use crate::sql::db;
 use crate::Result;
 
+use super::vo::UpdateWalletVo;
 use super::Wallet;
 
 #[tauri::command]
@@ -17,6 +18,22 @@ pub async fn create_wallet(name: String, remark: String, balance: u32, currency:
         .execute(db())
         .await?;
     info!("Wallet created");
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_wallet(vo: UpdateWalletVo) -> Result<()> {
+    debug!("Updating wallet(id = {})", vo.id);
+    sqlx::query(
+        r#"
+        UPDATE wallets
+        SET name = $1, remark = $2, balance = $3, color = $4, icon = $5
+        WHERE id = $6
+        "#)
+        .bind(vo.name).bind(vo.remark).bind(vo.balance).bind(vo.color).bind(vo.icon).bind(vo.id)
+        .execute(db())
+        .await?;
+    info!("Wallet(id = {}) updated", vo.id);
     Ok(())
 }
 

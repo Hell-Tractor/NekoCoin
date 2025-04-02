@@ -55,6 +55,7 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             wallet::controller::create_wallet,
+            wallet::controller::update_wallet,
             wallet::controller::get_wallet_by_id,
             wallet::controller::retrieve_wallets,
             wallet::controller::delete_wallet,
