@@ -23,7 +23,7 @@ pub struct TransactionSplitVo {
     pub id: Option<u32>,
     pub count: u32,
     pub expense: i32,
-    pub recieve_wallet_id: u32,
+    pub receive_wallet_id: u32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -31,7 +31,7 @@ pub struct TransactionSplitVo {
 pub struct CreateTransactionSplitVo {
     pub count: u32,
     pub expense: i32,
-    pub recieve_wallet_id: u32,
+    pub receive_wallet_id: u32,
 }
 
 #[derive(Debug, Clone, Deserialize)]

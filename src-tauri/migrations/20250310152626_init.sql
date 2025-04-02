@@ -40,6 +40,6 @@ CREATE TABLE transaction_splits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     count INTEGER NOT NULL,
     expense INTEGER NOT NULL,
-    recieve_wallet_id INTEGER NOT NULL,
-    FOREIGN KEY(recieve_wallet_id) REFERENCES wallets(id) ON DELETE CASCADE
+    receive_wallet_id INTEGER NOT NULL,
+    FOREIGN KEY(receive_wallet_id) REFERENCES wallets(id) ON DELETE CASCADE
 );

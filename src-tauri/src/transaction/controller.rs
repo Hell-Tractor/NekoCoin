@@ -25,19 +25,19 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
             return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
         }
         // receive wallet should have same currency as original wallet
-        let receive_wallet = wallet::service::get_wallet_by_id(split.recieve_wallet_id).await?;
+        let receive_wallet = wallet::service::get_wallet_by_id(split.receive_wallet_id).await?;
         let original_wallet = wallet::service::get_wallet_by_id(vo.wallet_id).await?;
         if receive_wallet.balance.get_currency() != original_wallet.balance.get_currency() {
             return Err(Error::InvalidParameter("receive wallet and original wallet must have same currency".to_string()));
         }
-        modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, vo.amount - split.expense).await?;
+        modify_currency(&mut *tx, &TagKind::Income, split.receive_wallet_id, None, vo.amount - split.expense).await?;
         let split_id: u32 = sqlx::query(
             r#"
-            INSERT INTO transaction_splits (count, expense, recieve_wallet_id)
+            INSERT INTO transaction_splits (count, expense, receive_wallet_id)
             VALUES ($1, $2, $3)
             RETURNING id
             "#)
-            .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id)
+            .bind(split.count).bind(split.expense).bind(split.receive_wallet_id)
             .fetch_one(&mut *tx)
             .await?
             .get(0);
@@ -78,7 +78,7 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
         if tag_kind != TagKind::Expense {
             return Err(Error::InvalidParameter("split is only allowed for expense".to_string()));
         }
-        let receive_wallet = wallet::service::get_wallet_by_id(split.recieve_wallet_id).await?;
+        let receive_wallet = wallet::service::get_wallet_by_id(split.receive_wallet_id).await?;
         let original_wallet = wallet::service::get_wallet_by_id(vo.wallet_id).await?;
         // receive wallet should have same currency as original wallet
         if receive_wallet.balance.get_currency() != original_wallet.balance.get_currency() {
@@ -91,14 +91,14 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
                 return Err(Error::InvalidParameter(format!("data mismatch: split id not provided but found old split(id={})", old_transaction.split_id.unwrap())));
             }
             // modify currency for new split
-            modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, vo.amount - split.expense).await?;
+            modify_currency(&mut *tx, &TagKind::Income, split.receive_wallet_id, None, vo.amount - split.expense).await?;
             let split_id: u32 = sqlx::query(
                 r#"
-                INSERT INTO transaction_splits (count, expense, recieve_wallet_id)
+                INSERT INTO transaction_splits (count, expense, receive_wallet_id)
                 VALUES ($1, $2, $3)
                 RETURNING id
                 "#)
-                .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id)
+                .bind(split.count).bind(split.expense).bind(split.receive_wallet_id)
                 .fetch_one(&mut *tx)
                 .await?
                 .get(0);
@@ -115,17 +115,17 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
             // revert old split currency
             let old_amount = old_transaction.amount; // * remove clone in the future
             let old_split = old_transaction.get_split().await?.unwrap(); // split with given id should always exists
-            revert_currency(&mut *tx, &TagKind::Income, old_split.recieve_wallet_id, None, old_amount - old_split.expense).await?;
+            revert_currency(&mut *tx, &TagKind::Income, old_split.receive_wallet_id, None, old_amount - old_split.expense).await?;
             // modify currency for new split
-            modify_currency(&mut *tx, &TagKind::Income, split.recieve_wallet_id, None, vo.amount - split.expense).await?;
+            modify_currency(&mut *tx, &TagKind::Income, split.receive_wallet_id, None, vo.amount - split.expense).await?;
             // update split
             sqlx::query(
                 r#"
                 UPDATE transaction_splits
-                SET count = $1, expense = $2, recieve_wallet_id = $3
+                SET count = $1, expense = $2, receive_wallet_id = $3
                 WHERE id = $4
                 "#)
-                .bind(split.count).bind(split.expense).bind(split.recieve_wallet_id).bind(split.id.unwrap())
+                .bind(split.count).bind(split.expense).bind(split.receive_wallet_id).bind(split.id.unwrap())
                 .execute(&mut *tx)
                 .await?;
             Some(split.id.unwrap())
@@ -140,7 +140,7 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
             // revert old split currency
             let old_amount = old_transaction.amount; // * remove clone in the future
             let old_split = old_transaction.get_split().await?.unwrap(); // split with given id should always exists
-            revert_currency(&mut *tx, &TagKind::Income, old_split.recieve_wallet_id, None, old_amount - old_split.expense).await?;
+            revert_currency(&mut *tx, &TagKind::Income, old_split.receive_wallet_id, None, old_amount - old_split.expense).await?;
             // delete split
             sqlx::query(
                 r#"
@@ -201,8 +201,10 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
         SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
+        LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
-        WHERE wallet_id = $1 AND time between $2 and $3
+        WHERE (wallet_id = $1 OR to_wallet_id = $1 OR ts.receive_wallet_id = $1)
+            AND time between $2 and $3
         ORDER BY time DESC
         LIMIT $4 OFFSET $5
         "#)
@@ -292,15 +294,18 @@ pub async fn get_sum_balance_in_wallet(wallet_id: u32, begin: Option<NaiveDate>,
     let result = sqlx::query_as::<_, BalanceWithTypeDto>(
         r#"
         SELECT
-            SUM(CASE WHEN tags.kind = $1 AND wallet_id = $3 THEN amount ELSE 0 END) AS expense,
-            SUM(CASE WHEN tags.kind = $2 AND wallet_id = $3 THEN amount ELSE 0 END +
-                CASE WHEN ts.recieve_wallet_id = $3 THEN amount - ts.expense ELSE 0 END) AS income
+            SUM(CASE WHEN (tags.kind = $1 OR tags.kind = $3) AND wallet_id = $4 THEN amount ELSE 0 END) AS expense,
+            SUM(CASE
+                    WHEN (tags.kind = $2 AND wallet_id = $4) OR (tags.kind = $3 AND to_wallet_id = $4)
+                    THEN amount ELSE 0
+                END +
+                CASE WHEN ts.receive_wallet_id = $4 THEN amount - ts.expense ELSE 0 END) AS income
         FROM transactions
         LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
         JOIN tags ON transactions.tag_id = tags.id
-        WHERE time BETWEEN $4 AND $5
+        WHERE time BETWEEN $5 AND $6
         "#)
-        .bind(TagKind::Expense as u8).bind(TagKind::Income as u8)
+        .bind(TagKind::Expense as u8).bind(TagKind::Income as u8).bind(TagKind::Transfer as u8)
         .bind(wallet_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
         .fetch_one(db())
         .await?;

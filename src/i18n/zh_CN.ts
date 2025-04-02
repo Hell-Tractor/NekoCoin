@@ -45,6 +45,8 @@ export default {
         no_account: '暂无账户',
         no_account_tip: '点击右下角按钮添加一个账户吧！',
         details: '账户详情',
+        summary: '汇总',
+        transactions: '交易记录',
     },
     tag: {
         add: '添加标签',

@@ -35,7 +35,7 @@ pub struct TransactionSplit {
     pub id: u32,
     pub count: u32,
     pub expense: i32,
-    pub recieve_wallet_id: u32,
+    pub receive_wallet_id: u32,
 }
 
 impl<'r> FromRow<'r, SqliteRow> for Transaction {

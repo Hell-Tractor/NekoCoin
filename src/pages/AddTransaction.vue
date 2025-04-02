@@ -39,7 +39,7 @@ const tags: Ref<Tag[]> = ref([]);
 const has_split: Ref<boolean> = ref(false);
 const split_count: Ref<number> = ref(2);
 const split_expense: Ref<number> = ref(0);
-const split_recieve_wallet: Ref<Wallet | undefined> = ref(undefined);
+const split_receive_wallet: Ref<Wallet | undefined> = ref(undefined);
 
 const others_expense: ComputedRef<number> = computed(() => {
     return Number.parseInt(Math.ceil((amount.value ?? 0) * 100 / split_count.value).toFixed(0)) / 100;
@@ -105,7 +105,7 @@ const confirm = async function() {
             id: split_id.value,
             count: split_count.value,
             expense: Math.round(split_expense.value * 100),
-            recieveWalletId: split_recieve_wallet.value?.id,
+            receiveWalletId: split_receive_wallet.value?.id,
         };
         let params = {
             id: id.value,
@@ -131,7 +131,7 @@ const confirm = async function() {
 const isFormValid = function() {
     let basic = form.value && selected_wallet.value != undefined && selected_tag.value != undefined &&
         (selected_tag.value.type != 'Transfer' || selected_to_wallet.value != undefined);
-    let split = !has_split.value || split_recieve_wallet.value != undefined;
+    let split = !has_split.value || split_receive_wallet.value != undefined;
     return basic && split;
 }
 const update_split_expense = function(count: number) {
@@ -143,8 +143,8 @@ watch(split_count, function(newValue) {
 watch(has_split, function(newValue) {
     if (newValue) {
         update_split_expense(split_count.value);
-        if (split_recieve_wallet.value == undefined) {
-            split_recieve_wallet.value = selected_wallet.value;
+        if (split_receive_wallet.value == undefined) {
+            split_receive_wallet.value = selected_wallet.value;
         }
     }
 });
@@ -171,7 +171,7 @@ onMounted(async () => {
             split_id.value = props.init!.split.id;
             split_count.value = props.init!.split.count;
             split_expense.value = props.init!.split.expense;
-            split_recieve_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.split!.recieve_wallet_name);
+            split_receive_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.split!.receive_wallet_name);
         }
     }
 });
@@ -254,7 +254,7 @@ onMounted(async () => {
                             <v-col class="text-end">{{ t('transaction.split.other', { each: (Math.ceil(((amount ?? 0) - split_expense) / (split_count - 1) * 100) / 100).toFixed(2), total: ((amount ?? 0) - split_expense).toFixed(2) }) }}</v-col>
                         </v-row>
                     </v-sheet>
-                    <WalletSelector v-if="has_split" :title="t('transaction.split.select_wallet')" v-model="split_recieve_wallet" :wallets="wallets"></WalletSelector>
+                    <WalletSelector v-if="has_split" :title="t('transaction.split.select_wallet')" v-model="split_receive_wallet" :wallets="wallets"></WalletSelector>
                 </v-card-text>
             </v-card>
             <div style="height: 50px;"></div>

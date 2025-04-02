@@ -38,7 +38,7 @@ export interface Transaction {
         id?: number;
         count: number;
         expense: number;
-        recieve_wallet_name: string;
+        receive_wallet_name: string;
     }
 }
 
@@ -196,7 +196,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                     </v-col>
                                     <v-col>
                                         <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em;">{{ t('transaction.account') }}</v-col></v-row>
-                                        <v-row><v-col class="no-pad">{{ transaction.split!.recieve_wallet_name }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad">{{ transaction.split!.receive_wallet_name }}</v-col></v-row>
                                     </v-col>
                                     <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.INCOME)) }">{{ `${transaction.currency}${((transaction.amount - transaction.split!.expense) / 100).toFixed(2)}` }}</v-col>
                                 </v-row>

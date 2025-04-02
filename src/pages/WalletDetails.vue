@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SummaryBar from './components/SummaryBar.vue';
 import { Money } from '../common/Money';
+import TransactionList from './components/TransactionList.vue';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -44,6 +45,8 @@ onMounted(() => {
     <BackTitleBar :title="t('account.details')" @back="router.back()"/>
     <v-main v-if="wallet" class="main">
         <WalletCard variant="flat" :wallet="wallet" />
-        <SummaryBar variant="flat" rounded="lg" :current-expense="new Money(sum_balance.expense, { symbol: wallet.currency, code: '' })" :current-income="new Money(sum_balance.income, { symbol: wallet.currency, code: '' })"></SummaryBar>
+        <SummaryBar variant="flat" rounded="lg" :title="t('account.summary')" :current-expense="new Money(sum_balance.expense, { symbol: wallet.currency, code: '' })" :current-income="new Money(sum_balance.income, { symbol: wallet.currency, code: '' })" />
+        <div style="height: 10px;" />
+        <TransactionList variant="flat" :title="t('account.transactions')" :filter="{ by: 'wallet', id: props.id }"/>
     </v-main>
 </template>

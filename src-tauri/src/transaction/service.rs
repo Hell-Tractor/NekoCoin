@@ -25,7 +25,7 @@ pub async fn get_split_by_id(id: u32) -> Result<TransactionSplit> {
     debug!("Getting transaction split with id: {}", id);
     let transaction_split = sqlx::query_as::<_, TransactionSplit>(
         r#"
-        SELECT id, count, expense, recieve_wallet_id
+        SELECT id, count, expense, receive_wallet_id
         FROM transaction_splits
         WHERE transaction_splits.id = $1
         "#,
@@ -44,7 +44,7 @@ pub async fn delete_transaction(executor: &mut SqliteConnection, id: u32) -> Res
     // revert income from transaction split
     let amount = transaction.amount; // * remove clone in the future
     if let Some(split) = transaction.get_split().await? {
-        revert_currency(&mut *executor, &TagKind::Income, split.recieve_wallet_id, None, amount - split.expense).await?;
+        revert_currency(&mut *executor, &TagKind::Income, split.receive_wallet_id, None, amount - split.expense).await?;
     }
     // currency have been reverted, now delete transaction
     sqlx::query(

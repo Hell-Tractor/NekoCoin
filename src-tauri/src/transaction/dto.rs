@@ -28,7 +28,7 @@ pub struct TransactionSplitDto {
     pub id: u32,
     pub count: u32,
     pub expense: i32,
-    pub recieve_wallet_name: String,
+    pub receive_wallet_name: String,
 }
 
 impl TransactionDto {
@@ -50,7 +50,7 @@ impl TransactionDto {
                         id: split.id,
                         count: split.count,
                         expense: split.expense,
-                        recieve_wallet_name: wallet::service::get_wallet_by_id(split.recieve_wallet_id).await?.name,
+                        receive_wallet_name: wallet::service::get_wallet_by_id(split.receive_wallet_id).await?.name,
                     })
                 } else {
                     None

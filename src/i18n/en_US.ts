@@ -45,6 +45,8 @@ export default {
         no_account: 'No Account',
         no_account_tip: 'Click the button in the bottom right corner to add an account!',
         details: 'Account Details',
+        summary: 'Summary',
+        transactions: 'Transactions',
     },
     tag: {
         add: 'Add Tag',
