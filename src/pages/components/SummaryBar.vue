@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { Money } from './Money';
+import { Money } from '../../common/Money';
 const { t } = useI18n();
 
 defineProps<{
     currentIncome: Money;
     currentExpense: Money;
     title?: string;
+    variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain"
+    rounded?: string | boolean;
 }>();
 </script>
 
 <template>
-    <v-card variant="text">
+    <v-card :variant="variant" :rounded="rounded">
         <v-card-text>
             <div style="margin-bottom: 5px;" v-if="!!title">{{ title }}</div>
             <v-row class="flex-nowrap">

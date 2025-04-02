@@ -273,6 +273,7 @@ pub async fn get_sum_balance_with_type(currency: String, begin: Option<NaiveDate
     let begin = begin.and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap());
     let end = end.and_hms_opt(23, 59, 59).unwrap();
+    // TODO: rewrite sql
     let sum = sqlx::query(
         r#"
         SELECT SUM(amount), tags.kind FROM transactions
@@ -295,5 +296,29 @@ pub async fn get_sum_balance_with_type(currency: String, begin: Option<NaiveDate
         }
     }
     info!("Sum of balance with type in transactions: {:?}", result);
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn get_sum_balance_in_wallet(wallet_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<BalanceWithTypeDto> {
+    debug!("Getting sum of transactions in wallet(id = {})", wallet_id);
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    // TODO: recognize split income as income
+    let result = sqlx::query_as::<_, BalanceWithTypeDto>(
+        r#"
+        SELECT
+            SUM(CASE WHEN tags.kind = $1 THEN COALESCE(ts.expense, amount) ELSE 0 END) AS expense,
+            SUM(CASE WHEN tags.kind = $2 THEN amount ELSE 0 END) AS income
+        FROM transactions
+        LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
+        JOIN tags ON transactions.tag_id = tags.id
+        WHERE wallet_id = $3 AND time BETWEEN $4 AND $5
+        "#)
+        .bind(TagKind::Expense as u8).bind(TagKind::Income as u8)
+        .bind(wallet_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .fetch_one(db())
+        .await?;
+    info!("Sum of transactions in wallet: {:?}", result);
     Ok(result)
 }

@@ -55,6 +55,7 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             wallet::controller::create_wallet,
+            wallet::controller::get_wallet_by_id,
             wallet::controller::retrieve_wallets,
             wallet::controller::delete_wallet,
             wallet::controller::get_sum_balance,
@@ -71,6 +72,7 @@ pub fn run() {
             transaction::controller::retrieve_transactions_with_tag,
             transaction::controller::delete_transaction,
             transaction::controller::get_sum_balance_with_type,
+            transaction::controller::get_sum_balance_in_wallet,
             transaction::controller::update_transaction,
         ])
         .run(tauri::generate_context!())

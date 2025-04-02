@@ -119,7 +119,7 @@ const get_actual_expense = function(transaction: Transaction) {
 }
 </script>
 <template>
-    <v-card :variant="variant">
+    <v-card :variant="variant" rounded="lg">
         <v-card-text style="padding: 10px;">
             <div v-if="!!props.title" style="padding-top: 0px; padding-bottom: 0px; padding-left: 10px;">{{ props.title }}</div>
             <v-infinite-scroll :items="transactions" @load="load_transactions">

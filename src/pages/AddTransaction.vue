@@ -6,7 +6,7 @@ import { rules } from '../common/Rules';
 import Constants from '../common/Constants';
 import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
 import { useDate } from 'vuetify';
-import { Wallet } from './Wallet.vue';
+import { Wallet } from './Wallets.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDatetime } from '../common/Utils';
 import WalletSelector from './components/WalletSelector.vue';
@@ -199,8 +199,8 @@ onMounted(async () => {
                                         </v-card-text>
                                         <v-card-actions>
                                             <v-spacer></v-spacer>
-                                            <v-btn :text="t('cancel')" @click="show_calendar_picker=false; resetDate()"></v-btn>
-                                            <v-btn :text="t('confirm')" @click="show_calendar_picker=false; updateDate()"></v-btn>
+                                            <v-btn :text="t('actions.cancel')" @click="show_calendar_picker=false; resetDate()"></v-btn>
+                                            <v-btn :text="t('actions.confirm')" @click="show_calendar_picker=false; updateDate()"></v-btn>
                                         </v-card-actions>
                                     </v-card>
                                 </v-dialog>
@@ -216,8 +216,8 @@ onMounted(async () => {
                                         </v-card-text>
                                         <v-card-actions>
                                             <v-spacer></v-spacer>
-                                            <v-btn :text="t('cancel')" @click="show_time_picker=false; resetTime()  "></v-btn>
-                                            <v-btn :text="t('confirm')" @click="show_time_picker=false; updateTime()"></v-btn>
+                                            <v-btn :text="t('actions.cancel')" @click="show_time_picker=false; resetTime()  "></v-btn>
+                                            <v-btn :text="t('actions.confirm')" @click="show_time_picker=false; updateTime()"></v-btn>
                                         </v-card-actions>
                                     </v-card>
                                 </v-dialog>

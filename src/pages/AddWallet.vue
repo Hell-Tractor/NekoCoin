@@ -8,7 +8,7 @@ import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
 import { Currency } from '../common/Money';
 import IconSelector from './components/IconSelector.vue';
-import { Wallet } from './Wallet.vue';
+import { Wallet } from './Wallets.vue';
 import { useRouter } from 'vue-router';
 const { t } = useI18n();
 const router = useRouter();

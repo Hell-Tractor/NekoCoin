@@ -44,6 +44,7 @@ export default {
         },
         no_account: '暂无账户',
         no_account_tip: '点击右下角按钮添加一个账户吧！',
+        details: '账户详情',
     },
     tag: {
         add: '添加标签',

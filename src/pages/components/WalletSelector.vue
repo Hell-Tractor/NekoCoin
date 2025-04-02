@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { Wallet } from '../Wallet.vue';
+import { Wallet } from '../Wallets.vue';
 import { useRouter } from 'vue-router';
 const { t } = useI18n();
 const router = useRouter();
