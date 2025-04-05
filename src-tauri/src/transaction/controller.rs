@@ -322,28 +322,59 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
     // 2. join tags by COALESCE(pid, tag_id)
     // 3. group by tag
     // 4. order by summary desc
-    let result = sqlx::query_as(
-        r#"
-        SELECT SUM(amount) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
-        FROM transactions
-        LEFT JOIN (
-            WITH RECURSIVE tag_tree(id, pid) AS (
-                SELECT id, parent_id FROM tags WHERE id = tags.id
-                UNION ALL
-                SELECT t.id, t.parent_id FROM tags t JOIN tag_tree tt ON t.id = tt.pid
-            )
-            SELECT id, pid FROM tag_tree
-        ) AS tf ON transactions.tag_id = tf.id
-        JOIN tags AS tag ON COALESCE(tf.pid, transactions.tag_id) = tag.id
-        WHERE time BETWEEN $1 AND $2 AND (wallet_id = $3 OR to_wallet_id = $3)
-        GROUP BY tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
-        HAVING tag.kind = $4
-        ORDER BY summary DESC
-        "#)
-        .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
-        .bind(wallet_id).bind(kind as u8)
-        .fetch_all(db())
-        .await?;
+    let result = if kind == TagKind::Expense {
+        sqlx::query_as(
+            r#"
+            SELECT SUM(
+                CASE WHEN (tag.kind = $4 OR tag.kind = $5) AND wallet_id = $3 THEN amount ELSE 0 END
+            ) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            FROM transactions
+            LEFT JOIN (
+                WITH RECURSIVE tag_tree(id, pid) AS (
+                    SELECT id, parent_id FROM tags WHERE id = tags.id
+                    UNION ALL
+                    SELECT t.id, t.parent_id FROM tags t JOIN tag_tree tt ON t.id = tt.pid
+                )
+                SELECT id, pid FROM tag_tree
+            ) AS tf ON transactions.tag_id = tf.id
+            JOIN tags AS tag ON COALESCE(tf.pid, transactions.tag_id) = tag.id
+            WHERE time BETWEEN $1 AND $2
+            GROUP BY tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            ORDER BY summary DESC
+            "#)
+            .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+            .bind(wallet_id).bind(TagKind::Expense as u8).bind(TagKind::Transfer as u8)
+            .fetch_all(db())
+            .await?
+    } else if kind == TagKind::Income {
+        sqlx::query_as(
+            r#"
+            SELECT SUM(
+                CASE WHEN (tag.kind = $5 AND wallet_id = $3) OR (tag.kind = $6 AND to_wallet_id = $3) THEN amount ELSE 0 END +
+                CASE WHEN (tag.kind = $4 AND ts.receive_wallet_id = $3) THEN amount - ts.expense ELSE 0 END
+            ) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            FROM transactions
+            LEFT JOIN (
+                WITH RECURSIVE tag_tree(id, pid) AS (
+                    SELECT id, parent_id FROM tags WHERE id = tags.id
+                    UNION ALL
+                    SELECT t.id, t.parent_id FROM tags t JOIN tag_tree tt ON t.id = tt.pid
+                )
+                SELECT id, pid FROM tag_tree
+            ) AS tf ON transactions.tag_id = tf.id
+            JOIN tags AS tag ON COALESCE(tf.pid, transactions.tag_id) = tag.id
+            LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
+            WHERE time BETWEEN $1 AND $2
+            GROUP BY tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            ORDER BY summary DESC
+            "#)
+            .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+            .bind(wallet_id).bind(TagKind::Expense as u8).bind(TagKind::Income as u8).bind(TagKind::Transfer as u8)
+            .fetch_all(db())
+            .await?
+    } else {
+        return Err(Error::InvalidParameter("kind must be expense or income".to_string()));
+    };
     info!("got summary by tag(length = {})", result.len());
     Ok(result)
 }
