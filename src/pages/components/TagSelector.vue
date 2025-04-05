@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import Tag from './Tag';
+import Tag from '../../common/Tag';
 import { useRouter } from 'vue-router';
 const { t } = useI18n();
 const router = useRouter();

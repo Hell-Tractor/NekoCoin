@@ -1,8 +1,15 @@
 use serde::Serialize;
 use chrono::NaiveDateTime;
-use sqlx::{prelude::FromRow, sqlite::SqliteRow, Row};
+use sqlx::{FromRow, sqlite::SqliteRow, Row};
 
 use crate::{tag::{service::get_tag_by_id, Tag}, wallet};
+
+#[derive(Serialize, Debug, FromRow)]
+pub struct SummaryByTagDto {
+    #[sqlx(flatten)]
+    pub tag: Tag,
+    pub summary: i32,
+}
 
 #[derive(Serialize, Debug, Default, FromRow)]
 pub struct BalanceWithTypeDto {

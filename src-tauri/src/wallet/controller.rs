@@ -71,8 +71,8 @@ pub async fn delete_wallet(id: u32) -> Result<()> {
 }
 
 #[tauri::command]
-pub async fn get_sum_balance(currency: String) -> Result<u32> {
-    let sum = sqlx::query_scalar::<_, u32>(
+pub async fn get_sum_balance(currency: String) -> Result<i32> {
+    let sum = sqlx::query_scalar::<_, i32>(
         r#"
         SELECT SUM(balance) FROM wallets
         WHERE currency = $1

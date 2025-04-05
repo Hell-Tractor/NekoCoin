@@ -43,6 +43,21 @@ pub async fn get_tag_by_id(id: u32) -> Result<Tag> {
 }
 
 #[tauri::command]
+pub async fn has_child_tag(id: u32) -> Result<bool> {
+    let count = sqlx::query(
+        r#"
+        SELECT COUNT(*) FROM tags
+        WHERE parent_id = $1
+        "#)
+        .bind(id)
+        .fetch_one(db())
+        .await?
+        .get::<i64, _>(0);
+    info!("Tag(id = {}) has {} child tags", id, count);
+    Ok(count > 0)
+}
+
+#[tauri::command]
 pub async fn retrieve_tags(filter: String, kind: Option<TagKind>) -> Result<Vec<Tag>> {
     let keywords = filter.trim().replace("  ", " ").split_whitespace().map(|word| word.into()).collect::<Vec<String>>();
     let tags = if kind.is_none() {

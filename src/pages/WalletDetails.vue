@@ -11,6 +11,8 @@ import { Money } from '../common/Money';
 import TransactionList from './components/TransactionList.vue';
 import AddWallet from './AddWallet.vue';
 import ConfirmSheet from './components/ConfirmSheet.vue';
+import StackDiagram from './components/StackDiagram.vue';
+import { TagType } from '../common/Tag';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -47,7 +49,6 @@ const edit_wallet = async function() {
 }
 
 const delete_wallet = async function() {
-    // TODO: delete transactions when split is deleted
     try {
         await invoke('delete_wallet', { id: props.id });
         router.back();
@@ -67,6 +68,7 @@ onMounted(() => {
     <v-main v-if="wallet" class="main">
         <WalletCard variant="flat" :wallet="wallet" />
         <SummaryBar variant="flat" rounded="lg" :title="t('account.summary')" :current-expense="new Money(sum_balance.expense, { symbol: wallet.currency, code: '' })" :current-income="new Money(sum_balance.income, { symbol: wallet.currency, code: '' })" />
+        <StackDiagram class="mt-2" variant="flat" rounded="lg" :kind="TagType.EXPENSE" :item_id="{ type: 'wallet', value: props.id }" :currency="wallet.currency" />
         <v-row class="d-flex" style="margin: 0px;">
             <v-col><v-btn block variant="tonal" rounded="xl" prepend-icon="mdi-pencil" color="secondary-darken-1" :text="t('actions.edit')" @click="edit_wallet"></v-btn></v-col>
             <v-col><v-btn block variant="outlined" rounded="xl" prepend-icon="mdi-delete" color="error" :text="t('actions.delete')" @click="show_confirm_sheet = true"></v-btn></v-col>
