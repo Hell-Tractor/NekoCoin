@@ -60,7 +60,7 @@ const draw_chart = function() {
             type: 'bar',
             stacked: true,
             stackType: '100%',
-            height: '100%',
+            height: '170px',
             width: '100%',
             offsetX: -7,
             toolbar: { show: false },
@@ -102,6 +102,15 @@ const draw_chart = function() {
                 }
             }
         },
+        legend: {
+            formatter: function(seriesName: string, opts: any) {
+                return `${seriesName} ${(opts.w.globals.seriesPercent[opts.seriesIndex][0]).toFixed(2)}%`;
+            },
+            horizontalAlign: 'left',
+            markers: {
+                shape: 'circle',
+            }
+        }
     };
     const chart = new ApexCharts(document.querySelector("#chart"), options);
     chart.render();
