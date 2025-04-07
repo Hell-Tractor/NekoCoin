@@ -110,7 +110,8 @@ const draw_chart = function() {
             horizontalAlign: 'left',
             markers: {
                 shape: 'circle',
-            }
+            },
+            showForSingleSeries: true,
         }
     };
     const chart = new ApexCharts(document.querySelector("#chart"), options);
