@@ -9,6 +9,7 @@ import AddTag from "./pages/AddTag.vue";
 import TagDetails from "./pages/TagDetails.vue";
 import Wallets from "./pages/Wallets.vue";
 import WalletDetails from "./pages/WalletDetails.vue";
+import Report from "./pages/Report.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -22,6 +23,7 @@ const router = createRouter({
                 { path: "accounts", component: Wallets },
                 { path: "tags", component: Tags },
                 { path: "transactions", component: Transaction },
+                { path: "reports", component: Report },
             ],
         },
         { path: "/transaction/add", component: AddTransaction },
