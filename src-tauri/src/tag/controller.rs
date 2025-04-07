@@ -65,6 +65,7 @@ pub async fn retrieve_tags(filter: String, kind: Option<TagKind>) -> Result<Vec<
             r#"
             SELECT * FROM tags
             WHERE name LIKE '%' || $1 || '%'
+            ORDER BY parent_id, id
             "#)
             .bind(keywords.join("%"))
             .fetch_all(db())
@@ -75,6 +76,7 @@ pub async fn retrieve_tags(filter: String, kind: Option<TagKind>) -> Result<Vec<
             SELECT * FROM tags
             WHERE name LIKE '%' || $1 || '%'
             AND kind = $2
+            ORDER BY parent_id, id
             "#)
             .bind(keywords.join("%")).bind(kind.unwrap() as u8)
             .fetch_all(db())
