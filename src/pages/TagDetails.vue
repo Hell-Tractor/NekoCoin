@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref } from 'vue';
 import BackTitleBar from './components/BackTitleBar.vue';
-import Tag, { TagType, TagTypeToString } from '../common/Tag';
+import Tag, { TagType, TagTypeFromString, TagTypeToString } from '../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -58,7 +58,7 @@ onMounted(async () => {
         </template>
     </BackTitleBar>
     <v-main class="main">
-        <StackDiagram v-if="tag && tag.type != TagTypeToString(TagType.TRANSFER)" class="mb-2" :item_id="{ type: 'tag', value: props.id }" :currency="Constants.CURRENCIES[0].symbol" variant="flat" rounded="lg" :kind="tag?.type == 'Expense' ? TagType.EXPENSE : TagType.INCOME"></StackDiagram>
+        <StackDiagram v-if="tag" class="mb-2" :item_id="{ type: 'tag', value: props.id }" :currency="Constants.CURRENCIES[0].symbol" variant="flat" rounded="lg" :kind="TagTypeFromString(tag!.type)"></StackDiagram>
         <TransactionList :filter="{ by: 'tag', id: props.id }" variant="flat"></TransactionList>
         <ConfirmSheet v-model="show_confirm_sheet" :title="t('warning.cascade_and_irrevertible.title')" :text="t('warning.cascade_and_irrevertible.content')" @confirm="delete_tag"></ConfirmSheet>
     </v-main>

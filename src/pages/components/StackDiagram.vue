@@ -10,7 +10,8 @@ const { t } = useI18n();
 const props = defineProps<{
     item_id?: { type: 'wallet' | 'tag', value: number };
     currency: string;
-    kind: TagType.EXPENSE | TagType.INCOME;
+    // TagType.Transfer is only allowed when item_id.type is 'tag'
+    kind: TagType;
     beginDate?: Date;
     endDate?: Date;
     variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain"
@@ -25,7 +26,7 @@ const get_data = async function() {
         if (props.item_id?.type == 'wallet') {
             data.value = await invoke('get_summary_by_tag_in_wallet', {
                 walletId: props.item_id?.value,
-                kind: TagTypeToString(props.kind!),
+                kind: TagTypeToString(props.kind),
                 beginDate: props.beginDate ? formatDate(props.beginDate) : undefined,
                 endDate: props.endDate ? formatDate(props.endDate) : undefined
             });

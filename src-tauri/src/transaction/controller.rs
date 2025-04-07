@@ -318,28 +318,28 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
     debug!("Getting summary by tag(kind = {:?}) in wallet(id = {})", kind, wallet_id);
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
-    // 1. find tags' farthest parent id => pid
-    // 2. join tags by COALESCE(pid, tag_id)
-    // 3. group by tag
+    // 1. find tags' farthest parent id => root_id
+    // 2. join tags by root_id
+    // 3. group by root_id
     // 4. order by summary desc
     let result = if kind == TagKind::Expense {
         sqlx::query_as(
             r#"
+            -- find all tags' farthest non null parent id => root_id
+            WITH RECURSIVE tag_tree AS (
+                SELECT t.id AS root_id, t.id AS id FROM tags t WHERE t.parent_id IS NULL
+                UNION ALL
+                SELECT tt.root_id, t.id FROM tag_tree tt JOIN tags t ON tt.id = t.parent_id
+            )
             SELECT SUM(
                 CASE WHEN (tag.kind = $4 OR tag.kind = $5) AND wallet_id = $3 THEN amount ELSE 0 END
             ) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
             FROM transactions
-            LEFT JOIN (
-                WITH RECURSIVE tag_tree(id, pid) AS (
-                    SELECT id, parent_id FROM tags WHERE id = tags.id
-                    UNION ALL
-                    SELECT t.id, t.parent_id FROM tags t JOIN tag_tree tt ON t.id = tt.pid
-                )
-                SELECT id, pid FROM tag_tree
-            ) AS tf ON transactions.tag_id = tf.id
-            JOIN tags AS tag ON COALESCE(tf.pid, transactions.tag_id) = tag.id
+            JOIN tag_tree AS tt ON transactions.tag_id = tt.id
+            JOIN tags AS tag ON tt.root_id = tag.id
             WHERE time BETWEEN $1 AND $2
-            GROUP BY tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            GROUP BY tt.root_id
+            HAVING summary > 0
             ORDER BY summary DESC
             "#)
             .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
@@ -349,23 +349,23 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
     } else if kind == TagKind::Income {
         sqlx::query_as(
             r#"
+            -- find all tags' farthest non null parent id => root_id
+            WITH RECURSIVE tag_tree AS (
+                SELECT t.id AS root_id, t.id AS id FROM tags t WHERE t.parent_id IS NULL
+                UNION ALL
+                SELECT tt.root_id, t.id FROM tag_tree tt JOIN tags t ON tt.id = t.parent_id
+            )
             SELECT SUM(
                 CASE WHEN (tag.kind = $5 AND wallet_id = $3) OR (tag.kind = $6 AND to_wallet_id = $3) THEN amount ELSE 0 END +
                 CASE WHEN (tag.kind = $4 AND ts.receive_wallet_id = $3) THEN amount - ts.expense ELSE 0 END
             ) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
             FROM transactions
-            LEFT JOIN (
-                WITH RECURSIVE tag_tree(id, pid) AS (
-                    SELECT id, parent_id FROM tags WHERE id = tags.id
-                    UNION ALL
-                    SELECT t.id, t.parent_id FROM tags t JOIN tag_tree tt ON t.id = tt.pid
-                )
-                SELECT id, pid FROM tag_tree
-            ) AS tf ON transactions.tag_id = tf.id
-            JOIN tags AS tag ON COALESCE(tf.pid, transactions.tag_id) = tag.id
+            JOIN tag_tree AS tt ON transactions.tag_id = tt.id
+            JOIN tags AS tag ON tt.root_id = tag.id
             LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
             WHERE time BETWEEN $1 AND $2
-            GROUP BY tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            GROUP BY tt.root_id
+            HAVING summary > 0
             ORDER BY summary DESC
             "#)
             .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
@@ -386,13 +386,23 @@ pub async fn get_summary_by_tag_with_tag(tag_id: u32, currency: String, begin: O
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     let result: Vec<SummaryByTagDto> = sqlx::query_as(
         r#"
-        SELECT SUM(amount) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+        WITH RECURSIVE tag_tree AS (
+            -- add tag(id = $3) itself
+            SELECT id AS root_id, id FROM tags WHERE id = $3
+            UNION
+            -- add all children of tag(id = $3)
+            SELECT t.id AS root_id, t.id AS id FROM tags t WHERE parent_id = $3
+            UNION ALL
+            -- find all children of tag(id = $3)'s children recursively, but not for tag(id = $3) itself
+            SELECT tt.root_id, t.id FROM tag_tree tt JOIN tags t ON tt.id = t.parent_id WHERE tt.id != $3
+        )
+        SELECT SUM(amount) as summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
         FROM transactions
-        JOIN tags AS tag ON transactions.tag_id = tag.id
+        JOIN tag_tree tt ON transactions.tag_id = tt.id
+        JOIN tags tag ON tt.root_id = tag.id
         JOIN wallets ON transactions.wallet_id = wallets.id
-        WHERE time BETWEEN $1 AND $2 AND tag.parent_id = $3 AND wallets.currency = $4
-        GROUP BY tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
-        ORDER BY summary DESC
+        WHERE time BETWEEN $1 AND $2 AND wallets.currency = $4
+        GROUP BY tt.root_id
         "#)
         .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
         .bind(tag_id).bind(currency)

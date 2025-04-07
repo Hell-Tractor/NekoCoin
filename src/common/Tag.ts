@@ -5,14 +5,21 @@ export enum TagType {
 }
 
 export const TagTypeToString = (type: TagType): string => {
-    switch (type) {
-        case TagType.EXPENSE:
-            return 'Expense';
-        case TagType.INCOME:
-            return 'Income';
-        case TagType.TRANSFER:
-            return 'Transfer';
+    for (let i = 0; i < TagTypeNames.length; i++) {
+        if (TagTypeNames[i].type === type) {
+            return TagTypeNames[i].name;
+        }
     }
+    throw new Error(`Unknown tag type: ${type}`);
+}
+
+export const TagTypeFromString= (type: String): TagType => {
+    for (let i = 0; i < TagTypeNames.length; i++) {
+        if (TagTypeNames[i].name === type) {
+            return TagTypeNames[i].type;
+        }
+    }
+    throw new Error(`Unknown tag type: ${type}`);
 }
 
 export const TagTypeNames = [
