@@ -122,5 +122,14 @@ export default {
             title: '警告',
             content: '该操作不可逆且会删除所有相关数据，确认继续？',
         },
+    },
+    report: {
+        overview: '概览',
+        summary_type: {
+            Daily: '按日',
+            Weekly: '按周',
+            Monthly: '按月',
+            Yearly: '按年',
+        }
     }
 }

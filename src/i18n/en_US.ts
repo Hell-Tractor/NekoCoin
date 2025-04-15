@@ -122,5 +122,14 @@ export default {
             title: 'Warning',
             content: 'This action is IRREVERTIBLE and will also delete ALL RELATED data, confirm to proceed?',
         },
+    },
+    report: {
+        overview: 'Overview',
+        summary_type: {
+            Daily: 'Daily',
+            Weekly: 'Weekly',
+            Monthly: 'Monthly',
+            Yearly: 'Yearly',
+        }
     }
 }
