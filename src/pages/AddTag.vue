@@ -5,10 +5,12 @@ import { rules } from '../common/Rules';
 import { onMounted, Ref, ref } from 'vue';
 import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
 import Constants from '../common/Constants';
-import { getRandomColor } from '../common/Utils';
+import { get_random_theme_color } from '../themes/palettes';
+import { load_settings, settings } from '../common/Settings';
 import { invoke } from '@tauri-apps/api/core';
 import IconSelector from './components/IconSelector.vue';
 import { useRouter } from 'vue-router';
+import ColorPalette from './components/ColorPalette.vue';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -21,7 +23,7 @@ const form: Ref<boolean> = ref(false);
 const tag_name: Ref<string> = ref('');
 const tag_remark: Ref<string> = ref('');
 const icon: Ref<string> = ref('mdi-tag');
-const selected_color: Ref<string> = ref(getRandomColor('rgb'));
+const selected_color: Ref<string> = ref(get_random_theme_color(settings.theme));
 const parent_tag: Ref<Tag | null> = ref(null);
 
 const tag_search_text: Ref<string> = ref('');
@@ -70,6 +72,7 @@ const addTag = async function() {
 }
 
 onMounted(async () => {
+    await load_settings();
     await retrieve_tags();
 
     if (props.init) {
@@ -85,6 +88,8 @@ onMounted(async () => {
         console.log(selected_tag_type.value);
 
         tags.value = tags.value.filter(tag => tag.id != id.value);
+    } else {
+        selected_color.value = get_random_theme_color(settings.theme);
     }
 });
 </script>
@@ -104,6 +109,7 @@ onMounted(async () => {
                     </template>
                 </v-select>
                 <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('icon.select') }}</v-btn>
+                <ColorPalette v-model="selected_color" />
                 <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
                 <div style="height: 50px;"></div>
                 <v-btn @click="addTag" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
