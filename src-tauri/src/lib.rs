@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::fs;
 
 use sql::db;
 use sqlx::migrate::Migrator;
@@ -6,6 +6,7 @@ use tag::TagKind;
 use tracing::{info, warn};
 use tracing_appender::rolling;
 use tracing_subscriber::{fmt::writer::MakeWriterExt, EnvFilter};
+use tauri::Manager;
 
 mod constants;
 mod money;
@@ -29,6 +30,8 @@ pub enum Error {
     },
     #[error("Invalid parameter: {0}")]
     InvalidParameter(String),
+    #[error("Database error: {0}")]
+    DatabaseError(String),
 }
 type Result<T> = std::result::Result<T, Error>;
 
@@ -50,11 +53,15 @@ impl Drop for Error {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     init_logger();
-    init_database();
-
-    tauri::async_runtime::block_on(migrate_database());
 
     tauri::Builder::default()
+        .setup(|app| {
+            tauri::async_runtime::block_on(async {
+                init_database(app.handle()).await.expect("Failed to initialize database");
+                migrate_database().await;
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             wallet::controller::create_wallet,
             wallet::controller::update_wallet,
@@ -101,12 +108,20 @@ async fn migrate_database() {
     info!("Database migration completed");
 }
 
-fn init_database() {
-    if !Path::new(constants::DB_NAME).exists() {
-        info!("Database file not exists. Creating file `{}`", constants::DB_NAME);
-        fs::File::create(constants::DB_NAME).expect("Failed to create database file.");
+async fn init_database(app: &tauri::AppHandle) -> Result<()> {
+    let directory = app.path().app_data_dir()
+        .map_err(|error| Error::DatabaseError(format!("failed to locate database directory: {error}")))?;
+    fs::create_dir_all(&directory)
+        .map_err(|error| Error::DatabaseError(format!("failed to create database directory: {error}")))?;
+    let database_path = directory.join(constants::DB_NAME);
+    if !database_path.exists() {
+        info!("Creating database file `{}`", database_path.display());
+        fs::File::create(&database_path)
+            .map_err(|error| Error::DatabaseError(format!("failed to create database: {error}")))?;
     }
+    sql::init(database_path).await?;
     info!("Database initialization done.");
+    Ok(())
 }
 
 fn init_logger() {
