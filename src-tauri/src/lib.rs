@@ -78,6 +78,7 @@ pub fn run() {
             transaction::controller::get_sum_balance_in_wallet,
             transaction::controller::update_transaction,
             transaction::controller::get_summary_by_tag_in_wallet,
+            transaction::controller::get_expense_summary_by_tag,
             transaction::controller::get_summary_by_tag_with_tag,
 
             summary::controller::get_summary,

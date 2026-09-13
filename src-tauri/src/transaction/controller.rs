@@ -6,7 +6,7 @@ use crate::sql::db;
 use crate::tag::TagKind;
 use crate::{tag, wallet, Error, Result};
 
-use super::dto::{BalanceWithTypeDto, SummaryByTagDto, TransactionDto};
+use super::dto::{BalanceWithTypeDto, SummaryByTagDto, SummaryByTagWithCurrencyDto, TransactionDto};
 use super::service::{modify_currency, revert_currency};
 use super::vo::{CreateTransactionVo, TransactionVo};
 
@@ -376,6 +376,47 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
         return Err(Error::InvalidParameter("kind must be expense or income".to_string()));
     };
     info!("got summary by tag(length = {})", result.len());
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn get_expense_summary_by_tag(begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagWithCurrencyDto>> {
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let result = sqlx::query_as(
+        r#"
+        WITH RECURSIVE tag_tree(root_id, id) AS (
+            SELECT id, id FROM tags WHERE parent_id IS NULL
+            UNION ALL
+            SELECT tag_tree.root_id, tags.id
+            FROM tag_tree JOIN tags ON tags.parent_id = tag_tree.id
+        )
+        SELECT
+            SUM(CASE
+                WHEN tags.kind = $3 THEN COALESCE(transaction_splits.expense, transactions.amount)
+                WHEN tags.kind = $4 THEN transactions.amount
+                ELSE 0
+            END) AS summary,
+            root.id, root.name, root.remark, root.color, root.icon, root.kind, root.parent_id,
+            wallets.currency_code
+        FROM transactions
+        JOIN tags ON transactions.tag_id = tags.id
+        JOIN tag_tree ON transactions.tag_id = tag_tree.id
+        JOIN tags AS root ON tag_tree.root_id = root.id
+        JOIN wallets ON transactions.wallet_id = wallets.id
+        LEFT JOIN transaction_splits ON transactions.split_id = transaction_splits.id
+        WHERE transactions.time BETWEEN $1 AND $2
+        GROUP BY tag_tree.root_id, wallets.currency_code
+        HAVING summary > 0
+        ORDER BY summary DESC
+        "#)
+        .bind(begin.format(super::DATETIME_FORMAT).to_string())
+        .bind(end.format(super::DATETIME_FORMAT).to_string())
+        .bind(TagKind::Expense as u8)
+        .bind(TagKind::Transfer as u8)
+        .fetch_all(db())
+        .await?;
+    info!("Retrieved {} expense tag summaries.", result.len());
     Ok(result)
 }
 

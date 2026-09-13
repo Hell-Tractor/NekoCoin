@@ -66,3 +66,11 @@ impl TransactionDto {
         })
     }
 }
+
+#[derive(Serialize, Debug, FromRow)]
+pub struct SummaryByTagWithCurrencyDto {
+    #[sqlx(flatten)]
+    pub tag: Tag,
+    pub summary: i32,
+    pub currency_code: String,
+}

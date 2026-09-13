@@ -125,6 +125,7 @@ export default {
     },
     report: {
         overview: 'Overview',
+        expense_by_tag: 'Expense by Tag',
         summary_type: {
             Daily: 'Daily',
             Weekly: 'Weekly',

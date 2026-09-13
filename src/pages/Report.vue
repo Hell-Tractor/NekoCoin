@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { SummaryType, SummaryTypeList } from '../common/SummaryType';
 import ColumnDiagram from './components/ColumnDiagram.vue';
+import ExpenseTagRanking from './components/ExpenseTagRanking.vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
@@ -9,7 +10,7 @@ const summary_type = ref<SummaryType>(SummaryType.Monthly);
 </script>
 
 <template>
-    <ColumnDiagram :summary-type="summary_type" variant="flat" rounded="xl">
+    <ColumnDiagram class="mb-2" :summary-type="summary_type" variant="flat" rounded="xl">
         <template v-slot:title>
             <v-row class="d-flex align-center">
                 <v-col>{{ t('report.overview') }}</v-col>
@@ -17,4 +18,5 @@ const summary_type = ref<SummaryType>(SummaryType.Monthly);
             </v-row>
         </template>
     </ColumnDiagram>
+    <ExpenseTagRanking />
 </template>
