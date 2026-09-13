@@ -42,7 +42,8 @@ pub async fn get_summary(summary_type: SummaryType, begin: Option<NaiveDate>, en
         return Ok(SummaryDto { dates: vec![], data: vec![], has_more: false });
     };
     let begin_date = NaiveDate::parse_from_str(&first_transaction, crate::transaction::DATETIME_FORMAT).unwrap();
-    let end_date = min(end, chrono::Local::now().naive_utc()).date();
+    let end_date = min(end, chrono::Local::now().naive_local()).date();
+    debug!("end_date = {}", end_date.and_hms_opt(23, 59, 59).unwrap().format(crate::transaction::DATETIME_FORMAT));
     let mut date_values = summary_type.generate_date_values_between(begin_date, end_date);
     date_values.reverse();
     let page_values = date_values.iter().skip(page_offset).take(page_size).copied().collect::<Vec<_>>();
@@ -53,6 +54,7 @@ pub async fn get_summary(summary_type: SummaryType, begin: Option<NaiveDate>, en
     let newest_range = summary_type.get_range_of_date(page_values[0]);
     let query_begin = std::cmp::max(oldest_range.0, begin.date()).and_hms_opt(0, 0, 0).unwrap();
     let query_end = std::cmp::min(newest_range.1, end.date()).and_hms_opt(23, 59, 59).unwrap();
+    debug!("query_range: {} ~ {}", query_begin.format(crate::transaction::DATETIME_FORMAT), query_end.format(crate::transaction::DATETIME_FORMAT));
 
     let data = sqlx::query(
         format!(r#"
