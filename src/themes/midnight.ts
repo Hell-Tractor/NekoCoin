@@ -3,21 +3,21 @@ import { type ThemeDefinition } from "vuetify"
 const midnight: ThemeDefinition = {
     dark: true,
     colors: {
-        background: '#2D3047',
-        surface: '#3B2F2F',
-        'surface-lighten-1': '#4A3C3C',
-        'on-surface-lighten-1': '#D9D9D9',
-        'on-surface-lighten-2': '#B3B3B3',
-        primary: '#FF9A8B',
-        'primary-darken-1': '#FF7A6B',
-        secondary: '#B0E0E6',
-        'secondary-darken-1': '#8FCED8',
-        error: '#FF6AC6',
-        info: '#99CCFF',
-        success: '#A8E6CF',
-        warning: '#FFD700',
-        'on-primary': '#2D3047',
-        'on-secondary': '#2D3047'
+        background: '#171B24',
+        surface: '#222936',
+        'surface-lighten-1': '#2C3443',
+        'on-surface-lighten-1': '#E7ECF4',
+        'on-surface-lighten-2': '#AEB8C8',
+        primary: '#8FB8FF',
+        'primary-darken-1': '#6F98E0',
+        secondary: '#E8B86D',
+        'secondary-darken-1': '#C9964D',
+        error: '#FF7B72',
+        info: '#74A7FF',
+        success: '#72D6A0',
+        warning: '#F2C14E',
+        'on-primary': '#172033',
+        'on-secondary': '#2A2115'
     }
 }
 

@@ -3,21 +3,21 @@ import { type ThemeDefinition } from "vuetify"
 const neon: ThemeDefinition = {
     dark: true,
     colors: {
-        background: '#2A2A2A',
-        surface: '#1E1E1E',
-        'surface-lighten-1': '#2A2A2A',
-        'on-surface-lighten-1': '#D9D9D9',
-        'on-surface-lighten-2': '#B3B3B3',
-        primary: '#FF6AC6',
-        'primary-darken-1': '#FF3DAC',
-        secondary: '#00E5FF',
-        'secondary-darken-1': '#00B8D4',
-        error: '#FF355E',
-        info: '#00E5FF',
-        success: '#76FF03',
-        warning: '#FFD700',
-        'on-primary': '#2A2A2A',
-        'on-secondary': '#2A2A2A'
+        background: '#10151A',
+        surface: '#182027',
+        'surface-lighten-1': '#23303A',
+        'on-surface-lighten-1': '#ECF4F2',
+        'on-surface-lighten-2': '#A9BCB8',
+        primary: '#F4B942',
+        'primary-darken-1': '#C88E1E',
+        secondary: '#47D7C0',
+        'secondary-darken-1': '#20A895',
+        error: '#FF6B6B',
+        info: '#74A7FF',
+        success: '#7BD88F',
+        warning: '#F4B942',
+        'on-primary': '#231B08',
+        'on-secondary': '#06231F'
     }
 }
 
