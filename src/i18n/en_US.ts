@@ -1,6 +1,7 @@
 export default {
     app_name: 'NekoCoin',
     welcome: 'Welcome back!',
+    welcome_user: 'Welcome back, {username}!',
     total_balance: 'Total Balance',
     this_month: 'This Month',
     income: 'Income',
@@ -28,6 +29,14 @@ export default {
         accounts: 'Accounts',
         tags: 'Tags',
         settings: 'Settings',
+    },
+    settings: {
+        title: 'User Settings',
+        user_name: 'User name',
+        primary_currency: 'Primary currency',
+        theme: 'Theme',
+        avatar: 'Avatar',
+        saved: 'Settings saved',
     },
     validation: {
         required: 'Required',

@@ -1,6 +1,7 @@
 export default {
     app_name: 'NekoCoin',
     welcome: '欢迎回来！',
+    welcome_user: '欢迎回来，{username}!',
     total_balance: '总余额',
     this_month: '本月',
     income: '收入',
@@ -28,6 +29,14 @@ export default {
         accounts: '账户',
         tags: '标签',
         settings: '设置',
+    },
+    settings: {
+        title: '用户设置',
+        user_name: '用户名',
+        primary_currency: '主要货币',
+        theme: '主题',
+        avatar: '头像',
+        saved: '设置已保存',
     },
     validation: {
         required: '必填',

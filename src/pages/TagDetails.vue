@@ -9,7 +9,7 @@ import TransactionList from './components/TransactionList.vue';
 import ConfirmSheet from './components/ConfirmSheet.vue';
 import AddTag from './AddTag.vue';
 import StackDiagram from './components/StackDiagram.vue';
-import Constants from '../common/Constants';
+import { load_settings, settings } from '../common/Settings';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -47,6 +47,7 @@ const edit_tag = async function() {
 
 onMounted(async () => {
     await get_tag();
+    await load_settings();
 });
 </script>
 
@@ -58,7 +59,7 @@ onMounted(async () => {
         </template>
     </BackTitleBar>
     <v-main class="main">
-        <StackDiagram v-if="tag" class="mb-2" :item_id="{ type: 'tag', value: props.id }" :currency_code="Constants.CURRENCIES[0].code" variant="flat" rounded="lg" :kind="TagTypeFromString(tag!.type)"></StackDiagram>
+        <StackDiagram v-if="tag" class="mb-2" :item_id="{ type: 'tag', value: props.id }" :currency_code="settings.primary_currency_code" variant="flat" rounded="lg" :kind="TagTypeFromString(tag!.type)"></StackDiagram>
         <TransactionList :filter="{ by: 'tag', id: props.id }" variant="flat"></TransactionList>
         <ConfirmSheet v-model="show_confirm_sheet" :title="t('warning.cascade_and_irrevertible.title')" :text="t('warning.cascade_and_irrevertible.content')" @confirm="delete_tag"></ConfirmSheet>
     </v-main>

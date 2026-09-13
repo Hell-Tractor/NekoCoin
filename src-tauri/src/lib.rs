@@ -14,6 +14,7 @@ mod wallet;
 mod tag;
 mod transaction;
 mod summary;
+mod settings;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -82,6 +83,9 @@ pub fn run() {
             transaction::controller::get_summary_by_tag_with_tag,
 
             summary::controller::get_summary,
+
+            settings::get_settings,
+            settings::save_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -7,6 +7,7 @@ import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDate } from '../common/Utils';
 import TransactionList from './components/TransactionList.vue';
+import { load_settings, settings } from '../common/Settings';
 const { t } = useI18n();
 
 const totalBalance: Ref<Money | undefined> = ref(undefined);
@@ -18,8 +19,9 @@ const today = function() {
 }
 const getTotalBalance = async function() {
     try {
-        const result: number = await invoke('get_sum_balance', { currencyCode: Constants.CURRENCIES[0].code });
-        totalBalance.value = new Money(result, Constants.CURRENCIES[0]);
+        const currency = Constants.CURRENCIES.find(item => item.code === settings.primary_currency_code) ?? Constants.CURRENCIES[0];
+        const result: number = await invoke('get_sum_balance', { currencyCode: currency.code });
+        totalBalance.value = new Money(result, currency);
     } catch (e) {
         console.error(e);
     }
@@ -28,10 +30,11 @@ const getMonthBalance = async function() {
     try {
         const beginDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         const endDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-        const result: { income: number, expense: number } = await invoke('get_sum_balance_with_type', { currencyCode: Constants.CURRENCIES[0].code, begin: formatDate(beginDate), end: formatDate(endDate) });
-        currentMonthIncome.value = new Money(result.income, Constants.CURRENCIES[0]);
-        currentMonthExpense.value = new Money(result.expense, Constants.CURRENCIES[0]);
-        currentMonthNetCashFlow.value = new Money(result.income - result.expense, Constants.CURRENCIES[0]);
+        const currency = Constants.CURRENCIES.find(item => item.code === settings.primary_currency_code) ?? Constants.CURRENCIES[0];
+        const result: { income: number, expense: number } = await invoke('get_sum_balance_with_type', { currencyCode: currency.code, begin: formatDate(beginDate), end: formatDate(endDate) });
+        currentMonthIncome.value = new Money(result.income, currency);
+        currentMonthExpense.value = new Money(result.expense, currency);
+        currentMonthNetCashFlow.value = new Money(result.income - result.expense, currency);
     } catch (e) {
         console.error(e);
     }
@@ -46,19 +49,21 @@ const refresh = async function() {
 }
 
 onMounted(() => {
-    getTotalBalance();
-    getMonthBalance();
+    load_settings().then(() => {
+        getTotalBalance();
+        getMonthBalance();
+    });
 });
 </script>
 
 <template>
     <v-row>
         <v-col class="flex-grow-0">
-            <v-avatar icon="mdi-cat" size="large" />
+            <v-avatar :icon="settings.avatar" size="large" />
         </v-col>
         <v-col>
             <div>{{ today() }}</div>
-            <div>{{ t('welcome') }}</div>
+            <div>{{ settings.user_name ? t('welcome_user', { username: settings.user_name }) : t('welcome') }}</div>
         </v-col>
     </v-row>
     <v-card rounded="xl">
@@ -68,6 +73,6 @@ onMounted(() => {
             <p class="text-h5 font-weight-black">{{ totalBalance ?? "loading..." }}</p>
         </v-card-text>
     </v-card>
-    <SummaryBar v-if="!!currentMonthExpense && !!currentMonthIncome && !!currentMonthNetCashFlow" :title="t('this_month')" variant="text" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money" :current-net-cash-flow="currentMonthNetCashFlow as Money"></SummaryBar>
+    <SummaryBar v-if="!!currentMonthExpense && !!currentMonthIncome && !!currentMonthNetCashFlow" variant="text" :title="t('this_month')" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money" :current-net-cash-flow="currentMonthNetCashFlow as Money"></SummaryBar>
     <TransactionList :title="t('transaction.list.title')" @deleted="_ => refresh()"></TransactionList>
 </template>
