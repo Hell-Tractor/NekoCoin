@@ -383,7 +383,7 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
 #[tauri::command]
 pub async fn get_expense_summary_by_tag(summary_type: Option<SummaryType>, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagWithCurrencyDto>> {
     let (begin_date, end_date) = if let Some(kind) = summary_type.as_ref() {
-        let today = chrono::Local::now().naive_utc().date();
+        let today = chrono::Local::now().naive_local().date();
         let (period_begin, period_end) = kind.get_range_of_date(today);
         (
             std::cmp::max(begin.unwrap_or(period_begin), period_begin),
