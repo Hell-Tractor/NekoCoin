@@ -8,11 +8,18 @@ use crate::{Error, Result};
 const SETTINGS_FILE: &str = "settings.yaml";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
     pub primary_currency_code: String,
     pub theme: String,
     pub user_name: String,
     pub avatar: String,
+    pub locale: String,
+    pub default_page: String,
+    pub date_format: String,
+    pub time_format: String,
+    pub decimal_places: u8,
+    pub thousands_separator: bool,
 }
 
 impl Default for Settings {
@@ -22,6 +29,12 @@ impl Default for Settings {
             theme: "pinkPad".to_string(),
             user_name: String::new(),
             avatar: "mdi-cat".to_string(),
+            locale: "zh-CN".to_string(),
+            default_page: "home".to_string(),
+            date_format: "YYYY-MM-DD".to_string(),
+            time_format: "24hr".to_string(),
+            decimal_places: 2,
+            thousands_separator: true,
         }
     }
 }

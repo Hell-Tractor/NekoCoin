@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { computed, ComputedRef, onMounted, ref, Ref, watch } from 'vue';
+import { computed, ComputedRef, nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 'vue';
 import BackTitleBar from './components/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { rules } from '../common/Rules';
 import Constants from '../common/Constants';
-import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
+import Tag, { TagType, TagTypeFromString, TagTypeNames, TagTypeToString } from '../common/Tag';
 import { useDate } from 'vuetify';
 import { Wallet } from './Wallets.vue';
 import { invoke } from '@tauri-apps/api/core';
-import { formatDatetime } from '../common/Utils';
+import { formatDatetime, formatTime } from '../common/Utils';
+import { load_settings, settings } from '../common/Settings';
 import WalletSelector from './components/WalletSelector.vue';
 import TagSelector from './components/TagSelector.vue';
 import { Transaction } from './components/TransactionList.vue';
-import { useRouter } from 'vue-router';
+import { onBeforeRouteLeave, useRouter } from 'vue-router';
+import { clear_transaction_draft, transaction_draft } from '../common/TransactionDraft';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -40,6 +42,8 @@ const has_split: Ref<boolean> = ref(false);
 const split_count: Ref<number> = ref(2);
 const split_expense: Ref<number> = ref(0);
 const split_receive_wallet: Ref<Wallet | undefined> = ref(undefined);
+let tag_request_id = 0;
+let restoring_draft = false;
 
 const others_expense: ComputedRef<number> = computed(() => {
     return Number.parseInt(Math.ceil((amount.value ?? 0) * 100 / split_count.value).toFixed(0)) / 100;
@@ -60,6 +64,7 @@ const updateDate = function() {
         time.value.setHours(parseInt(maxHour), parseInt(maxMinute));
     }
     resetTime();
+    save_draft();
 }
 const resetDate = function() {
     selecting_date.value = new Date(time.value);
@@ -67,6 +72,7 @@ const resetDate = function() {
 const updateTime = function() {
     var [hour, minute] = selecting_time.value.split(':');
     time.value.setHours(parseInt(hour), parseInt(minute));
+    save_draft();
 }
 const resetTime = function() {
     selecting_time.value = `${formatter.format(time.value.getHours())}:${formatter.format(time.value.getMinutes())}`;
@@ -82,7 +88,57 @@ const getMaxTime = function() {
     }
     return '23:59';
 }
+
+const save_draft = function() {
+    if (props.init) {
+        return;
+    }
+    transaction_draft.active = true;
+    transaction_draft.remark = remark.value;
+    transaction_draft.amount = amount.value;
+    transaction_draft.time = time.value.toISOString();
+    const tag_type = typeof selected_tag_type.value === 'string'
+        ? TagTypeFromString(selected_tag_type.value)
+        : selected_tag_type.value;
+    transaction_draft.selected_tag_type = TagTypeToString(tag_type) as 'Expense' | 'Income' | 'Transfer';
+    transaction_draft.wallet_id = selected_wallet.value?.id;
+    transaction_draft.to_wallet_id = selected_to_wallet.value?.id;
+    transaction_draft.tag_id = selected_tag.value?.id;
+    transaction_draft.tag = selected_tag.value ? { ...selected_tag.value } : undefined;
+    transaction_draft.has_split = has_split.value;
+    transaction_draft.split_count = split_count.value;
+    transaction_draft.split_expense = split_expense.value;
+    transaction_draft.split_receive_wallet_id = split_receive_wallet.value?.id;
+};
+
+const restore_draft = function() {
+    remark.value = transaction_draft.remark;
+    amount.value = transaction_draft.amount;
+    time.value = new Date(transaction_draft.time);
+    selecting_date.value = new Date(time.value);
+    resetTime();
+    selected_tag_type.value = TagTypeFromString(transaction_draft.selected_tag_type);
+    selected_wallet.value = wallets.value.find(wallet => wallet.id === transaction_draft.wallet_id);
+    selected_to_wallet.value = wallets.value.find(wallet => wallet.id === transaction_draft.to_wallet_id);
+    selected_tag.value = tags.value.find(tag => tag.id === transaction_draft.tag_id) ?? transaction_draft.tag;
+    has_split.value = transaction_draft.has_split;
+    split_count.value = transaction_draft.split_count;
+    split_expense.value = transaction_draft.split_expense;
+    split_receive_wallet.value = wallets.value.find(wallet => wallet.id === transaction_draft.split_receive_wallet_id);
+};
+
+const restore_draft_after_tags_loaded = async function() {
+    restoring_draft = true;
+    selected_tag_type.value = TagTypeFromString(transaction_draft.selected_tag_type);
+    await retrieve_tags();
+    await nextTick();
+    restore_draft();
+    await nextTick();
+    restoring_draft = false;
+};
+
 const maxTime: Ref<string> = ref(getMaxTime());
+const time_picker_format = computed(() => settings.time_format === '12hr' ? 'ampm' : '24hr');
 const retrieve_wallets = async function() {
     try {
         wallets.value = await invoke('retrieve_wallets');
@@ -92,8 +148,15 @@ const retrieve_wallets = async function() {
     }
 }
 const retrieve_tags = async function() {
+    const current_request_id = ++tag_request_id;
     try {
-        tags.value = await invoke('retrieve_tags', { filter: '', kind: TagTypeToString(selected_tag_type.value) });
+        const tag_type = typeof selected_tag_type.value === 'string'
+            ? TagTypeFromString(selected_tag_type.value)
+            : selected_tag_type.value;
+        const result = await invoke('retrieve_tags', { filter: '', kind: TagTypeToString(tag_type) }) as Tag[];
+        if (current_request_id === tag_request_id) {
+            tags.value = result;
+        }
     } catch (error) {
         // TODO: handle error
         console.error(error);
@@ -122,6 +185,7 @@ const confirm = async function() {
             await invoke('create_transaction', { vo: params });
         else
             await invoke('update_transaction', { vo: params });
+        clear_transaction_draft();
         router.back();
     } catch (error) {
         // TODO: handle error
@@ -151,17 +215,43 @@ watch(has_split, function(newValue) {
 watch(amount, function(_newValue) {
     update_split_expense(split_count.value);
 })
+watch(selected_tag_type, function(newValue, oldValue) {
+    if (restoring_draft || newValue === oldValue) {
+        return;
+    }
+    selected_tag.value = undefined;
+    retrieve_tags();
+});
+watch([
+    remark,
+    amount,
+    selected_tag_type,
+    selected_wallet,
+    selected_to_wallet,
+    selected_tag,
+    has_split,
+    split_count,
+    split_expense,
+    split_receive_wallet,
+], () => {
+    if (!restoring_draft) {
+        save_draft();
+    }
+});
 onMounted(async () => {
+    await load_settings();
     await retrieve_wallets();
-    await retrieve_tags();
 
     if (props.init) {
+        clear_transaction_draft();
+        selected_tag_type.value = TagTypeFromString(props.init.tag.type);
+        await retrieve_tags();
         id.value = props.init.id;
         amount.value = props.init.amount / 100;
         remark.value = props.init.remark || '';
         time.value = props.init.time;
         selected_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.wallet_name);
-        selected_tag.value = tags.value.find(tag => tag.id == props.init!.tag.id);
+        selected_tag.value = tags.value.find(tag => tag.id == props.init!.tag.id) ?? props.init.tag;
         if (props.init!.to_wallet_name) {
             selected_to_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.to_wallet_name);
         }
@@ -173,14 +263,26 @@ onMounted(async () => {
             split_expense.value = props.init!.split.expense;
             split_receive_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.split!.receive_wallet_name);
         }
+    } else if (transaction_draft.active) {
+        await restore_draft_after_tags_loaded();
+    } else {
+        await retrieve_tags();
     }
+});
+
+onBeforeUnmount(() => {
+    save_draft();
+});
+
+onBeforeRouteLeave(() => {
+    save_draft();
 });
 </script>
 <template>
     <BackTitleBar :title="t(id == undefined ? 'transaction.add' : 'transaction.update')" @back="router.back()"></BackTitleBar>
     <v-main class="main">
         <v-form class="fill-height" v-model="form">
-            <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]" @update:model-value="selected_tag = undefined; retrieve_tags()">
+            <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]">
                 <v-chip v-for="tag in TagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
             </v-chip-group>
             <v-text-field v-model.number="amount" :placeholder="t('transaction.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
@@ -208,11 +310,11 @@ onMounted(async () => {
                         </v-col>
                         <v-col class="flex-grow-1">
                             <v-btn variant="text" prepend-icon="mdi-clock" width="95%">
-                                {{ `${formatter.format(time.getHours())}:${formatter.format(time.getMinutes())}` }}
+                                {{ formatTime(time) }}
                                 <v-dialog activator="parent" width="auto" v-model="show_time_picker">
                                     <v-card>
                                         <v-card-text style="padding: 0px;">
-                                            <v-time-picker v-model="selecting_time" format="24hr" :max="maxTime"></v-time-picker>
+                                            <v-time-picker v-model="selecting_time" :format="time_picker_format" :max="maxTime"></v-time-picker>
                                         </v-card-text>
                                         <v-card-actions>
                                             <v-spacer></v-spacer>

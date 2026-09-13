@@ -6,6 +6,12 @@ export interface UserSettings {
     theme: string;
     user_name: string;
     avatar: string;
+    locale: 'zh-CN' | 'en-US';
+    default_page: string;
+    date_format: 'YYYY-MM-DD' | 'DD/MM/YYYY' | 'MM/DD/YYYY';
+    time_format: '12hr' | '24hr';
+    decimal_places: number;
+    thousands_separator: boolean;
 }
 
 export const default_settings: UserSettings = {
@@ -13,6 +19,12 @@ export const default_settings: UserSettings = {
     theme: 'pinkPad',
     user_name: '',
     avatar: 'mdi-cat',
+    locale: 'zh-CN',
+    default_page: 'home',
+    date_format: 'YYYY-MM-DD',
+    time_format: '24hr',
+    decimal_places: 2,
+    thousands_separator: true,
 };
 
 export const settings = reactive<UserSettings>({ ...default_settings });

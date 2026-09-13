@@ -1,4 +1,5 @@
 import i18n from "../i18n";
+import { settings } from './Settings';
 const t = i18n.global.t;
 
 export const getRandomColor = function(type: 'rgb' | 'rgba') : string {
@@ -32,6 +33,27 @@ export const formatDate = function(naive_date: Date) : string {
     return `${year}-${month}-${date}`;
 }
 
+export const formatDisplayDate = function(date: Date): string {
+    const year = date.getFullYear().toString();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    if (settings.date_format === 'DD/MM/YYYY') {
+        return `${day}/${month}/${year}`;
+    }
+    if (settings.date_format === 'MM/DD/YYYY') {
+        return `${month}/${day}/${year}`;
+    }
+    return `${year}-${month}-${day}`;
+}
+
+export const formatAmount = function(cents: number): string {
+    const amount = cents / 100;
+    const decimals = Math.max(0, Math.min(4, settings.decimal_places));
+    return settings.thousands_separator
+        ? amount.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+        : amount.toFixed(decimals);
+}
+
 export const formatDatetimeRelative = function(date: Date, relative_date: Date) : string {
     // convert to: today, yesterday
     //             month, date
@@ -44,20 +66,19 @@ export const formatDatetimeRelative = function(date: Date, relative_date: Date) 
     } else if (diffDays <= 1) {
         return t('date.yesterday');
     } else {
-        const year = date.getFullYear();
-        const month = date.toLocaleString(i18n.global.locale.value, { month: 'short' });
-        const day = date.getDate();
-
-        if (year === relative_date.getFullYear()) {
-            return `${month} ${day}`;
-        } else {
-            return `${year}, ${month} ${day}`;
-        }
+        return formatDisplayDate(date);
     }
 }
 
 export const formatTime = function(date: Date) : string {
+    if (settings.time_format === '12hr') {
+        return date.toLocaleTimeString(i18n.global.locale.value, {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        });
+    }
     const hour = date.getHours().toString().padStart(2, '0');
     const minute = date.getMinutes().toString().padStart(2, '0');
-    return `${hour}:${minute}`
+    return `${hour}:${minute}`;
 }

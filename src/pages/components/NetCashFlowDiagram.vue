@@ -106,12 +106,8 @@ const load_chart = async function() {
             noData: { text: t('loading') },
         };
 
-        if (chart === undefined) {
-            chart = new ApexCharts(chart_element.value, options);
-            await chart.render();
-        } else {
-            await chart.updateOptions(options, false, false);
-        }
+        chart = new ApexCharts(chart_element.value, options);
+        await chart.render();
     } catch (error) {
         console.error(error);
         has_data.value = false;

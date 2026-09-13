@@ -3,7 +3,7 @@ import { ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Tag, { TagType, TagTypeToString } from '../../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
-import { formatDate, formatDatetimeRelative, formatTime } from '../../common/Utils';
+import { formatDatetimeRelative, formatDisplayDate, formatTime } from '../../common/Utils';
 import { useRouter } from 'vue-router';
 import AddTransaction from '../AddTransaction.vue';
 import ConfirmSheet from './ConfirmSheet.vue';
@@ -159,7 +159,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                             <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency_code} ${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                         </v-row>
                                         <v-row class="flex-nowrap">
-                                            <v-col class="no-pad on-surface-lighten-2">{{ formatDate(transaction.time) }}</v-col>
+                                            <v-col class="no-pad on-surface-lighten-2">{{ formatDisplayDate(transaction.time) }}</v-col>
                                         </v-row>
                                     </v-col>
                                 </v-row>

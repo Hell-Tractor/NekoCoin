@@ -1,3 +1,5 @@
+import { formatAmount } from './Utils';
+
 export class Money {
     private _amount: number;
     private _currency: Currency;
@@ -12,8 +14,7 @@ export class Money {
     }
 
     public toString() : string {
-        // format the money amount to 2 decimal places with comma separated thousands
-        return `${this._currency.code} ${(this._amount / 100).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+        return `${this._currency.code} ${formatAmount(this._amount)}`;
     }
 }
 

@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import SummaryBar from './components/SummaryBar.vue';
 import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
-import { formatDate } from '../common/Utils';
+import { formatDate, formatDisplayDate } from '../common/Utils';
 import TransactionList from './components/TransactionList.vue';
 import { load_settings, settings } from '../common/Settings';
 const { t } = useI18n();
@@ -15,7 +15,7 @@ const currentMonthIncome: Ref<Money | undefined> = ref(undefined);
 const currentMonthExpense: Ref<Money | undefined> = ref(undefined);
 const currentMonthNetCashFlow: Ref<Money | undefined> = ref(undefined);
 const today = function() {
-    return `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
+    return formatDisplayDate(new Date());
 }
 const getTotalBalance = async function() {
     try {

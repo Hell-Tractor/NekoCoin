@@ -138,7 +138,7 @@ watch(grouping, () => {
     flex: 0 0 auto;
     width: fit-content;
     min-width: 92px;
-    max-width: 112px;
+    /* max-width: 112px; */
 }
 
 .period-group + .period-group {

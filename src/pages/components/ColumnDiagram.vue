@@ -256,7 +256,7 @@ onBeforeUnmount(() => {
 <template>
     <v-card :variant="props.variant" :rounded="props.rounded" :height="hide_self ? '0px' : 'auto'">
         <v-card-title v-if="props.title">{{ props.title }}</v-card-title>
-        <v-card-title v-else><slot name="title" /></v-card-title>
+        <v-card-title class="title-row" v-else><slot name="title"/></v-card-title>
         <v-card-text class="pa-0">
             <v-progress-linear v-if="loading" indeterminate />
             <div ref="scroll_element" class="chart-scroll" @scroll.passive="on_scroll"
@@ -291,5 +291,12 @@ onBeforeUnmount(() => {
 
 .chart {
     min-width: 100%;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 </style>
