@@ -5,7 +5,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::{Error, Result};
 
-const SETTINGS_FILE: &str = "settings.yaml";
+const SETTINGS_FILE: &str = "nekocoin_settings.yaml";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
