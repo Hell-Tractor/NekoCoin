@@ -126,7 +126,8 @@ const get_actual_expense = function(transaction: Transaction) {
                 <template v-for="transaction in transactions" :key="transaction.id">
                     <v-bottom-sheet>
                         <template v-slot:activator="{ props }">
-                            <v-card variant="text" v-bind="props">
+                            <!-- add inner border box -->
+                            <v-card variant="text" rounded="0" v-bind="props" style="border-bottom: 1px solid #e0e0e0">
                                 <v-card-text>
                                     <v-row class="flex-nowrap">
                                         <v-col class="flex-grow-0" style="padding-left: 0px;">
@@ -141,7 +142,6 @@ const get_actual_expense = function(transaction: Transaction) {
                                                 <v-col class="no-pad on-surface-lighten-2">{{ formatDatetimeRelative(transaction.time, new Date()) }}</v-col>
                                                 <v-col class="no-pad text-end on-surface-lighten-2">{{ formatTime(transaction.time) }}</v-col>
                                             </v-row>
-                                            <v-divider style="margin-top: 20px;"></v-divider>
                                         </v-col>
                                     </v-row>
                                 </v-card-text>

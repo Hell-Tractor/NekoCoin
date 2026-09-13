@@ -29,11 +29,11 @@ impl SummaryType {
             SummaryType::Yearly => datetime.format("%Y").to_string(),
         }
     }
-    pub fn generate_dates_between(&self, begin: NaiveDate, end: NaiveDate) -> Vec<String> {
+    pub fn generate_date_values_between(&self, begin: NaiveDate, end: NaiveDate) -> Vec<NaiveDate> {
         let mut dates = vec![];
         let mut current_date = begin;
         while self.get_range_of_date(current_date).0 <= end {
-            dates.push(self.format_datetime(current_date));
+            dates.push(current_date);
             current_date = match self {
                 SummaryType::Daily => current_date.succ_opt().unwrap(),
                 SummaryType::Weekly => current_date + chrono::Duration::weeks(1),

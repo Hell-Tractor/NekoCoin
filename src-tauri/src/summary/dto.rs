@@ -17,4 +17,5 @@ pub struct SimpleSummaryDto {
 pub struct SummaryDto {
     pub dates: Vec<String>,
     pub data: Vec<SummaryWithCurrencyDto>,
+    pub has_more: bool,
 }

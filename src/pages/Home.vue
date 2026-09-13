@@ -59,7 +59,7 @@ onMounted(() => {
             <div>{{ t('welcome') }}</div>
         </v-col>
     </v-row>
-    <v-card variant="flat" rounded="xl">
+    <v-card rounded="xl">
         <v-card-text>
             <div>{{ t('total_balance') }}</div>
             <div style="height: 10px;"></div>
@@ -67,5 +67,5 @@ onMounted(() => {
         </v-card-text>
     </v-card>
     <SummaryBar v-if="!!currentMonthExpense && !! currentMonthIncome" :title="t('this_month')" variant="text" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money"></SummaryBar>
-    <TransactionList variant="flat" :title="t('transaction.list.title')" @deleted="_ => refresh()"></TransactionList>
+    <TransactionList :title="t('transaction.list.title')" @deleted="_ => refresh()"></TransactionList>
 </template>
