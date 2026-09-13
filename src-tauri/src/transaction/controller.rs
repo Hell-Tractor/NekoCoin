@@ -5,6 +5,7 @@ use sqlx::Row;
 use crate::sql::db;
 use crate::tag::TagKind;
 use crate::{tag, wallet, Error, Result};
+use crate::summary::SummaryType;
 
 use super::dto::{BalanceWithTypeDto, SummaryByTagDto, SummaryByTagWithCurrencyDto, TransactionDto};
 use super::service::{modify_currency, revert_currency};
@@ -380,11 +381,24 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
 }
 
 #[tauri::command]
-pub async fn get_expense_summary_by_tag(begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagWithCurrencyDto>> {
-    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
-    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+pub async fn get_expense_summary_by_tag(summary_type: Option<SummaryType>, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagWithCurrencyDto>> {
+    let (begin_date, end_date) = if let Some(kind) = summary_type.as_ref() {
+        let today = chrono::Local::now().naive_utc().date();
+        let (period_begin, period_end) = kind.get_range_of_date(today);
+        (
+            std::cmp::max(begin.unwrap_or(period_begin), period_begin),
+            std::cmp::min(end.unwrap_or(period_end), period_end),
+        )
+    } else {
+        (
+            begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()),
+            end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()),
+        )
+    };
+    let begin = begin_date.and_hms_opt(0, 0, 0).unwrap();
+    let end = end_date.and_hms_opt(23, 59, 59).unwrap();
     let result = sqlx::query_as(
-        r#"
+        format!(r#"
         WITH RECURSIVE tag_tree(root_id, id) AS (
             SELECT id, id FROM tags WHERE parent_id IS NULL
             UNION ALL
@@ -398,7 +412,8 @@ pub async fn get_expense_summary_by_tag(begin: Option<NaiveDate>, end: Option<Na
                 ELSE 0
             END) AS summary,
             root.id, root.name, root.remark, root.color, root.icon, root.kind, root.parent_id,
-            wallets.currency_code
+            wallets.currency_code,
+            '' AS period
         FROM transactions
         JOIN tags ON transactions.tag_id = tags.id
         JOIN tag_tree ON transactions.tag_id = tag_tree.id
@@ -409,7 +424,7 @@ pub async fn get_expense_summary_by_tag(begin: Option<NaiveDate>, end: Option<Na
         GROUP BY tag_tree.root_id, wallets.currency_code
         HAVING summary > 0
         ORDER BY summary DESC
-        "#)
+        "#).as_str())
         .bind(begin.format(super::DATETIME_FORMAT).to_string())
         .bind(end.format(super::DATETIME_FORMAT).to_string())
         .bind(TagKind::Expense as u8)

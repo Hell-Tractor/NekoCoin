@@ -126,6 +126,9 @@ export default {
     report: {
         overview: '概览',
         expense_by_tag: '支出排行—标签',
+        all: '全部',
+        no_data: '暂无数据',
+        load_failed: '报表加载失败',
         summary_type: {
             Daily: '按日',
             Weekly: '按周',

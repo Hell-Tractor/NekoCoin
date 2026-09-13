@@ -126,6 +126,9 @@ export default {
     report: {
         overview: 'Overview',
         expense_by_tag: 'Expense by Tag',
+        all: 'All',
+        no_data: 'No data',
+        load_failed: 'Failed to load report',
         summary_type: {
             Daily: 'Daily',
             Weekly: 'Weekly',

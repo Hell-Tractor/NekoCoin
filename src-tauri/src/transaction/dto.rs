@@ -73,4 +73,5 @@ pub struct SummaryByTagWithCurrencyDto {
     pub tag: Tag,
     pub summary: i32,
     pub currency_code: String,
+    pub period: String,
 }
