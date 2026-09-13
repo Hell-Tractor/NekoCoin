@@ -5,6 +5,12 @@ export default {
     this_month: '本月',
     income: '收入',
     expense: '支出',
+    net_cash_flow: '净现金流',
+    net_cash_flow_status: {
+        increase: '净现金流增加',
+        decrease: '净现金流减少',
+        unchanged: '净现金流持平',
+    },
     WIP: '开发中...',
     loading: '加载中...',
     actions: {
@@ -126,6 +132,7 @@ export default {
     report: {
         overview: '概览',
         expense_by_tag: '支出排行—标签',
+        net_cash_flow: '净现金流趋势',
         all: '全部',
         no_data: '暂无数据',
         load_failed: '报表加载失败',

@@ -5,6 +5,12 @@ export default {
     this_month: 'This Month',
     income: 'Income',
     expense: 'Expense',
+    net_cash_flow: 'Net Cash Flow',
+    net_cash_flow_status: {
+        increase: 'Net cash flow increased',
+        decrease: 'Net cash flow decreased',
+        unchanged: 'Net cash flow unchanged',
+    },
     WIP: 'Work in Progress...',
     loading: 'Loading...',
     actions: {
@@ -126,6 +132,7 @@ export default {
     report: {
         overview: 'Overview',
         expense_by_tag: 'Expense by Tag',
+        net_cash_flow: 'Net Cash Flow Trend',
         all: 'All',
         no_data: 'No data',
         load_failed: 'Failed to load report',

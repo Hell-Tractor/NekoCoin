@@ -7,6 +7,10 @@ export class Money {
         this._currency = currency;
     }
 
+    public getAmount(): number {
+        return this._amount;
+    }
+
     public toString() : string {
         // format the money amount to 2 decimal places with comma separated thousands
         return `${this._currency.code} ${(this._amount / 100).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;

@@ -12,6 +12,7 @@ const { t } = useI18n();
 const totalBalance: Ref<Money | undefined> = ref(undefined);
 const currentMonthIncome: Ref<Money | undefined> = ref(undefined);
 const currentMonthExpense: Ref<Money | undefined> = ref(undefined);
+const currentMonthNetCashFlow: Ref<Money | undefined> = ref(undefined);
 const today = function() {
     return `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
 }
@@ -30,6 +31,7 @@ const getMonthBalance = async function() {
         const result: { income: number, expense: number } = await invoke('get_sum_balance_with_type', { currencyCode: Constants.CURRENCIES[0].code, begin: formatDate(beginDate), end: formatDate(endDate) });
         currentMonthIncome.value = new Money(result.income, Constants.CURRENCIES[0]);
         currentMonthExpense.value = new Money(result.expense, Constants.CURRENCIES[0]);
+        currentMonthNetCashFlow.value = new Money(result.income - result.expense, Constants.CURRENCIES[0]);
     } catch (e) {
         console.error(e);
     }
@@ -66,6 +68,6 @@ onMounted(() => {
             <p class="text-h5 font-weight-black">{{ totalBalance ?? "loading..." }}</p>
         </v-card-text>
     </v-card>
-    <SummaryBar v-if="!!currentMonthExpense && !! currentMonthIncome" :title="t('this_month')" variant="text" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money"></SummaryBar>
+    <SummaryBar v-if="!!currentMonthExpense && !!currentMonthIncome && !!currentMonthNetCashFlow" :title="t('this_month')" variant="text" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money" :current-net-cash-flow="currentMonthNetCashFlow as Money"></SummaryBar>
     <TransactionList :title="t('transaction.list.title')" @deleted="_ => refresh()"></TransactionList>
 </template>

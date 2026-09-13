@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { SummaryType, SummaryTypeList } from '../common/SummaryType';
 import ColumnDiagram from './components/ColumnDiagram.vue';
 import ExpenseTagRanking from './components/ExpenseTagRanking.vue';
+import NetCashFlowDiagram from './components/NetCashFlowDiagram.vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
@@ -18,5 +19,6 @@ const summary_type = ref<SummaryType>(SummaryType.Monthly);
             </v-row>
         </template>
     </ColumnDiagram>
+    <NetCashFlowDiagram class="mb-2" variant="flat" rounded="xl" />
     <ExpenseTagRanking />
 </template>
