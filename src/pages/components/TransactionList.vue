@@ -30,7 +30,7 @@ export interface Transaction {
     remark?: string;
     wallet_name: string;
     to_wallet_name?: string;
-    currency: string;
+    currency_code: string;
     tag: Tag;
     amount: number;
     time: Date;
@@ -136,7 +136,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                         <v-col style="padding-bottom: 0px;">
                                             <v-row class="flex-nowrap">
                                                 <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
-                                                <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
+                                                <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency_code} ${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                             </v-row>
                                             <v-row class="flex-nowrap">
                                                 <v-col class="no-pad on-surface-lighten-2">{{ formatDatetimeRelative(transaction.time, new Date()) }}</v-col>
@@ -156,7 +156,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                     <v-col style="padding-bottom: 0px;">
                                         <v-row class="flex-nowrap">
                                             <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
-                                            <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency}${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
+                                            <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency_code} ${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                         </v-row>
                                         <v-row class="flex-nowrap">
                                             <v-col class="no-pad on-surface-lighten-2">{{ formatDate(transaction.time) }}</v-col>
@@ -181,7 +181,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                         <v-row><v-col class="no-pad">{{ transaction.to_wallet_name! }}</v-col></v-row>
                                     </v-col>
 
-                                    <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.EXPENSE)) }">{{ `${transaction.currency}${(transaction.amount / 100).toFixed(2)}` }}</v-col>
+                                            <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.EXPENSE)) }">{{ `${transaction.currency_code} ${(transaction.amount / 100).toFixed(2)}` }}</v-col>
                                 </v-row>
                                 <v-row class="flex-nowrap align-center" v-if="transaction.split">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">
@@ -198,7 +198,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                         <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em;">{{ t('transaction.account') }}</v-col></v-row>
                                         <v-row><v-col class="no-pad">{{ transaction.split!.receive_wallet_name }}</v-col></v-row>
                                     </v-col>
-                                    <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.INCOME)) }">{{ `${transaction.currency}${((transaction.amount - transaction.split!.expense) / 100).toFixed(2)}` }}</v-col>
+                                            <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.INCOME)) }">{{ `${transaction.currency_code} ${((transaction.amount - transaction.split!.expense) / 100).toFixed(2)}` }}</v-col>
                                 </v-row>
                                 <v-row class="flex-nowrap" v-if="!!transaction.remark">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">

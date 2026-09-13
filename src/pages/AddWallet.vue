@@ -43,7 +43,7 @@ const addWallet = async function() {
                 name: wallet_name.value,
                 remark: wallet_remark.value,
                 balance: Math.round(wallet_amount.value! * 100),
-                currency: selected_currency.value.symbol,
+                currencyCode: selected_currency.value.code,
                 icon: icon.value,
                 color: selected_color.value
             });
@@ -67,7 +67,7 @@ onMounted(() => {
         id.value = props.init.id;
         wallet_name.value = props.init.name;
         wallet_remark.value = props.init.remark || '';
-        selected_currency.value = Constants.CURRENCIES.find(c => c.symbol == props.init!.currency)!;
+        selected_currency.value = Constants.CURRENCIES.find(c => c.code == props.init!.currency_code)!;
         icon.value = props.init.icon;
         selected_color.value = props.init.color;
         wallet_amount.value = props.init.balance / 100;

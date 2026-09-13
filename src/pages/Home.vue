@@ -17,7 +17,7 @@ const today = function() {
 }
 const getTotalBalance = async function() {
     try {
-        const result: number = await invoke('get_sum_balance', { currency: Constants.CURRENCIES[0].symbol });
+        const result: number = await invoke('get_sum_balance', { currencyCode: Constants.CURRENCIES[0].code });
         totalBalance.value = new Money(result, Constants.CURRENCIES[0]);
     } catch (e) {
         console.error(e);
@@ -27,7 +27,7 @@ const getMonthBalance = async function() {
     try {
         const beginDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         const endDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-        const result: { income: number, expense: number } = await invoke('get_sum_balance_with_type', { currency: Constants.CURRENCIES[0].symbol, begin: formatDate(beginDate), end: formatDate(endDate) });
+        const result: { income: number, expense: number } = await invoke('get_sum_balance_with_type', { currencyCode: Constants.CURRENCIES[0].code, begin: formatDate(beginDate), end: formatDate(endDate) });
         currentMonthIncome.value = new Money(result.income, Constants.CURRENCIES[0]);
         currentMonthExpense.value = new Money(result.expense, Constants.CURRENCIES[0]);
     } catch (e) {

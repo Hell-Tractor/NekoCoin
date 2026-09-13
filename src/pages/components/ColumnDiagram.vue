@@ -8,7 +8,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 interface ColumnDiagramData {
-    currency: string;
+    currency_code: string;
     summary: {
         income: number;
         expense: number;
@@ -68,14 +68,14 @@ const merge_data = function(page: SummaryPage, append: boolean) {
         const previous_length = dates.value.length;
         dates.value.push(...page.dates);
         const currencies = new Set([
-            ...chart_data.value.map(item => item.currency),
-            ...page.data.map(item => item.currency),
+            ...chart_data.value.map(item => item.currency_code),
+            ...page.data.map(item => item.currency_code),
         ]);
-        chart_data.value = [...currencies].map(currency => {
-            const existing = chart_data.value.find(item => item.currency === currency);
-            const incoming = page.data.find(item => item.currency === currency);
+        chart_data.value = [...currencies].map(currency_code => {
+            const existing = chart_data.value.find(item => item.currency_code === currency_code);
+            const incoming = page.data.find(item => item.currency_code === currency_code);
             return {
-                currency,
+                currency_code,
                 summary: [
                     ...(existing?.summary ?? Array.from({ length: previous_length }, () => ({ income: 0, expense: 0 }))),
                     ...(incoming?.summary ?? Array.from({ length: page.dates.length }, () => ({ income: 0, expense: 0 }))),
@@ -103,11 +103,11 @@ const render_chart = async function() {
         series: chart_data.value.flatMap(item => {
             return [
                 {
-                    name: `${t('income')}/${item.currency}`,
+                    name: `${t('income')}/${item.currency_code}`,
                     group: 'income',
                     data: item.summary.map(summary => summary.income / 100)
                 }, {
-                    name: `${t('expense')}/${item.currency}`,
+                    name: `${t('expense')}/${item.currency_code}`,
                     group: 'expense',
                     data: item.summary.map(summary => summary.expense / 100)
                 }

@@ -23,7 +23,7 @@ const props = defineProps<{
             <v-row><v-col>{{ props.wallet.remark }}</v-col></v-row>
             <div class="position-absolute bottom-0 mb-4">
                 <div>{{ t('total_balance') }}</div>
-                <v-row><v-col class="text-h5">{{ props.wallet.currency + ' ' + (props.wallet.balance / 100).toFixed(2) }}</v-col></v-row>
+                <v-row><v-col class="text-h5">{{ props.wallet.currency_code + ' ' + (props.wallet.balance / 100).toFixed(2) }}</v-col></v-row>
             </div>
         </v-card-text>
     </v-card>

@@ -27,7 +27,7 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
         // receive wallet should have same currency as original wallet
         let receive_wallet = wallet::service::get_wallet_by_id(split.receive_wallet_id).await?;
         let original_wallet = wallet::service::get_wallet_by_id(vo.wallet_id).await?;
-        if receive_wallet.balance.get_currency() != original_wallet.balance.get_currency() {
+        if receive_wallet.balance.get_currency_code() != original_wallet.balance.get_currency_code() {
             return Err(Error::InvalidParameter("receive wallet and original wallet must have same currency".to_string()));
         }
         modify_currency(&mut *tx, &TagKind::Income, split.receive_wallet_id, None, vo.amount - split.expense).await?;
@@ -81,7 +81,7 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
         let receive_wallet = wallet::service::get_wallet_by_id(split.receive_wallet_id).await?;
         let original_wallet = wallet::service::get_wallet_by_id(vo.wallet_id).await?;
         // receive wallet should have same currency as original wallet
-        if receive_wallet.balance.get_currency() != original_wallet.balance.get_currency() {
+        if receive_wallet.balance.get_currency_code() != original_wallet.balance.get_currency_code() {
             return Err(Error::InvalidParameter("receive wallet and original wallet must have same currency".to_string()));
         }
         // if no split id provided, it's a new split
@@ -174,7 +174,7 @@ pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDa
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -198,7 +198,7 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
@@ -225,7 +225,7 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
     // retrieve transactions with tag_id or its children
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -261,7 +261,7 @@ pub async fn delete_transaction(id: u32) -> Result<()> {
 }
 
 #[tauri::command]
-pub async fn get_sum_balance_with_type(currency: String, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<BalanceWithTypeDto> {
+pub async fn get_sum_balance_with_type(currency_code: String, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<BalanceWithTypeDto> {
     debug!("Getting sum of transactions with kind...");
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
     let begin = begin.and_hms_opt(0, 0, 0).unwrap();
@@ -277,9 +277,9 @@ pub async fn get_sum_balance_with_type(currency: String, begin: Option<NaiveDate
         LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
         JOIN tags ON transactions.tag_id = tags.id
         JOIN wallets ON transactions.wallet_id = wallets.id
-        WHERE wallets.currency = $3 AND time between $4 and $5
+        WHERE wallets.currency_code = $3 AND time between $4 and $5
         "#)
-        .bind(TagKind::Expense as u8).bind(TagKind::Income as u8).bind(currency).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .bind(TagKind::Expense as u8).bind(TagKind::Income as u8).bind(currency_code).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
         .fetch_one(db())
         .await?;
     info!("Sum of balance with type in transactions: {:?}", result);
@@ -380,7 +380,7 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
 }
 
 #[tauri::command]
-pub async fn get_summary_by_tag_with_tag(tag_id: u32, currency: String, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagDto>> {
+pub async fn get_summary_by_tag_with_tag(tag_id: u32, currency_code: String, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagDto>> {
     debug!("Getting summary directly under tag(id = {})", tag_id);
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
@@ -401,11 +401,11 @@ pub async fn get_summary_by_tag_with_tag(tag_id: u32, currency: String, begin: O
         JOIN tag_tree tt ON transactions.tag_id = tt.id
         JOIN tags tag ON tt.root_id = tag.id
         JOIN wallets ON transactions.wallet_id = wallets.id
-        WHERE time BETWEEN $1 AND $2 AND wallets.currency = $4
+        WHERE time BETWEEN $1 AND $2 AND wallets.currency_code = $4
         GROUP BY tt.root_id
         "#)
         .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
-        .bind(tag_id).bind(currency)
+        .bind(tag_id).bind(currency_code)
         .fetch_all(db())
         .await?;
     info!("got summary under tag(length = {})", result.len());

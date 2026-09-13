@@ -12,7 +12,7 @@ export interface Wallet {
     name: string;
     remark?: string;
     balance: number;
-    currency: string;
+    currency_code: string;
     icon: string;
     color: string;
 };

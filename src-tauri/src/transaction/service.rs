@@ -73,7 +73,7 @@ pub async fn modify_currency(executor: &mut SqliteConnection, tag_kind: &TagKind
             }
             let from_wallet = wallet::service::get_wallet_by_id(wallet_id).await?;
             let to_wallet = wallet::service::get_wallet_by_id(to_wallet_id).await?;
-            if from_wallet.balance.get_currency() != to_wallet.balance.get_currency() {
+            if from_wallet.balance.get_currency_code() != to_wallet.balance.get_currency_code() {
                 return Err(Error::InvalidParameter("from_wallet and to_wallet must have the same currency".to_string()));
             }
             wallet::service::modify_currency(&mut *executor, wallet_id, -amount).await?;

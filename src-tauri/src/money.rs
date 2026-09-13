@@ -41,12 +41,12 @@ impl<'r> Decode<'r, Sqlite> for Cent {
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct Money {
     pub balance: Cent,
-    currency: String,
+    pub currency_code: String,
 }
 
 impl Money {
-    pub fn get_currency(&self) -> &str {
-        &self.currency
+    pub fn get_currency_code(&self) -> &str {
+        &self.currency_code
     }
 }
 
@@ -57,7 +57,7 @@ impl Display for Money {
             "{}.{:02}{}",
             self.balance.0 / 100,
             self.balance.0 % 100,
-            self.currency
+            self.currency_code
         )
     }
 }
@@ -68,7 +68,7 @@ impl Into<String> for Money {
             "{}.{:02}{}",
             self.balance.0 / 100,
             self.balance.0 % 100,
-            self.currency
+            self.currency_code
         )
     }
 }

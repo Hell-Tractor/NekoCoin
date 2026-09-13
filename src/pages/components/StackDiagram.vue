@@ -9,7 +9,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
     item_id?: { type: 'wallet' | 'tag', value: number };
-    currency: string;
+    currency_code: string;
     // TagType.Transfer is only allowed when item_id.type is 'tag'
     kind: TagType;
     beginDate?: Date;
@@ -33,7 +33,7 @@ const get_data = async function() {
         } else if (props.item_id?.type == 'tag') {
             data.value = await invoke('get_summary_by_tag_with_tag', {
                 tagId: props.item_id?.value,
-                currency: props.currency,
+                currencyCode: props.currency_code,
                 beginDate: props.beginDate ? formatDate(props.beginDate) : undefined,
                 endDate: props.endDate ? formatDate(props.endDate) : undefined
             });
@@ -92,7 +92,7 @@ const draw_chart = function() {
             },
             y: {
                 formatter: function(val: number) {
-                    return `${props.currency} ${(val / 100).toFixed(2)}`;
+                    return `${props.currency_code} ${(val / 100).toFixed(2)}`;
                 }
             }
         },

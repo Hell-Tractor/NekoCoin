@@ -19,7 +19,7 @@ pub async fn get_summary(summary_type: SummaryType, begin: Option<NaiveDate>, en
 
     #[derive(Debug)]
     struct QueryResult {
-        currency: String,
+        currency_code: String,
         summary: Vec::<SingleQueryResult>,
     }
 
@@ -57,7 +57,7 @@ pub async fn get_summary(summary_type: SummaryType, begin: Option<NaiveDate>, en
     let data = sqlx::query(
         format!(r#"
         SELECT
-            wallets.currency,
+            wallets.currency_code,
             SUM(
                 CASE WHEN tags.kind = $4 THEN
                     CASE WHEN transactions.split_id IS NULL THEN transactions.amount ELSE ts.expense END
@@ -72,8 +72,8 @@ pub async fn get_summary(summary_type: SummaryType, begin: Option<NaiveDate>, en
         JOIN tags ON tags.id = transactions.tag_id
         LEFT JOIN transaction_splits AS ts ON transactions.split_id = ts.id
         WHERE time BETWEEN $1 AND $2 AND tags.kind != $5
-        GROUP BY wallets.currency, {0}
-        ORDER BY wallets.currency, {0}
+        GROUP BY wallets.currency_code, {0}
+        ORDER BY wallets.currency_code, {0}
         "#, summary_type.to_sql("time")).as_str())
         .bind(query_begin.format(crate::transaction::DATETIME_FORMAT).to_string()).bind(query_end.format(crate::transaction::DATETIME_FORMAT).to_string())
         .bind(TagKind::Income as u8).bind(TagKind::Expense as u8).bind(TagKind::Transfer as u8)
@@ -81,16 +81,16 @@ pub async fn get_summary(summary_type: SummaryType, begin: Option<NaiveDate>, en
         .await?
         .iter()
         .fold(Vec::<QueryResult>::new(), |mut acc: Vec<QueryResult>, row| {
-            let currency: String = row.get("currency");
+            let currency_code: String = row.get("currency_code");
             let date: String = row.get("date");
             let income: i32 = row.get("income");
             let expense: i32 = row.get("expense");
 
-            if acc.last().map_or(false, |last| last.currency == currency) {
+            if acc.last().map_or(false, |last| last.currency_code == currency_code) {
                 acc.last_mut().unwrap().summary.push(SingleQueryResult { date, income, expense });
             } else {
                 acc.push(QueryResult {
-                    currency,
+                    currency_code,
                     summary: vec![SingleQueryResult { date, income, expense }],
                 });
             }
@@ -114,7 +114,7 @@ pub async fn get_summary(summary_type: SummaryType, begin: Option<NaiveDate>, en
             }
         }).collect::<Vec<SimpleSummaryDto>>();
         SummaryWithCurrencyDto {
-            currency: result.currency,
+            currency_code: result.currency_code,
             summary,
         }
     }).collect::<Vec<_>>();

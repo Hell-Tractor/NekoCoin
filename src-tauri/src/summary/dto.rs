@@ -2,7 +2,7 @@ use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 pub struct SummaryWithCurrencyDto {
-    pub currency: String,
+    pub currency_code: String,
     pub summary: Vec<SimpleSummaryDto>,
 }
 
