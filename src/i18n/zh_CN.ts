@@ -37,6 +37,12 @@ export default {
         theme: '主题',
         avatar: '头像',
         saved: '设置已保存',
+        themes: {
+            pinkPad: '玫瑰薄荷',
+            midnight: '午夜蓝',
+            calico: '森野陶土',
+            neon: '霓虹薄荷',
+        },
     },
     validation: {
         required: '必填',

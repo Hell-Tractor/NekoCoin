@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
 import Constants from '../common/Constants';
 import { settings, save_settings } from '../common/Settings';
+import { get_theme_color_palette } from '../themes/palettes';
 
 const { t } = useI18n();
 const theme = useTheme();
 const saved = ref(false);
-const theme_items = [
-    { value: 'pinkPad', title: 'Pink Pad' },
-    { value: 'midnight', title: 'Midnight' },
-    { value: 'calico', title: 'Calico' },
-    { value: 'neon', title: 'Neon' },
-];
+const theme_items = computed(() => ['pinkPad', 'midnight', 'calico', 'neon'].map(value => ({
+    value,
+    title: t(`settings.themes.${value}`),
+    palette: get_theme_color_palette(value).slice(0, 6),
+})));
 const avatar_items = [
     'mdi-cat',
     'mdi-dog',
@@ -66,7 +66,23 @@ const save = async function() {
                 variant="outlined"
                 density="comfortable"
                 @update:model-value="update_theme"
-            />
+            >
+                <template #selection="{ item }">
+                    <span class="theme-name">{{ item.raw.title }}</span>
+                    <span class="theme-palette">
+                        <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
+                    </span>
+                </template>
+                <template #item="{ props: item_props, item }">
+                    <v-list-item v-bind="item_props">
+                        <template #append>
+                            <span class="theme-palette">
+                                <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
+                            </span>
+                        </template>
+                    </v-list-item>
+                </template>
+            </v-select>
             <v-select
                 v-model="settings.avatar"
                 :items="avatar_items"
@@ -90,3 +106,24 @@ const save = async function() {
         </v-card-text>
     </v-card>
 </template>
+
+<style scoped>
+.theme-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+    border-radius: 50%;
+}
+
+.theme-name {
+    margin-right: 10px;
+}
+
+.theme-palette {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+</style>

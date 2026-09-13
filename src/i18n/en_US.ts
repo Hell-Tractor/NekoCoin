@@ -37,6 +37,12 @@ export default {
         theme: 'Theme',
         avatar: 'Avatar',
         saved: 'Settings saved',
+        themes: {
+            pinkPad: 'Pink Pad',
+            midnight: 'Midnight Blue',
+            calico: 'Calico',
+            neon: 'Neon Mint',
+        },
     },
     validation: {
         required: 'Required',
