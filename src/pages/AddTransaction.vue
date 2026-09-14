@@ -8,6 +8,7 @@ import Tag, { TagType, TagTypeFromString, TagTypeToString, TransactionTagTypeNam
 import { useDate } from 'vuetify';
 import { Wallet } from './Wallets.vue';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { formatDatetime, formatTime } from '../common/Utils';
 import { load_settings, settings } from '../common/Settings';
 import WalletSelector from './components/WalletSelector.vue';
@@ -158,8 +159,7 @@ const retrieve_wallets = async function() {
     try {
         wallets.value = await invoke('retrieve_wallets');
     } catch (error) {
-        // TODO: handle error
-        console.error(error);
+        show_error(error);
     }
 }
 const retrieve_activities = async function() {
@@ -170,7 +170,7 @@ const retrieve_activities = async function() {
             activities.value = [selected_activity.value, ...activities.value];
         }
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 }
 const retrieve_tags = async function() {
@@ -184,8 +184,7 @@ const retrieve_tags = async function() {
             tags.value = result;
         }
     } catch (error) {
-        // TODO: handle error
-        console.error(error);
+        show_error(error);
     }
 }
 const confirm = async function() {
@@ -215,8 +214,7 @@ const confirm = async function() {
         clear_transaction_draft();
         router.back();
     } catch (error) {
-        // TODO: handle error
-        console.error(error);
+        show_error(error);
     }
 }
 const isFormValid = function() {

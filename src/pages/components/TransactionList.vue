@@ -3,10 +3,11 @@ import { ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Tag from '../../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
-import { entity_accent_color, entity_avatar_style, flow_color_for_tag, formatAmount, formatDatetimeRelative, formatDisplayDate, formatTime } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, flow_color_for_tag, formatAmount, formatDate, formatDatetimeRelative, formatDisplayDate, formatTime } from '../../common/Utils';
 import { useRouter } from 'vue-router';
 import AddTransaction from '../AddTransaction.vue';
 import ConfirmSheet from './ConfirmSheet.vue';
+import { show_error } from '../../common/Notify';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -19,6 +20,9 @@ const props = defineProps<{
     title?: string,
     variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain"
     filter?: TransactionFilter,
+    keyword?: string,
+    beginDate?: Date,
+    endDate?: Date,
 }>();
 
 const emits = defineEmits<{
@@ -56,22 +60,29 @@ const PAGE_SIZE = 20;
 
 const retrieve_transactions = async function(page: number, pageSize: number): Promise<Transaction[]> {
     try {
+        const query = {
+            page,
+            pageSize,
+            keyword: props.keyword?.trim() || null,
+            begin: props.beginDate ? formatDate(props.beginDate) : null,
+            end: props.endDate ? formatDate(props.endDate) : null,
+        };
         let transactions: Transaction[];
         if (props.filter == undefined)
-            transactions = await invoke('retrieve_transactions', { page, pageSize });
+            transactions = await invoke('retrieve_transactions', query);
         else if (props.filter!.by === 'tag')
-            transactions = await invoke('retrieve_transactions_with_tag', { page, pageSize, tagId: props.filter!.id });
+            transactions = await invoke('retrieve_transactions_with_tag', { ...query, tagId: props.filter!.id });
         else if (props.filter!.by === 'activity')
-            transactions = await invoke('retrieve_transactions_in_activity', { page, pageSize, activityId: props.filter!.id });
+            transactions = await invoke('retrieve_transactions_in_activity', { ...query, activityId: props.filter!.id });
         else {
-            transactions = await invoke('retrieve_transactions_in_wallet', { page, pageSize, walletId: props.filter!.id });
+            transactions = await invoke('retrieve_transactions_in_wallet', { ...query, walletId: props.filter!.id });
         }
         for (let id in transactions) {
             transactions[id].time = new Date(transactions[id].time);
         }
         return transactions;
     } catch (e) {
-        console.error(e);
+        show_error(e);
     }
     return [];
 }
@@ -93,7 +104,7 @@ const delete_transaction = async function(transaction: Transaction) {
         transactions.value = transactions.value.filter(t => t.id != transaction.id);
         emits('deleted', transaction);
     } catch (e) {
-        console.error(e);
+        show_error(e);
     }
 }
 

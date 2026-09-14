@@ -11,6 +11,10 @@ use super::dto::{BalanceWithTypeDto, SummaryByTagDto, SummaryByTagWithCurrencyDt
 use super::service::{modify_currency, revert_currency};
 use super::vo::{CreateTransactionVo, TransactionVo};
 
+fn sanitize_keyword(keyword: Option<String>) -> String {
+    keyword.unwrap_or_default().replace(['%', '_', '\\'], "")
+}
+
 async fn resolve_activity_id(activity_id: Option<u32>, previous_activity_id: Option<u32>) -> Result<Option<u32>> {
     let Some(activity_id) = activity_id else {
         return Ok(None);
@@ -199,20 +203,32 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
 }
 
 #[tauri::command]
-pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDate>, keyword: Option<String>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let keyword = sanitize_keyword(keyword);
     let transactions = sqlx::query(
         r#"
         SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
+        JOIN tags ON transactions.tag_id = tags.id
+        LEFT JOIN activities ON transactions.activity_id = activities.id
         WHERE time between $1 and $2
+            AND (
+                $3 = ''
+                OR IFNULL(transactions.remark, '') LIKE '%' || $3 || '%'
+                OR tags.name LIKE '%' || $3 || '%'
+                OR wallets.name LIKE '%' || $3 || '%'
+                OR IFNULL(to_wallets.name, '') LIKE '%' || $3 || '%'
+                OR IFNULL(activities.name, '') LIKE '%' || $3 || '%'
+            )
         ORDER BY time DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#)
         .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .bind(keyword)
         .bind(page_size).bind(page * page_size)
         .fetch_all(db())
         .await?;
@@ -223,9 +239,10 @@ pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDa
 }
 
 #[tauri::command]
-pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, keyword: Option<String>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let keyword = sanitize_keyword(keyword);
     let transactions = sqlx::query(
         r#"
         SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
@@ -233,12 +250,23 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
-        WHERE (wallet_id = $1 OR to_wallet_id = $1 OR ts.receive_wallet_id = $1)
+        JOIN tags ON transactions.tag_id = tags.id
+        LEFT JOIN activities ON transactions.activity_id = activities.id
+        WHERE (transactions.wallet_id = $1 OR transactions.to_wallet_id = $1 OR ts.receive_wallet_id = $1)
             AND time between $2 and $3
+            AND (
+                $4 = ''
+                OR IFNULL(transactions.remark, '') LIKE '%' || $4 || '%'
+                OR tags.name LIKE '%' || $4 || '%'
+                OR wallets.name LIKE '%' || $4 || '%'
+                OR IFNULL(to_wallets.name, '') LIKE '%' || $4 || '%'
+                OR IFNULL(activities.name, '') LIKE '%' || $4 || '%'
+            )
         ORDER BY time DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#)
         .bind(wallet_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .bind(keyword)
         .bind(page_size).bind(page * page_size)
         .fetch_all(db())
         .await?;
@@ -249,9 +277,10 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
 }
 
 #[tauri::command]
-pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, keyword: Option<String>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let keyword = sanitize_keyword(keyword);
     // retrieve transactions with tag_id or its children
     let transactions = sqlx::query(
         r#"
@@ -259,6 +288,8 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
+        JOIN tags ON transactions.tag_id = tags.id
+        LEFT JOIN activities ON transactions.activity_id = activities.id
         WHERE tag_id IN (
             WITH RECURSIVE tag_tree(id) AS (
                 SELECT id FROM tags WHERE id = $1
@@ -267,10 +298,19 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
             )
             SELECT id FROM tag_tree
         ) AND time between $2 and $3
+            AND (
+                $4 = ''
+                OR IFNULL(transactions.remark, '') LIKE '%' || $4 || '%'
+                OR tags.name LIKE '%' || $4 || '%'
+                OR wallets.name LIKE '%' || $4 || '%'
+                OR IFNULL(to_wallets.name, '') LIKE '%' || $4 || '%'
+                OR IFNULL(activities.name, '') LIKE '%' || $4 || '%'
+            )
         ORDER BY time DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#)
         .bind(tag_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .bind(keyword)
         .bind(page_size).bind(page * page_size)
         .fetch_all(db())
         .await?;
@@ -281,20 +321,32 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
 }
 
 #[tauri::command]
-pub async fn retrieve_transactions_in_activity(activity_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+pub async fn retrieve_transactions_in_activity(activity_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, keyword: Option<String>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let keyword = sanitize_keyword(keyword);
     let transactions = sqlx::query(
         r#"
         SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
+        JOIN tags ON transactions.tag_id = tags.id
+        LEFT JOIN activities ON transactions.activity_id = activities.id
         WHERE activity_id = $1 AND time between $2 and $3
+            AND (
+                $4 = ''
+                OR IFNULL(transactions.remark, '') LIKE '%' || $4 || '%'
+                OR tags.name LIKE '%' || $4 || '%'
+                OR wallets.name LIKE '%' || $4 || '%'
+                OR IFNULL(to_wallets.name, '') LIKE '%' || $4 || '%'
+                OR IFNULL(activities.name, '') LIKE '%' || $4 || '%'
+            )
         ORDER BY time DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#)
         .bind(activity_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .bind(keyword)
         .bind(page_size).bind(page * page_size)
         .fetch_all(db())
         .await?;

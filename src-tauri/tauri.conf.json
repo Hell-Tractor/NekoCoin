@@ -1,7 +1,7 @@
 {
   "productName": "nekocoin",
   "version": "0.0.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.helltractor.nekocoin",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -11,6 +11,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "NekoCoin",
         "width": 400,
         "height": 800

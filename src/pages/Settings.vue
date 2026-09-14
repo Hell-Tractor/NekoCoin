@@ -3,12 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
 import Constants from '../common/Constants';
-import { clear_logs, get_log_usage, reset_app, settings, save_settings } from '../common/Settings';
+import { clear_logs, export_csv, export_database, get_log_usage, import_csv, import_database, reset_app, settings, save_settings } from '../common/Settings';
 import { format_bytes } from '../common/Utils';
 import { get_theme_color_palette } from '../themes/palettes';
 import BackTitleBar from './components/BackTitleBar.vue';
 import ConfirmSheet from './components/ConfirmSheet.vue';
 import { useRouter } from 'vue-router';
+import { show_error, show_success } from '../common/Notify';
 
 const router = useRouter();
 const { t, locale } = useI18n();
@@ -53,6 +54,13 @@ const log_retention_items = computed(() => [
     { value: 90, title: t('settings.logs.retention_days', { days: 90 }) },
     { value: 180, title: t('settings.logs.retention_days', { days: 180 }) },
 ]);
+const log_level_items = computed(() => [
+    { value: 'error', title: t('settings.logs.levels.error') },
+    { value: 'warn', title: t('settings.logs.levels.warn') },
+    { value: 'info', title: t('settings.logs.levels.info') },
+    { value: 'debug', title: t('settings.logs.levels.debug') },
+    { value: 'trace', title: t('settings.logs.levels.trace') },
+]);
 const log_usage_bytes = ref(0);
 const log_usage_display = computed(() => format_bytes(log_usage_bytes.value));
 
@@ -65,7 +73,7 @@ const save = async function() {
     try {
         await save_settings();
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 };
 
@@ -86,7 +94,7 @@ const refresh_log_usage = async function() {
     try {
         log_usage_bytes.value = await get_log_usage();
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 };
 
@@ -102,7 +110,7 @@ const confirm_clear_logs = async function() {
         await clear_logs();
         await refresh_log_usage();
     } catch (error) {
-        console.error(error);
+        show_error(error);
     } finally {
         clearing_logs.value = false;
     }
@@ -119,8 +127,51 @@ const confirm_reset = async function() {
     try {
         await reset_app();
     } catch (error) {
-        console.error(error);
+        show_error(error);
         resetting.value = false;
+    }
+};
+
+const transferring_data = ref(false);
+const pending_import = ref<'db' | 'csv' | undefined>(undefined);
+const show_import_confirm = ref(false);
+
+const run_export = async function(kind: 'db' | 'csv') {
+    if (transferring_data.value) {
+        return;
+    }
+    transferring_data.value = true;
+    try {
+        const exported = kind === 'db' ? await export_database() : await export_csv();
+        if (exported) {
+            show_success(t('settings.data.exported'));
+        }
+    } catch (error) {
+        show_error(error);
+    } finally {
+        transferring_data.value = false;
+    }
+};
+
+const choose_import = function(kind: 'db' | 'csv') {
+    pending_import.value = kind;
+    show_import_confirm.value = true;
+};
+
+const confirm_import = async function() {
+    if (!pending_import.value || transferring_data.value) {
+        return;
+    }
+    transferring_data.value = true;
+    try {
+        if (pending_import.value === 'db') {
+            await import_database();
+        } else {
+            await import_csv();
+        }
+    } catch (error) {
+        show_error(error);
+        transferring_data.value = false;
     }
 };
 
@@ -250,6 +301,17 @@ onMounted(refresh_log_usage);
         </v-card>
         <v-card class="mt-4" rounded="xl">
             <v-card-text>
+                <div class="settings-section-title">{{ t('settings.data.section') }}</div>
+                <div class="data-actions">
+                    <v-btn variant="tonal" rounded="xl" :loading="transferring_data" @click="run_export('db')">{{ t('settings.data.export_db') }}</v-btn>
+                    <v-btn variant="outlined" rounded="xl" :loading="transferring_data" @click="choose_import('db')">{{ t('settings.data.import_db') }}</v-btn>
+                    <v-btn variant="tonal" rounded="xl" :loading="transferring_data" @click="run_export('csv')">{{ t('settings.data.export_csv') }}</v-btn>
+                    <v-btn variant="outlined" rounded="xl" :loading="transferring_data" @click="choose_import('csv')">{{ t('settings.data.import_csv') }}</v-btn>
+                </div>
+            </v-card-text>
+        </v-card>
+        <v-card class="mt-4" rounded="xl">
+            <v-card-text>
                 <div class="settings-section-title">{{ t('settings.logs.section') }}</div>
                 <v-text-field
                     :model-value="log_usage_display"
@@ -264,6 +326,15 @@ onMounted(refresh_log_usage);
                     item-title="title"
                     item-value="value"
                     :label="t('settings.logs.retention')"
+                    variant="outlined"
+                    density="compact"
+                />
+                <v-select
+                    v-model="settings.log_level"
+                    :items="log_level_items"
+                    item-title="title"
+                    item-value="value"
+                    :label="t('settings.logs.level')"
                     variant="outlined"
                     density="compact"
                 />
@@ -293,6 +364,12 @@ onMounted(refresh_log_usage);
             </v-card-text>
         </v-card>
         <confirm-sheet
+            v-model="show_import_confirm"
+            :title="t('settings.data.import_confirm_title')"
+            :text="t('settings.data.import_confirm_text')"
+            @confirm="confirm_import"
+        />
+        <confirm-sheet
             v-model="show_clear_logs_confirm"
             :title="t('settings.logs.confirm_title')"
             :text="t('settings.logs.confirm_text')"
@@ -317,6 +394,12 @@ onMounted(refresh_log_usage);
 
 .section-divider {
     margin: 8px 0 20px;
+}
+
+.data-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 
 .theme-swatch {

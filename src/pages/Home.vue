@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import SummaryBar from './components/SummaryBar.vue';
 import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { formatDate, formatDisplayDate } from '../common/Utils';
 import TransactionList from './components/TransactionList.vue';
 import ActiveActivityList from './components/ActiveActivityList.vue';
@@ -24,7 +25,7 @@ const getTotalBalance = async function() {
         const result: number = await invoke('get_sum_balance', { currencyCode: currency.code });
         totalBalance.value = new Money(result, currency);
     } catch (e) {
-        console.error(e);
+        show_error(e);
     }
 }
 const getMonthBalance = async function() {
@@ -37,7 +38,7 @@ const getMonthBalance = async function() {
         currentMonthExpense.value = new Money(result.expense, currency);
         currentMonthNetCashFlow.value = new Money(result.income - result.expense, currency);
     } catch (e) {
-        console.error(e);
+        show_error(e);
     }
 }
 const refresh = async function() {
@@ -45,7 +46,7 @@ const refresh = async function() {
         await getTotalBalance();
         await getMonthBalance();
     } catch (e) {
-        console.error(e);
+        show_error(e);
     }
 }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../../common/Notify';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { Activity } from '../../common/Activity';
@@ -44,7 +45,7 @@ const retrieve_open_activities = async function() {
             expanded.value = false;
         }
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 };
 
@@ -61,7 +62,7 @@ const close_activity = async function(activity: Activity, event: Event) {
             expanded.value = false;
         }
     } catch (error) {
-        console.error(error);
+        show_error(error);
     } finally {
         closing_id.value = undefined;
     }

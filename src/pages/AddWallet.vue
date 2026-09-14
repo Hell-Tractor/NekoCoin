@@ -7,6 +7,7 @@ import { get_random_theme_color } from '../themes/palettes';
 import { load_settings, settings } from '../common/Settings';
 import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { Currency } from '../common/Money';
 import IconSelector from './components/IconSelector.vue';
 import { Wallet } from './Wallets.vue';
@@ -52,8 +53,7 @@ const addWallet = async function() {
         }
         router.back();
     } catch (error) {
-        // TODO: handle error
-        console.error(error);
+        show_error(error);
     }
 }
 

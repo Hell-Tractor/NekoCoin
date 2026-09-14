@@ -3,6 +3,7 @@ import { onMounted, ref, Ref } from 'vue';
 import BackTitleBar from './components/BackTitleBar.vue';
 import Tag, { TagTypeFromString } from '../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import TransactionList from './components/TransactionList.vue';
@@ -24,7 +25,7 @@ const get_tag = async function() {
     try {
         tag.value = await invoke('get_tag_by_id', { id: props.id });
     } catch (e) {
-        console.error(e);
+        show_error(e);
     }
 }
 
@@ -33,7 +34,7 @@ const delete_tag = async function() {
         await invoke('delete_tag', { id: props.id });
         router.back();
     } catch (e) {
-        console.error(e);
+        show_error(e);
     }
 }
 

@@ -4,6 +4,7 @@ import { useTheme } from 'vuetify';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { load_settings, settings } from './common/Settings';
+import { notice } from './common/Notify';
 
 const theme = useTheme();
 const router = useRouter();
@@ -26,6 +27,9 @@ onMounted(async () => {
 <template>
     <v-app>
         <router-view />
+        <v-snackbar v-model="notice.visible" :color="notice.color" timeout="4000" location="top">
+            {{ notice.text }}
+        </v-snackbar>
     </v-app>
 </template>
 

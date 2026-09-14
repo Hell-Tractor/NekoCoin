@@ -1,5 +1,6 @@
 import { reactive, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from './Notify';
 
 export interface UserSettings {
     primary_currency_code: string;
@@ -14,6 +15,7 @@ export interface UserSettings {
     thousands_separator: boolean;
     initialized: boolean;
     log_retention_days: number;
+    log_level: 'error' | 'warn' | 'info' | 'debug' | 'trace';
 }
 
 export const default_settings: UserSettings = {
@@ -29,6 +31,7 @@ export const default_settings: UserSettings = {
     thousands_separator: true,
     initialized: false,
     log_retention_days: 30,
+    log_level: 'info',
 };
 
 export const settings = reactive<UserSettings>({ ...default_settings });
@@ -46,7 +49,9 @@ export const load_settings = async function() {
         .then(loaded => {
             Object.assign(settings, default_settings, loaded as UserSettings);
         })
-        .catch(error => console.error(error))
+        .catch(error => {
+            show_error(error);
+        })
         .finally(() => {
             settings_loaded.value = true;
             loading_settings = undefined;
@@ -68,4 +73,20 @@ export const get_log_usage = async function(): Promise<number> {
 
 export const clear_logs = async function() {
     await invoke('clear_logs');
+};
+
+export const export_database = async function(): Promise<boolean> {
+    return await invoke('export_database') as boolean;
+};
+
+export const import_database = async function(): Promise<boolean> {
+    return await invoke('import_database') as boolean;
+};
+
+export const export_csv = async function(): Promise<boolean> {
+    return await invoke('export_csv') as boolean;
+};
+
+export const import_csv = async function(): Promise<boolean> {
+    return await invoke('import_csv') as boolean;
 };

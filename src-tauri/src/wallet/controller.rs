@@ -1,6 +1,9 @@
+use sqlx::Row;
 use tracing::{debug, info};
 
 use crate::sql::db;
+use crate::tag::TagKind;
+use crate::transaction::service::{delete_transaction, revert_currency};
 use crate::Result;
 
 use super::vo::UpdateWalletVo;
@@ -58,15 +61,56 @@ pub async fn retrieve_wallets() -> Result<Vec<Wallet>> {
 
 #[tauri::command]
 pub async fn delete_wallet(id: u32) -> Result<()> {
-    sqlx::query(
+    debug!("Deleting wallet(id = {})", id);
+    let mut tx = db().begin().await?;
+    let owned_ids = sqlx::query(
         r#"
-        DELETE FROM wallets
-        WHERE id = $1
+        SELECT id FROM transactions
+        WHERE wallet_id = $1 OR to_wallet_id = $1
         "#)
         .bind(id)
-        .execute(db())
+        .fetch_all(&mut *tx)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<u32, _>("id"))
+        .collect::<Vec<_>>();
+    for transaction_id in owned_ids {
+        delete_transaction(&mut *tx, transaction_id).await?;
+    }
+
+    let split_rows = sqlx::query(
+        r#"
+        SELECT transactions.id AS transaction_id, transactions.amount, ts.id AS split_id, ts.expense, ts.receive_wallet_id
+        FROM transactions
+        JOIN transaction_splits ts ON transactions.split_id = ts.id
+        WHERE ts.receive_wallet_id = $1
+        "#)
+        .bind(id)
+        .fetch_all(&mut *tx)
         .await?;
-    info!("Wallet deleted");
+    for row in split_rows {
+        let transaction_id: u32 = row.get("transaction_id");
+        let split_id: u32 = row.get("split_id");
+        let amount: i32 = row.get("amount");
+        let expense: i32 = row.get("expense");
+        let receive_wallet_id: u32 = row.get("receive_wallet_id");
+        revert_currency(&mut *tx, &TagKind::Income, receive_wallet_id, None, amount - expense).await?;
+        sqlx::query("UPDATE transactions SET split_id = NULL WHERE id = $1")
+            .bind(transaction_id)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("DELETE FROM transaction_splits WHERE id = $1")
+            .bind(split_id)
+            .execute(&mut *tx)
+            .await?;
+    }
+
+    sqlx::query("DELETE FROM wallets WHERE id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    info!("Wallet(id = {}) deleted", id);
     Ok(())
 }
 

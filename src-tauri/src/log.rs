@@ -9,15 +9,56 @@ use tracing::{debug, info, warn};
 
 use crate::{Error, Result};
 
-pub const LOG_DIR_NAME: &str = "nekocoin_logs";
 pub const LOG_PREFIX: &str = "nekocoin.log";
+pub const DEFAULT_LOG_LEVEL: &str = "info";
+
+pub struct LogReloadHandle {
+    inner: tracing_subscriber::reload::Handle<
+        tracing_subscriber::EnvFilter,
+        tracing_subscriber::Registry,
+    >,
+}
+
+pub fn normalize_log_level(level: &str) -> &'static str {
+    match level.to_ascii_lowercase().as_str() {
+        "error" => "error",
+        "warn" => "warn",
+        "info" => "info",
+        "debug" => "debug",
+        "trace" => "trace",
+        _ => DEFAULT_LOG_LEVEL,
+    }
+}
+
+pub fn env_filter_for_level(level: &str) -> tracing_subscriber::EnvFilter {
+    tracing_subscriber::EnvFilter::new(format!("nekocoin_lib={}", normalize_log_level(level)))
+}
+
+impl LogReloadHandle {
+    pub fn new(
+        handle: tracing_subscriber::reload::Handle<
+            tracing_subscriber::EnvFilter,
+            tracing_subscriber::Registry,
+        >,
+    ) -> Self {
+        Self { inner: handle }
+    }
+
+    pub fn set_level(&self, level: &str) -> Result<()> {
+        let normalized = normalize_log_level(level);
+        self.inner
+            .reload(env_filter_for_level(normalized))
+            .map_err(|error| Error::LoggerError(format!("failed to reload log filter: {error}")))?;
+        info!("Log level set to {normalized}");
+        Ok(())
+    }
+}
 
 pub fn log_dir(app: &AppHandle) -> Result<PathBuf> {
     let directory = app
         .path()
         .app_log_dir()
-        .map_err(|error| Error::LoggerError(format!("failed to locate log directory: {error}")))?
-        .join(LOG_DIR_NAME);
+        .map_err(|error| Error::LoggerError(format!("failed to locate log directory: {error}")))?;
     fs::create_dir_all(&directory).map_err(|error| {
         Error::LoggerError(format!("failed to create log directory: {error}"))
     })?;

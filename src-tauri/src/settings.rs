@@ -23,6 +23,12 @@ pub struct Settings {
     pub thousands_separator: bool,
     pub initialized: bool,
     pub log_retention_days: u32,
+    #[serde(default = "default_log_level")]
+    pub log_level: String,
+}
+
+fn default_log_level() -> String {
+    crate::log::DEFAULT_LOG_LEVEL.to_string()
 }
 
 impl Default for Settings {
@@ -40,6 +46,7 @@ impl Default for Settings {
             thousands_separator: true,
             initialized: false,
             log_retention_days: 30,
+            log_level: default_log_level(),
         }
     }
 }
@@ -67,15 +74,17 @@ pub fn get_settings(app: AppHandle) -> Result<Settings> {
     if !settings.initialized {
         settings.initialized = true;
     }
+    settings.log_level = crate::log::normalize_log_level(&settings.log_level).to_string();
     info!("Settings loaded");
     Ok(settings)
 }
 
 #[tauri::command]
-pub fn save_settings(app: AppHandle, settings: Settings) -> Result<()> {
+pub fn save_settings(app: AppHandle, mut settings: Settings) -> Result<()> {
+    settings.log_level = crate::log::normalize_log_level(&settings.log_level).to_string();
     debug!(
-        "Saving settings (locale = {}, log_retention_days = {})",
-        settings.locale, settings.log_retention_days
+        "Saving settings (locale = {}, log_retention_days = {}, log_level = {})",
+        settings.locale, settings.log_retention_days, settings.log_level
     );
     let path = settings_path(&app)?;
     let content = serde_yaml::to_string(&settings)
@@ -85,6 +94,9 @@ pub fn save_settings(app: AppHandle, settings: Settings) -> Result<()> {
         .map_err(|error| Error::InvalidParameter(format!("failed to write settings: {error}")))?;
     fs::rename(temporary_path, path)
         .map_err(|error| Error::InvalidParameter(format!("failed to replace settings: {error}")))?;
+    if let Some(handle) = app.try_state::<crate::log::LogReloadHandle>() {
+        handle.set_level(&settings.log_level)?;
+    }
     info!("Settings saved");
     Ok(())
 }

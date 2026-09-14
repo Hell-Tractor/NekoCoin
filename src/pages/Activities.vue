@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { Activity } from '../common/Activity';
@@ -26,7 +27,7 @@ const retrieve_activities = async function() {
         }
         net_by_id.value = next;
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 }
 

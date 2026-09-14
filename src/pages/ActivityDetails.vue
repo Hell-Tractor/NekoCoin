@@ -2,6 +2,7 @@
 import { onMounted, ref, Ref } from 'vue';
 import BackTitleBar from './components/BackTitleBar.vue';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SummaryBar from './components/SummaryBar.vue';
@@ -42,7 +43,7 @@ const get_activity = async function() {
     try {
         activity.value = await invoke('get_activity_by_id', { id: props.id });
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 }
 
@@ -50,7 +51,7 @@ const get_sum_balance = async function() {
     try {
         sum_balance.value = await invoke('get_sum_balance_in_activity', { activityId: props.id });
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 }
 
@@ -84,7 +85,7 @@ const toggle_open = async function(open: boolean | null) {
     try {
         await invoke('set_activity_open', { id: props.id, open });
     } catch (error) {
-        console.error(error);
+        show_error(error);
         activity.value.open = previous;
     } finally {
         toggling_open.value = false;
@@ -96,7 +97,7 @@ const delete_activity = async function() {
         await invoke('delete_activity', { id: props.id });
         router.back();
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 }
 

@@ -8,6 +8,7 @@ import Constants from '../common/Constants';
 import { get_random_theme_color } from '../themes/palettes';
 import { load_settings, settings } from '../common/Settings';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import IconSelector from './components/IconSelector.vue';
 import { useRoute, useRouter } from 'vue-router';
 import ColorPalette from './components/ColorPalette.vue';
@@ -62,8 +63,7 @@ const retrieve_tags = async function() {
         forbidden.add(id.value);
         tags.value = result.filter(tag => !forbidden.has(tag.id));
     } catch (error) {
-        // TODO: handle error
-        console.error(error);
+        show_error(error);
     }
 }
 
@@ -92,8 +92,7 @@ const addTag = async function() {
         }
         router.back();
     } catch (error) {
-        // TODO: handle error
-        console.error(error);
+        show_error(error);
     }
 }
 

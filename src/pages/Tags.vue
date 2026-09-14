@@ -3,6 +3,7 @@ import { onMounted, ref, Ref } from 'vue';
 import Tag, { TagType, TagTypeNames, TagTypeToString } from '../common/Tag';
 import { useI18n } from 'vue-i18n';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { useRouter } from 'vue-router';
 import { entity_accent_color, entity_avatar_style } from '../common/Utils';
 import EmptyState from './components/EmptyState.vue';
@@ -19,7 +20,7 @@ const retrieve_tags = async function() {
         const kind = selected_kind.value === 'all' ? undefined : TagTypeToString(selected_kind.value);
         tags.value = await invoke('retrieve_tags', { filter: filter_key.value, kind });
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 }
 

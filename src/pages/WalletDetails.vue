@@ -3,6 +3,7 @@ import { onMounted, ref, Ref } from 'vue';
 import WalletCard from './components/WalletCard.vue';
 import { Wallet } from './Wallets.vue';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import BackTitleBar from './components/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -28,7 +29,7 @@ const get_wallet = async function() {
     try {
         wallet.value = await invoke('get_wallet_by_id', { id: props.id });
     } catch (error) {
-        console.log(error);
+        show_error(error);
     }
 }
 
@@ -36,7 +37,7 @@ const get_sum_balance = async function() {
     try {
         sum_balance.value = await invoke('get_sum_balance_in_wallet', { walletId: props.id });
     } catch (error) {
-        console.log(error);
+        show_error(error);
     }
 }
 
@@ -53,7 +54,7 @@ const delete_wallet = async function() {
         await invoke('delete_wallet', { id: props.id });
         router.back();
     } catch (error) {
-        console.log(error);
+        show_error(error);
     }
 }
 

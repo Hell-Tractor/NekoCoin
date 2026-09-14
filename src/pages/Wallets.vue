@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { show_error } from '../common/Notify';
 import { useI18n } from 'vue-i18n';
 import WalletCard from './components/WalletCard.vue';
 import EmptyState from './components/EmptyState.vue';
@@ -24,7 +25,7 @@ const retrieveWallets = async function() {
     try {
         wallets.value = await invoke('retrieve_wallets');
     } catch (error) {
-        console.error(error);
+        show_error(error);
     }
 }
 

@@ -5,7 +5,7 @@ use sqlx::migrate::Migrator;
 use tag::TagKind;
 use tracing::{info, warn};
 use tracing_appender::rolling;
-use tracing_subscriber::{fmt::writer::MakeWriterExt, EnvFilter};
+use tracing_subscriber::{fmt, layer::SubscriberExt, reload, util::SubscriberInitExt, fmt::writer::MakeWriterExt};
 use tauri::Manager;
 
 mod constants;
@@ -18,6 +18,7 @@ mod summary;
 mod settings;
 mod log;
 mod activity;
+mod backup;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -36,6 +37,10 @@ pub enum Error {
     DatabaseError(String),
     #[error("Logger error: {0}")]
     LoggerError(String),
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+    #[error(transparent)]
+    CsvError(#[from] csv::Error),
 }
 type Result<T> = std::result::Result<T, Error>;
 
@@ -57,6 +62,7 @@ impl Drop for Error {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             init_logger(app.handle())?;
             let retention_days = settings::get_settings(app.handle().clone())?.log_retention_days;
@@ -115,6 +121,11 @@ pub fn run() {
 
             log::get_log_usage,
             log::clear_logs,
+
+            backup::export_database,
+            backup::import_database,
+            backup::export_csv,
+            backup::import_csv,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -148,18 +159,21 @@ async fn init_database(app: &tauri::AppHandle) -> Result<()> {
 
 fn init_logger(app: &tauri::AppHandle) -> Result<()> {
     let directory = log::log_dir(app)?;
+    let log_level = settings::get_settings(app.clone())
+        .map(|loaded| loaded.log_level)
+        .unwrap_or_else(|_| log::DEFAULT_LOG_LEVEL.to_string());
 
     let file_appender = rolling::daily(directory, log::LOG_PREFIX);
     let (file_writer, guard) = tracing_appender::non_blocking(file_appender);
     std::mem::forget(guard);
-    let subscriber = tracing_subscriber::fmt()
-        .with_writer(file_writer.and(std::io::stdout))
-        .with_max_level(tracing::Level::DEBUG)
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("nekocoin_lib=debug")))
-        .finish();
 
-    tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
+    let (filter_layer, reload_handle) = reload::Layer::new(log::env_filter_for_level(&log_level));
+    tracing_subscriber::registry()
+        .with(filter_layer)
+        .with(fmt::layer().with_writer(file_writer.and(std::io::stdout)))
+        .init();
+    app.manage(log::LogReloadHandle::new(reload_handle));
 
-    info!("Logger initialized");
+    info!("Logger initialized (level = {})", crate::log::normalize_log_level(&log_level));
     Ok(())
 }
