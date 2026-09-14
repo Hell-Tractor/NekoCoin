@@ -51,6 +51,16 @@ export default {
             calico: 'Calico',
             neon: 'Neon Mint',
         },
+        logs: {
+            section: 'Logs',
+            usage: 'Storage used',
+            retention: 'Retention period',
+            retention_forever: 'Keep forever',
+            retention_days: '{days} days',
+            clear: 'Clear logs',
+            confirm_title: 'Confirm Clear Logs',
+            confirm_text: 'All log files except today will be permanently deleted. Continue?',
+        },
         danger_zone: {
             title: 'Danger Zone',
             description: 'Resetting will erase all accounts, tags, transactions, and user settings. This cannot be undone.',

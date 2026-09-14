@@ -51,6 +51,16 @@ export default {
             calico: '森野陶土',
             neon: '霓虹薄荷',
         },
+        logs: {
+            section: '日志',
+            usage: '当前占用',
+            retention: '保留时长',
+            retention_forever: '永久保留',
+            retention_days: '{days} 天',
+            clear: '清除日志',
+            confirm_title: '确认清除日志',
+            confirm_text: '将删除除今天以外的所有日志文件，此操作不可撤销。确认继续？',
+        },
         danger_zone: {
             title: '危险区域',
             description: '重置将清除所有账户、标签、交易记录和用户配置，此操作不可撤销。',

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
 import Constants from '../common/Constants';
-import { reset_app, settings, save_settings } from '../common/Settings';
+import { clear_logs, get_log_usage, reset_app, settings, save_settings } from '../common/Settings';
+import { format_bytes } from '../common/Utils';
 import { get_theme_color_palette } from '../themes/palettes';
 import BackTitleBar from './components/BackTitleBar.vue';
 import ConfirmSheet from './components/ConfirmSheet.vue';
@@ -44,6 +45,15 @@ const language_items = [
     { value: 'zh-CN', title: '简体中文' },
     { value: 'en-US', title: 'English' },
 ];
+const log_retention_items = computed(() => [
+    { value: 0, title: t('settings.logs.retention_forever') },
+    { value: 7, title: t('settings.logs.retention_days', { days: 7 }) },
+    { value: 30, title: t('settings.logs.retention_days', { days: 30 }) },
+    { value: 90, title: t('settings.logs.retention_days', { days: 90 }) },
+    { value: 180, title: t('settings.logs.retention_days', { days: 180 }) },
+]);
+const log_usage_bytes = ref(0);
+const log_usage_display = computed(() => format_bytes(log_usage_bytes.value));
 
 const update_theme = function(value: string) {
     theme.global.name.value = value;
@@ -71,6 +81,32 @@ const update_locale = function(value: 'zh-CN' | 'en-US') {
     locale.value = value;
 };
 
+const refresh_log_usage = async function() {
+    try {
+        log_usage_bytes.value = await get_log_usage();
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+const show_clear_logs_confirm = ref(false);
+const clearing_logs = ref(false);
+
+const confirm_clear_logs = async function() {
+    if (clearing_logs.value) {
+        return;
+    }
+    clearing_logs.value = true;
+    try {
+        await clear_logs();
+        await refresh_log_usage();
+    } catch (error) {
+        console.error(error);
+    } finally {
+        clearing_logs.value = false;
+    }
+};
+
 const show_reset_confirm = ref(false);
 const resetting = ref(false);
 
@@ -88,6 +124,8 @@ const confirm_reset = async function() {
 };
 
 watch(settings, queue_save, { deep: true });
+
+onMounted(refresh_log_usage);
 </script>
 
 <template>
@@ -209,6 +247,35 @@ watch(settings, queue_save, { deep: true });
                 </v-select>
             </v-card-text>
         </v-card>
+        <v-card class="mt-4" rounded="xl">
+            <v-card-text>
+                <div class="settings-section-title">{{ t('settings.logs.section') }}</div>
+                <v-text-field
+                    :model-value="log_usage_display"
+                    :label="t('settings.logs.usage')"
+                    variant="outlined"
+                    density="comfortable"
+                    readonly
+                />
+                <v-select
+                    v-model="settings.log_retention_days"
+                    :items="log_retention_items"
+                    item-title="title"
+                    item-value="value"
+                    :label="t('settings.logs.retention')"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-btn
+                    variant="outlined"
+                    rounded="xl"
+                    :loading="clearing_logs"
+                    @click="show_clear_logs_confirm = true"
+                >
+                    {{ t('settings.logs.clear') }}
+                </v-btn>
+            </v-card-text>
+        </v-card>
         <v-card class="mt-4 danger-zone" rounded="xl" variant="outlined">
             <v-card-text>
                 <div class="danger-zone-title">{{ t('settings.danger_zone.title') }}</div>
@@ -224,6 +291,12 @@ watch(settings, queue_save, { deep: true });
                 </v-btn>
             </v-card-text>
         </v-card>
+        <confirm-sheet
+            v-model="show_clear_logs_confirm"
+            :title="t('settings.logs.confirm_title')"
+            :text="t('settings.logs.confirm_text')"
+            @confirm="confirm_clear_logs"
+        />
         <confirm-sheet
             v-model="show_reset_confirm"
             :title="t('settings.danger_zone.confirm_title')"

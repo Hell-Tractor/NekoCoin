@@ -2,6 +2,7 @@ use std::{fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
+use tracing::{debug, info};
 
 use crate::{constants, sql, Error, Result};
 
@@ -21,6 +22,7 @@ pub struct Settings {
     pub decimal_places: u8,
     pub thousands_separator: bool,
     pub initialized: bool,
+    pub log_retention_days: u32,
 }
 
 impl Default for Settings {
@@ -37,6 +39,7 @@ impl Default for Settings {
             decimal_places: 2,
             thousands_separator: true,
             initialized: false,
+            log_retention_days: 30,
         }
     }
 }
@@ -51,8 +54,10 @@ fn settings_path(app: &AppHandle) -> Result<PathBuf> {
 
 #[tauri::command]
 pub fn get_settings(app: AppHandle) -> Result<Settings> {
+    debug!("Getting settings");
     let path = settings_path(&app)?;
     if !path.exists() {
+        debug!("Settings file not found, returning defaults");
         return Ok(Settings::default());
     }
     let content = fs::read_to_string(path)
@@ -62,11 +67,16 @@ pub fn get_settings(app: AppHandle) -> Result<Settings> {
     if !settings.initialized {
         settings.initialized = true;
     }
+    info!("Settings loaded");
     Ok(settings)
 }
 
 #[tauri::command]
 pub fn save_settings(app: AppHandle, settings: Settings) -> Result<()> {
+    debug!(
+        "Saving settings (locale = {}, log_retention_days = {})",
+        settings.locale, settings.log_retention_days
+    );
     let path = settings_path(&app)?;
     let content = serde_yaml::to_string(&settings)
         .map_err(|error| Error::InvalidParameter(format!("failed to serialize settings: {error}")))?;
@@ -75,6 +85,7 @@ pub fn save_settings(app: AppHandle, settings: Settings) -> Result<()> {
         .map_err(|error| Error::InvalidParameter(format!("failed to write settings: {error}")))?;
     fs::rename(temporary_path, path)
         .map_err(|error| Error::InvalidParameter(format!("failed to replace settings: {error}")))?;
+    info!("Settings saved");
     Ok(())
 }
 
@@ -86,6 +97,7 @@ fn database_path(app: &AppHandle) -> Result<PathBuf> {
 
 #[tauri::command]
 pub async fn reset_app(app: AppHandle) -> Result<()> {
+    debug!("Resetting app");
     sql::close().await?;
 
     let database_path = database_path(&app)?;
@@ -100,6 +112,6 @@ pub async fn reset_app(app: AppHandle) -> Result<()> {
             .map_err(|error| Error::InvalidParameter(format!("failed to delete settings: {error}")))?;
     }
 
-    app.restart();
-    Ok(())
+    info!("App reset completed, restarting");
+    app.restart()
 }

@@ -16,6 +16,7 @@ mod tag;
 mod transaction;
 mod summary;
 mod settings;
+mod log;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -57,6 +58,8 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             init_logger(app.handle())?;
+            let retention_days = settings::get_settings(app.handle().clone())?.log_retention_days;
+            log::cleanup_expired_logs(app.handle(), retention_days)?;
             tauri::async_runtime::block_on(async {
                 init_database(app.handle()).await.expect("Failed to initialize database");
                 migrate_database().await;
@@ -95,6 +98,9 @@ pub fn run() {
             settings::get_settings,
             settings::save_settings,
             settings::reset_app,
+
+            log::get_log_usage,
+            log::clear_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -127,13 +133,9 @@ async fn init_database(app: &tauri::AppHandle) -> Result<()> {
 }
 
 fn init_logger(app: &tauri::AppHandle) -> Result<()> {
-    let directory = app.path().app_log_dir()
-        .map_err(|error| Error::LoggerError(format!("failed to locate log directory: {error}")))?
-        .join("nekocoin_logs");
-    fs::create_dir_all(&directory)
-        .map_err(|error| Error::LoggerError(format!("failed to create log directory: {error}")))?;
+    let directory = log::log_dir(app)?;
 
-    let file_appender = rolling::daily(directory, "nekocoin.log");
+    let file_appender = rolling::daily(directory, log::LOG_PREFIX);
     let (file_writer, guard) = tracing_appender::non_blocking(file_appender);
     std::mem::forget(guard);
     let subscriber = tracing_subscriber::fmt()

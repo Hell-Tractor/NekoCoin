@@ -13,6 +13,7 @@ export interface UserSettings {
     decimal_places: number;
     thousands_separator: boolean;
     initialized: boolean;
+    log_retention_days: number;
 }
 
 export const default_settings: UserSettings = {
@@ -27,6 +28,7 @@ export const default_settings: UserSettings = {
     decimal_places: 2,
     thousands_separator: true,
     initialized: false,
+    log_retention_days: 30,
 };
 
 export const settings = reactive<UserSettings>({ ...default_settings });
@@ -58,4 +60,12 @@ export const save_settings = async function() {
 
 export const reset_app = async function() {
     await invoke('reset_app');
+};
+
+export const get_log_usage = async function(): Promise<number> {
+    return await invoke('get_log_usage') as number;
+};
+
+export const clear_logs = async function() {
+    await invoke('clear_logs');
 };

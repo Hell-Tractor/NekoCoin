@@ -70,6 +70,16 @@ export const formatDatetimeRelative = function(date: Date, relative_date: Date) 
     }
 }
 
+export const format_bytes = function(bytes: number): string {
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export const formatTime = function(date: Date) : string {
     if (settings.time_format === '12hr') {
         return date.toLocaleTimeString(i18n.global.locale.value, {
