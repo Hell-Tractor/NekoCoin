@@ -25,7 +25,6 @@ const router = createRouter({
                 { path: "tags", component: Tags },
                 { path: "transactions", component: Transaction },
                 { path: "reports", component: Report },
-                { path: "settings", component: Settings },
             ],
         },
         { path: "/transaction/add", component: AddTransaction },
@@ -33,6 +32,7 @@ const router = createRouter({
         { path: "/tag/add", component: AddTag },
         { path: "/tag/:id", component: TagDetails, props: route => ({ id: Number(route.params.id) }) },
         { path: "/wallet/:id", component: WalletDetails, props: route => ({ id: Number(route.params.id) }) },
+        { path: "/settings", component: Settings },
     ]
 });
 

@@ -5,7 +5,10 @@ import { useTheme } from 'vuetify';
 import Constants from '../common/Constants';
 import { settings, save_settings } from '../common/Settings';
 import { get_theme_color_palette } from '../themes/palettes';
+import BackTitleBar from './components/BackTitleBar.vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const { t, locale } = useI18n();
 const theme = useTheme();
 const theme_items = computed(() => ['pinkPad', 'midnight', 'calico', 'neon'].map(value => ({
@@ -71,122 +74,125 @@ watch(settings, queue_save, { deep: true });
 </script>
 
 <template>
-    <v-card rounded="xl">
-        <v-card-title>{{ t('settings.title') }}</v-card-title>
-        <v-card-text>
-            <div class="settings-section-title">{{ t('settings.user_section') }}</div>
-            <v-text-field
-                v-model="settings.user_name"
-                :label="t('settings.user_name')"
-                variant="outlined"
-                density="comfortable"
-            />
-            <v-select
-                v-model="settings.avatar"
-                :items="avatar_items"
-                :label="t('settings.avatar')"
-                variant="outlined"
-                density="comfortable"
-            >
-                <template #selection="{ item }">
-                    <v-icon class="mr-2">{{ item.raw }}</v-icon>{{ item.raw }}
-                </template>
-                <template #item="{ props: item_props, item }">
-                    <v-list-item v-bind="item_props">
-                        <template #prepend><v-icon>{{ item.raw }}</v-icon></template>
-                    </v-list-item>
-                </template>
-            </v-select>
-            <v-divider class="section-divider" />
-            <div class="settings-section-title">{{ t('settings.application_section') }}</div>
-            <v-select
-                v-model="settings.locale"
-                :items="language_items"
-                item-title="title"
-                item-value="value"
-                :label="t('settings.language')"
-                variant="outlined"
-                density="comfortable"
-                @update:model-value="update_locale"
-            />
-            <v-select
-                v-model="settings.primary_currency_code"
-                :items="Constants.CURRENCIES"
-                item-title="code"
-                item-value="code"
-                :label="t('settings.primary_currency')"
-                variant="outlined"
-                density="comfortable"
-            />
-            <v-select
-                v-model="settings.default_page"
-                :items="default_page_items"
-                item-title="title"
-                item-value="value"
-                :label="t('settings.default_page')"
-                variant="outlined"
-                density="comfortable"
-            />
-            <v-select
-                v-model="settings.date_format"
-                :items="date_format_items"
-                item-title="title"
-                item-value="value"
-                :label="t('settings.date_format')"
-                variant="outlined"
-                density="comfortable"
-            />
-            <v-select
-                v-model="settings.time_format"
-                :items="time_format_items"
-                item-title="title"
-                item-value="value"
-                :label="t('settings.time_format')"
-                variant="outlined"
-                density="comfortable"
-            />
-            <v-select
-                v-model="settings.decimal_places"
-                :items="[0, 1, 2, 3, 4]"
-                :label="t('settings.decimal_places')"
-                variant="outlined"
-                density="comfortable"
-            />
-            <v-switch
-                v-model="settings.thousands_separator"
-                :label="t('settings.thousands_separator')"
-                color="primary"
-                hide-details
-                class="mb-4"
-            />
-            <v-select
-                v-model="settings.theme"
-                :items="theme_items"
-                item-title="title"
-                item-value="value"
-                :label="t('settings.theme')"
-                variant="outlined"
-                density="comfortable"
-                @update:model-value="update_theme"
-            >
-                <template #selection="{ item }">
-                    <span class="theme-name">{{ item.raw.title }}</span>
-                    <span class="theme-palette">
-                        <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
-                    </span>
-                </template>
-                <template #item="{ props: item_props, item }">
-                    <v-list-item v-bind="item_props">
-                        <template #append>
-                            <span class="theme-palette">
-                                <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
-                            </span>
-                        </template>
-                    </v-list-item>
-                </template>
-            </v-select>
-        </v-card-text>
-    </v-card>
+    <back-title-bar :title="t('settings.title')" @back="router.back()"/>
+    <v-main class="main">
+        <v-card rounded="xl">
+            <!-- <v-card-title>{{ t('settings.title') }}</v-card-title> -->
+            <v-card-text>
+                <div class="settings-section-title">{{ t('settings.user_section') }}</div>
+                <v-text-field
+                    v-model="settings.user_name"
+                    :label="t('settings.user_name')"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-select
+                    v-model="settings.avatar"
+                    :items="avatar_items"
+                    :label="t('settings.avatar')"
+                    variant="outlined"
+                    density="comfortable"
+                >
+                    <template #selection="{ item }">
+                        <v-icon class="mr-2">{{ item.raw }}</v-icon>{{ item.raw }}
+                    </template>
+                    <template #item="{ props: item_props, item }">
+                        <v-list-item v-bind="item_props">
+                            <template #prepend><v-icon>{{ item.raw }}</v-icon></template>
+                        </v-list-item>
+                    </template>
+                </v-select>
+                <v-divider class="section-divider" />
+                <div class="settings-section-title">{{ t('settings.application_section') }}</div>
+                <v-select
+                    v-model="settings.locale"
+                    :items="language_items"
+                    item-title="title"
+                    item-value="value"
+                    :label="t('settings.language')"
+                    variant="outlined"
+                    density="comfortable"
+                    @update:model-value="update_locale"
+                />
+                <v-select
+                    v-model="settings.primary_currency_code"
+                    :items="Constants.CURRENCIES"
+                    item-title="code"
+                    item-value="code"
+                    :label="t('settings.primary_currency')"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-select
+                    v-model="settings.default_page"
+                    :items="default_page_items"
+                    item-title="title"
+                    item-value="value"
+                    :label="t('settings.default_page')"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-select
+                    v-model="settings.date_format"
+                    :items="date_format_items"
+                    item-title="title"
+                    item-value="value"
+                    :label="t('settings.date_format')"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-select
+                    v-model="settings.time_format"
+                    :items="time_format_items"
+                    item-title="title"
+                    item-value="value"
+                    :label="t('settings.time_format')"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-select
+                    v-model="settings.decimal_places"
+                    :items="[0, 1, 2, 3, 4]"
+                    :label="t('settings.decimal_places')"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-switch
+                    v-model="settings.thousands_separator"
+                    :label="t('settings.thousands_separator')"
+                    color="primary"
+                    hide-details
+                    class="mb-4"
+                />
+                <v-select
+                    v-model="settings.theme"
+                    :items="theme_items"
+                    item-title="title"
+                    item-value="value"
+                    :label="t('settings.theme')"
+                    variant="outlined"
+                    density="comfortable"
+                    @update:model-value="update_theme"
+                >
+                    <template #selection="{ item }">
+                        <span class="theme-name">{{ item.raw.title }}</span>
+                        <span class="theme-palette">
+                            <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
+                        </span>
+                    </template>
+                    <template #item="{ props: item_props, item }">
+                        <v-list-item v-bind="item_props">
+                            <template #append>
+                                <span class="theme-palette">
+                                    <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
+                                </span>
+                            </template>
+                        </v-list-item>
+                    </template>
+                </v-select>
+            </v-card-text>
+        </v-card>
+    </v-main>
 </template>
 
 <style scoped>

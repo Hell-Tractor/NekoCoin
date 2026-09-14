@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { SummaryType } from '../../common/SummaryType';
 import { formatDate } from '../../common/Utils';
@@ -37,6 +37,7 @@ const chart_element = ref<HTMLElement>();
 const scroll_element = ref<HTMLElement>();
 const dates = ref<string[]>([]);
 const chart_data = ref<ColumnDiagramData[]>([]);
+const has_data = ref(false);
 const has_more = ref(false);
 let chart: ApexCharts | undefined = undefined;
 let request_id = 0;
@@ -85,6 +86,11 @@ const merge_data = function(page: SummaryPage, append: boolean) {
     }
     has_more.value = page.has_more;
     width.value = Math.max(window.innerWidth - 50, 150 + 50 * dates.value.length);
+    if (dates.value.length === 0 || chart_data.value.length === 0) {
+        has_data.value = false;
+    } else {
+        has_data.value = true;
+    }
 }
 
 const render_chart = async function() {
@@ -257,14 +263,15 @@ onBeforeUnmount(() => {
     <v-card :variant="props.variant" :rounded="props.rounded" :height="hide_self ? '0px' : 'auto'">
         <v-card-title v-if="props.title">{{ props.title }}</v-card-title>
         <v-card-title class="title-row" v-else><slot name="title"/></v-card-title>
-        <v-card-text class="pa-0">
-            <v-progress-linear v-if="loading" indeterminate />
+        <v-progress-linear v-if="loading" indeterminate />
+        <v-card-text v-if="has_data" class="pa-0">
             <div ref="scroll_element" class="chart-scroll" @scroll.passive="on_scroll"
                 @pointerdown="on_pointer_down" @pointermove="on_pointer_move"
                 @pointerup="on_pointer_up" @pointercancel="on_pointer_up">
                 <div ref="chart_element" class="chart" :style="{ width: `${width}px` }"></div>
             </div>
         </v-card-text>
+        <v-card-text v-else-if="!loading">{{ t('report.no_data') }}</v-card-text>
     </v-card>
 </template>
 

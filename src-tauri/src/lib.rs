@@ -32,6 +32,8 @@ pub enum Error {
     InvalidParameter(String),
     #[error("Database error: {0}")]
     DatabaseError(String),
+    #[error("Logger error: {0}")]
+    LoggerError(String),
 }
 type Result<T> = std::result::Result<T, Error>;
 
@@ -52,10 +54,9 @@ impl Drop for Error {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    init_logger();
-
     tauri::Builder::default()
         .setup(|app| {
+            init_logger(app.handle())?;
             tauri::async_runtime::block_on(async {
                 init_database(app.handle()).await.expect("Failed to initialize database");
                 migrate_database().await;
@@ -124,8 +125,14 @@ async fn init_database(app: &tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
-fn init_logger() {
-    let file_appender = rolling::daily("logs", "latest.log");
+fn init_logger(app: &tauri::AppHandle) -> Result<()> {
+    let directory = app.path().app_log_dir()
+        .map_err(|error| Error::LoggerError(format!("failed to locate log directory: {error}")))?
+        .join("nekocoin_logs");
+    fs::create_dir_all(&directory)
+        .map_err(|error| Error::LoggerError(format!("failed to create log directory: {error}")))?;
+
+    let file_appender = rolling::daily(directory, "nekocoin.log");
     let (file_writer, guard) = tracing_appender::non_blocking(file_appender);
     std::mem::forget(guard);
     let subscriber = tracing_subscriber::fmt()
@@ -137,4 +144,5 @@ fn init_logger() {
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
 
     info!("Logger initialized");
+    Ok(())
 }

@@ -9,25 +9,26 @@ const route = useRoute();
 
 interface Page {
     name: string;
+    path: string;
     indexInBottom?: number;
     icon?: string;
     nextPage?: string;
 }
 
 const allPages: Page[] = [
-    { name: 'home', indexInBottom: 0, icon: 'mdi-home', nextPage: '/transaction/add' },
-    { name: 'accounts', indexInBottom: 1, icon: 'mdi-credit-card', nextPage: '/account/add' },
-    { name: 'tags', icon: 'mdi-tag-multiple', nextPage: '/tag/add' },
-    { name: 'transactions', icon: 'mdi-format-list-bulleted' },
-    { name: 'reports', indexInBottom: 2, icon: 'mdi-chart-multiple' },
-    { name: 'settings', icon: 'mdi-cog-outline' },
+    { name: 'home', path: '/main/home', indexInBottom: 0, icon: 'mdi-home', nextPage: '/transaction/add' },
+    { name: 'accounts', path: '/main/accounts', indexInBottom: 1, icon: 'mdi-credit-card', nextPage: '/account/add' },
+    { name: 'tags', path: '/main/tags', icon: 'mdi-tag-multiple', nextPage: '/tag/add' },
+    { name: 'transactions', path: '/main/transactions', icon: 'mdi-format-list-bulleted' },
+    { name: 'reports', path: '/main/reports', indexInBottom: 2, icon: 'mdi-chart-multiple' },
+    { name: 'settings', path: '/settings', icon: 'mdi-cog-outline' },
 ];
 const bottomPages = computed(() => allPages.filter(page => page.indexInBottom != undefined).sort((a, b) => (a.indexInBottom as number) - (b.indexInBottom as number)));
 const showDrawer: Ref<boolean> = ref(false);
 
 const changePage = function(target_page: Page) : void {
     showDrawer.value = false;
-    router.push({ path: `/main/${target_page.name}` });
+    router.push({ path: target_page.path });
 };
 const globalButtonClick = function() : void {
     let current_page_name = route.path.split('/')[2];
@@ -65,7 +66,7 @@ const hasNextAction = function() : boolean {
             <v-list-item
                 v-for="item in allPages"
                 :key="item.name"
-                :active="route.path === `/main/${item.name}`"
+                :active="route.path === item.path"
                 color="primary"
                 rounded="lg"
                 class="drawer-item"
