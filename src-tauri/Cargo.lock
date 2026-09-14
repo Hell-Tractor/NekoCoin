@@ -2128,6 +2128,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
+ "tauri-plugin-fs",
  "thiserror 2.0.12",
  "tracing",
  "tracing-appender",

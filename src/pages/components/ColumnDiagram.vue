@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { SummaryType } from '../../common/SummaryType';
 import { formatDate } from '../../common/Utils';
 import { apex_chart_theme } from '../../common/ChartTheme';
+import { create_chart_pan } from '../../common/chartPan';
 import ApexCharts from 'apexcharts';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
@@ -45,9 +46,7 @@ const has_more = ref(false);
 let chart: ApexCharts | undefined = undefined;
 let request_id = 0;
 const PAGE_SIZE = 90;
-let pointer_start_x = 0;
-let pointer_start_scroll_left = 0;
-let dragging = false;
+const { on_pointer_down, on_pointer_move, on_pointer_up } = create_chart_pan(() => scroll_element.value);
 
 const get_data = async function(offset: number): Promise<SummaryPage | undefined> {
     try {
@@ -232,33 +231,6 @@ const on_scroll = function() {
     }
 }
 
-const on_pointer_down = function(event: PointerEvent) {
-    const element = scroll_element.value;
-    if (element === undefined) {
-        return;
-    }
-    dragging = true;
-    pointer_start_x = event.clientX;
-    pointer_start_scroll_left = element.scrollLeft;
-    element.setPointerCapture(event.pointerId);
-}
-
-const on_pointer_move = function(event: PointerEvent) {
-    const element = scroll_element.value;
-    if (!dragging || element === undefined) {
-        return;
-    }
-    element.scrollLeft = pointer_start_scroll_left - (event.clientX - pointer_start_x);
-}
-
-const on_pointer_up = function(event: PointerEvent) {
-    const element = scroll_element.value;
-    dragging = false;
-    if (element?.hasPointerCapture(event.pointerId)) {
-        element.releasePointerCapture(event.pointerId);
-    }
-}
-
 onMounted(() => {
     draw_chart();
 });
@@ -306,8 +278,13 @@ onBeforeUnmount(() => {
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
-    touch-action: pan-x;
+    touch-action: pan-y;
     cursor: grab;
+}
+
+.chart-scroll :deep(.apexcharts-canvas),
+.chart-scroll :deep(svg) {
+    touch-action: pan-y;
 }
 
 .chart-scroll::-webkit-scrollbar {

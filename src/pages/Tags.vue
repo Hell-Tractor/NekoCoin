@@ -49,7 +49,7 @@ onMounted(() => {
                 {{ item.type === 'all' ? t('tag.filter.all') : t(`tag.type.${item.name}`) }}
             </v-chip>
         </v-chip-group>
-        <EmptyState v-if="tags.length === 0" :title="t('tag.no_tag')" :tip="t('tag.no_tag_tip')" />
+        <EmptyState v-if="tags.length === 0" variant="flat" :title="t('tag.no_tag')" :tip="t('tag.no_tag_tip')" />
         <button
             v-else
             v-for="item in tags"

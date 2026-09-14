@@ -1,11 +1,13 @@
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use csv::StringRecord;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::Row;
 use tauri::{AppHandle, Manager};
-use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_dialog::{DialogExt, FilePath};
+use tauri_plugin_fs::{FsExt, OpenOptions};
 use tracing::{debug, info, warn};
 
 use crate::constants;
@@ -80,11 +82,7 @@ async fn checkpoint_database() -> Result<()> {
     Ok(())
 }
 
-async fn validate_import_database(source: &Path, work_path: &Path) -> Result<()> {
-    cleanup_sqlite_file(work_path);
-    fs::copy(source, work_path)?;
-    copy_sqlite_sidecars(source, work_path);
-
+async fn validate_import_database(work_path: &Path) -> Result<()> {
     let database_url = format!("sqlite://{}", work_path.display());
     let pool = SqlitePoolOptions::new()
         .max_connections(1)
@@ -128,11 +126,35 @@ async fn validate_import_database(source: &Path, work_path: &Path) -> Result<()>
     Ok(())
 }
 
-fn file_path_to_pathbuf(file: tauri_plugin_dialog::FilePath) -> Result<PathBuf> {
-    file.into_path().map_err(|error| Error::InvalidParameter(format!("invalid file path: {error}")))
+fn open_picked_read(app: &AppHandle, path: FilePath) -> Result<fs::File> {
+    let mut options = OpenOptions::new();
+    options.read(true);
+    Ok(app.fs().open(path, options)?)
 }
 
-async fn pick_save_path(window: tauri::WebviewWindow, file_name: &'static str, filter_name: &'static str, extensions: &'static [&str]) -> Result<Option<PathBuf>> {
+fn open_picked_write(app: &AppHandle, path: FilePath) -> Result<fs::File> {
+    let mut options = OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    Ok(app.fs().open(path, options)?)
+}
+
+fn copy_to_picked(app: &AppHandle, source: &Path, destination: FilePath) -> Result<()> {
+    let mut input = fs::File::open(source)?;
+    let mut output = open_picked_write(app, destination)?;
+    std::io::copy(&mut input, &mut output)?;
+    output.flush()?;
+    Ok(())
+}
+
+fn copy_from_picked(app: &AppHandle, source: FilePath, destination: &Path) -> Result<()> {
+    let mut input = open_picked_read(app, source)?;
+    let mut output = fs::File::create(destination)?;
+    std::io::copy(&mut input, &mut output)?;
+    output.flush()?;
+    Ok(())
+}
+
+async fn pick_save_path(window: tauri::WebviewWindow, file_name: &'static str, filter_name: &'static str, extensions: &'static [&str]) -> Result<Option<FilePath>> {
     let picked = tauri::async_runtime::spawn_blocking(move || {
         window
             .dialog()
@@ -143,10 +165,10 @@ async fn pick_save_path(window: tauri::WebviewWindow, file_name: &'static str, f
     })
     .await
     .map_err(|error| Error::InvalidParameter(format!("failed to open save dialog: {error}")))?;
-    picked.map(file_path_to_pathbuf).transpose()
+    Ok(picked)
 }
 
-async fn pick_open_path(window: tauri::WebviewWindow, filter_name: &'static str, extensions: &'static [&str]) -> Result<Option<PathBuf>> {
+async fn pick_open_path(window: tauri::WebviewWindow, filter_name: &'static str, extensions: &'static [&str]) -> Result<Option<FilePath>> {
     let picked = tauri::async_runtime::spawn_blocking(move || {
         window
             .dialog()
@@ -156,7 +178,7 @@ async fn pick_open_path(window: tauri::WebviewWindow, filter_name: &'static str,
     })
     .await
     .map_err(|error| Error::InvalidParameter(format!("failed to open file dialog: {error}")))?;
-    picked.map(file_path_to_pathbuf).transpose()
+    Ok(picked)
 }
 
 #[tauri::command]
@@ -165,11 +187,11 @@ pub async fn export_database(app: AppHandle, window: tauri::WebviewWindow) -> Re
         debug!("Database export cancelled");
         return Ok(false);
     };
-    debug!("Exporting database to {}", path.display());
+    debug!("Exporting database to {path}");
     checkpoint_database().await?;
     let source = database_path(&app)?;
-    fs::copy(&source, &path)?;
-    info!("Database exported to {}", path.display());
+    copy_to_picked(&app, &source, path.clone())?;
+    info!("Database exported to {path}");
     Ok(true)
 }
 
@@ -179,10 +201,7 @@ pub async fn import_database(app: AppHandle, window: tauri::WebviewWindow) -> Re
         debug!("Database import cancelled");
         return Ok(false);
     };
-    debug!("Importing database from {}", source.display());
-    if !source.exists() {
-        return Err(Error::InvalidParameter("import file does not exist".to_string()));
-    }
+    debug!("Importing database from {source}");
 
     let destination = database_path(&app)?;
     if let Some(parent) = destination.parent() {
@@ -190,8 +209,17 @@ pub async fn import_database(app: AppHandle, window: tauri::WebviewWindow) -> Re
     }
     let work_path = destination.with_file_name("nekocoin.import.tmp.db");
     let backup_path = destination.with_file_name("nekocoin.db.bak");
+    cleanup_sqlite_file(&work_path);
+    let sidecar_source = source.clone();
+    if let Err(error) = copy_from_picked(&app, source.clone(), &work_path) {
+        cleanup_sqlite_file(&work_path);
+        return Err(error);
+    }
+    if let Some(path) = sidecar_source.as_path() {
+        copy_sqlite_sidecars(path, &work_path);
+    }
 
-    if let Err(error) = validate_import_database(&source, &work_path).await {
+    if let Err(error) = validate_import_database(&work_path).await {
         cleanup_sqlite_file(&work_path);
         return Err(error);
     }
@@ -222,18 +250,18 @@ pub async fn import_database(app: AppHandle, window: tauri::WebviewWindow) -> Re
     remove_sqlite_sidecars(&destination);
     cleanup_sqlite_file(&work_path);
     let _ = fs::remove_file(&backup_path);
-    info!("Database imported from {}, restarting", source.display());
+    info!("Database imported from {source}, restarting");
     app.restart()
 }
 
 #[tauri::command]
-pub async fn export_csv(window: tauri::WebviewWindow) -> Result<bool> {
+pub async fn export_csv(app: AppHandle, window: tauri::WebviewWindow) -> Result<bool> {
     let Some(path) = pick_save_path(window, "nekocoin.csv", "CSV", &["csv"]).await? else {
         debug!("CSV export cancelled");
         return Ok(false);
     };
-    debug!("Exporting CSV to {}", path.display());
-    let mut writer = csv::WriterBuilder::new().flexible(true).from_path(&path)?;
+    debug!("Exporting CSV to {path}");
+    let mut writer = csv::WriterBuilder::new().flexible(true).from_writer(open_picked_write(&app, path.clone())?);
     writer.write_record([CSV_FORMAT])?;
 
     writer.write_record(["[wallets]"])?;
@@ -325,7 +353,7 @@ pub async fn export_csv(window: tauri::WebviewWindow) -> Result<bool> {
     }
 
     writer.flush()?;
-    info!("CSV exported to {}", path.display());
+    info!("CSV exported to {path}");
     Ok(true)
 }
 
@@ -335,11 +363,11 @@ pub async fn import_csv(app: AppHandle, window: tauri::WebviewWindow) -> Result<
         debug!("CSV import cancelled");
         return Ok(false);
     };
-    debug!("Importing CSV from {}", path.display());
+    debug!("Importing CSV from {path}");
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(false)
         .flexible(true)
-        .from_path(&path)?;
+        .from_reader(open_picked_read(&app, path.clone())?);
     let mut records = reader.records();
     let first = records.next().ok_or_else(|| Error::InvalidParameter("CSV file is empty".to_string()))??;
     if first.get(0) != Some(CSV_FORMAT) {
@@ -463,6 +491,6 @@ pub async fn import_csv(app: AppHandle, window: tauri::WebviewWindow) -> Result<
     }
     sqlx::query("PRAGMA foreign_keys = ON").execute(&mut *tx).await?;
     tx.commit().await?;
-    info!("CSV imported from {}, restarting", path.display());
+    info!("CSV imported from {path}, restarting");
     app.restart()
 }

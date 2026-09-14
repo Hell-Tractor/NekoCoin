@@ -7,6 +7,7 @@ import { useTheme } from 'vuetify';
 import { SummaryType } from '../../common/SummaryType';
 import { formatDate } from '../../common/Utils';
 import { apex_chart_theme } from '../../common/ChartTheme';
+import { create_chart_pan } from '../../common/chartPan';
 
 interface SummaryData {
     currency_code: string;
@@ -35,9 +36,7 @@ const loading = ref(false);
 const has_data = ref(false);
 let chart: ApexCharts | undefined;
 let request_id = 0;
-let pointer_start_x = 0;
-let pointer_start_scroll_left = 0;
-let dragging = false;
+const { on_pointer_down, on_pointer_move, on_pointer_up } = create_chart_pan(() => scroll_element.value);
 
 const load_chart = async function() {
     const current_request_id = ++request_id;
@@ -78,6 +77,8 @@ const load_chart = async function() {
                 height: 260,
                 width: width.value,
                 toolbar: { show: false },
+                selection: { enabled: false },
+                zoom: { enabled: false },
                 animations: { enabled: false },
                 redrawOnWindowResize: true,
                 ...chart_theme.chart,
@@ -133,33 +134,6 @@ const load_chart = async function() {
     }
 };
 
-const on_pointer_down = function(event: PointerEvent) {
-    const element = scroll_element.value;
-    if (element === undefined) {
-        return;
-    }
-    dragging = true;
-    pointer_start_x = event.clientX;
-    pointer_start_scroll_left = element.scrollLeft;
-    element.setPointerCapture(event.pointerId);
-};
-
-const on_pointer_move = function(event: PointerEvent) {
-    const element = scroll_element.value;
-    if (!dragging || element === undefined) {
-        return;
-    }
-    element.scrollLeft = pointer_start_scroll_left - (event.clientX - pointer_start_x);
-};
-
-const on_pointer_up = function(event: PointerEvent) {
-    const element = scroll_element.value;
-    dragging = false;
-    if (element?.hasPointerCapture(event.pointerId)) {
-        element.releasePointerCapture(event.pointerId);
-    }
-};
-
 onMounted(() => {
     load_chart();
 });
@@ -206,8 +180,13 @@ onBeforeUnmount(() => {
     overscroll-behavior-x: contain;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    touch-action: pan-x;
+    touch-action: pan-y;
     cursor: grab;
+}
+
+.chart-container :deep(.apexcharts-canvas),
+.chart-container :deep(svg) {
+    touch-action: pan-y;
 }
 
 .chart-container::-webkit-scrollbar {
