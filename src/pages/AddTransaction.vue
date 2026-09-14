@@ -52,6 +52,14 @@ let restoring_draft = false;
 const others_expense: ComputedRef<number> = computed(() => {
     return Number.parseInt(Math.ceil((amount.value ?? 0) * 100 / split_count.value).toFixed(0)) / 100;
 });
+const split_others_total = computed(() => Math.max(0, (amount.value ?? 0) - split_expense.value));
+const split_others_each = computed(() => {
+    const others = split_count.value - 1;
+    if (others <= 0) {
+        return 0;
+    }
+    return Math.ceil(split_others_total.value / others * 100) / 100;
+});
 
 const formatter = new Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
 const updateDate = function() {
@@ -365,36 +373,84 @@ onBeforeRouteLeave(() => {
             <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="'account.select_to'" v-model="selected_to_wallet" :wallets="wallets"></WalletSelector>
             <TagSelector v-model="selected_tag" :tags="tags" :kind="selected_tag_type"></TagSelector>
             <ActivitySelector v-if="selected_tag_type != TagType.TRANSFER" v-model="selected_activity" :activities="activities"></ActivitySelector>
-            <v-card v-if="selected_tag_type == TagType.EXPENSE" :variant="has_split ? 'flat' : 'text'" density="compact" color="surface-lighten-1" rounded="xl" class="mt-2">
-                <v-card-text class="pa-2">
-                    <v-row class="d-flex align-center">
-                        <v-col class="flex-grow-0">
-                            <v-checkbox class="text-body-2" v-model="has_split" hide-details density="compact" color="secondary"></v-checkbox>
-                        </v-col>
-                        <v-col>{{ t('transaction.has_split') }}</v-col>
-                    </v-row>
-                    <v-sheet v-if="has_split" style="margin: 0px 7px 0px 7px;" color="surface-lighten-1">
-                        <v-row class="d-flex align-center">
-                            <v-col>{{ t('transaction.split.count') }}</v-col>
-                            <v-col>
-                                <v-text-field v-model.number="split_count" variant="outlined" type="number" min="2" :rules="[rules.required, rules.min(2)]" density="compact" hide-details="auto"></v-text-field>
-                            </v-col>
-                        </v-row>
-                        <v-row class="d-flex align-center">
-                            <v-col>{{ t('transaction.split.your') }}</v-col>
-                            <v-col>
-                                <v-text-field v-model.number="split_expense" variant="outlined" type="number" min="0" :max="amount ?? 0" :rules="[rules.required, rules.min(0), rules.max(amount ?? 0)]" density="compact" hide-details="auto"></v-text-field>
-                            </v-col>
-                        </v-row>
-                        <v-row class="d-flex align-center">
-                            <v-col class="text-end">{{ t('transaction.split.other', { each: (Math.ceil(((amount ?? 0) - split_expense) / (split_count - 1) * 100) / 100).toFixed(2), total: ((amount ?? 0) - split_expense).toFixed(2) }) }}</v-col>
-                        </v-row>
-                    </v-sheet>
-                    <WalletSelector v-if="has_split" :title="t('transaction.split.select_wallet')" v-model="split_receive_wallet" :wallets="wallets"></WalletSelector>
-                </v-card-text>
-            </v-card>
+            <div v-if="selected_tag_type == TagType.EXPENSE" class="split-block">
+                <div class="split-header">
+                    <span class="split-title">{{ t('transaction.split.title') }}</span>
+                    <v-switch v-model="has_split" color="primary" hide-details density="compact" class="split-switch" />
+                </div>
+                <div v-if="has_split" class="split-body">
+                    <div class="split-grid">
+                        <v-text-field
+                            v-model.number="split_count"
+                            :label="t('transaction.split.count')"
+                            variant="outlined"
+                            type="number"
+                            min="2"
+                            :rules="[rules.required, rules.min(2)]"
+                            density="compact"
+                            hide-details="auto"
+                        />
+                        <v-text-field
+                            v-model.number="split_expense"
+                            :label="t('transaction.split.your')"
+                            variant="outlined"
+                            type="number"
+                            min="0"
+                            :max="amount ?? 0"
+                            :rules="[rules.required, rules.min(0), rules.max(amount ?? 0)]"
+                            density="compact"
+                            hide-details="auto"
+                        />
+                    </div>
+                    <div class="split-summary">
+                        {{ t('transaction.split.other', { each: split_others_each.toFixed(2), total: split_others_total.toFixed(2) }) }}
+                    </div>
+                    <WalletSelector :title="'transaction.split.select_wallet'" v-model="split_receive_wallet" :wallets="wallets"></WalletSelector>
+                </div>
+            </div>
             <div style="height: 50px;"></div>
             <v-btn @click="confirm" color="primary" class="form-save-btn" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
         </v-form>
     </v-main>
 </template>
+
+<style scoped>
+.split-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    padding: 0 2px 0 3px;
+}
+
+.split-title {
+    font-size: 1rem;
+}
+
+.split-switch {
+    flex: 0 0 auto;
+}
+
+.split-switch :deep(.v-selection-control) {
+    min-height: 36px;
+}
+
+.split-body {
+    padding: 4px 4px 8px;
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+}
+
+.split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.split-summary {
+    margin: 4px 2px 8px;
+    color: rgba(var(--v-theme-on-surface), 0.58);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+</style>

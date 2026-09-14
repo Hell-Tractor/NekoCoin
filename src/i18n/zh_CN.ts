@@ -214,7 +214,7 @@ export default {
         overview: '概览',
         expense_by_tag: '支出排行—标签',
         expense_by_activity: '支出排行—活动',
-        expense_by_activity_tag: '支出排行—活动分类',
+        expense_by_activity_tag: '支出排行—活动类别',
         net_cash_flow: '净现金流趋势',
         all: '全部',
         no_data: '暂无数据',
