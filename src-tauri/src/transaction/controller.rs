@@ -290,7 +290,7 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
         JOIN tags ON transactions.tag_id = tags.id
         LEFT JOIN activities ON transactions.activity_id = activities.id
-        WHERE tag_id IN (
+        WHERE transactions.tag_id IN (
             WITH RECURSIVE tag_tree(id) AS (
                 SELECT id FROM tags WHERE id = $1
                 UNION ALL
@@ -333,7 +333,7 @@ pub async fn retrieve_transactions_in_activity(activity_id: u32, begin: Option<N
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
         JOIN tags ON transactions.tag_id = tags.id
         LEFT JOIN activities ON transactions.activity_id = activities.id
-        WHERE activity_id = $1 AND time between $2 and $3
+        WHERE transactions.activity_id = $1 AND time between $2 and $3
             AND (
                 $4 = ''
                 OR IFNULL(transactions.remark, '') LIKE '%' || $4 || '%'
