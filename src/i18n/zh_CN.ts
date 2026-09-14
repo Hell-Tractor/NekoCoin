@@ -47,10 +47,10 @@ export default {
         language: '语言',
         saved: '设置已保存',
         themes: {
-            pinkPad: '玫瑰薄荷',
+            pinkPad: '蔷薇笺',
             midnight: '午夜蓝',
             calico: '森野陶土',
-            neon: '霓虹薄荷',
+            neon: '霓虹金',
         },
         logs: {
             section: '日志',
@@ -106,6 +106,8 @@ export default {
         update: '更新标签',
         select: '选择标签',
         empty_on_select: '暂无标签，创建一个吧',
+        no_tag: '暂无标签',
+        no_tag_tip: '点击右下角按钮添加一个标签吧！',
         no_available_parent: '没有可用的父标签',
         enter: {
             name: '输入标签名',
@@ -169,7 +171,9 @@ export default {
         },
         list: {
             title: '近期交易',
-        }
+        },
+        no_transaction: '暂无交易',
+        no_transaction_tip: '点击右下角按钮记一笔吧！',
     },
     list: {
         summary: '共 {0} 条记录',

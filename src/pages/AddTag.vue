@@ -99,7 +99,7 @@ onMounted(async () => {
     <div v-if="page == 'main'">
         <BackTitleBar :title="t(id == undefined ? 'tag.add' : 'tag.update')" @back="router.back()"></BackTitleBar>
         <v-main class="main">
-            <v-form class="fill-height" v-model="form">
+            <v-form class="fill-height form-page" v-model="form">
                 <v-chip-group mandatory v-model="selected_tag_type" @update:model-value="parent_tag = null; retrieve_tags()" :disabled="id !== undefined">
                     <v-chip v-for="tag in TagTypeNames" :value="tag" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
                 </v-chip-group>
@@ -112,9 +112,8 @@ onMounted(async () => {
                 </v-select>
                 <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('icon.select') }}</v-btn>
                 <ColorPalette v-model="selected_color" />
-                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
-                <div style="height: 50px;"></div>
-                <v-btn @click="addTag" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
+                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" class="mt-2"></v-color-picker>
+                <v-btn @click="addTag" color="primary" class="form-save-btn" :disabled="!form">{{ t('actions.save') }}</v-btn>
             </v-form>
         </v-main>
     </div>

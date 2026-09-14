@@ -100,30 +100,130 @@ export const format_net_cash_flow = function(cents: number): string {
 
 export const net_cash_flow_color = function(cents: number): string {
     if (cents > 0) {
-        return '#009900';
+        return 'rgb(var(--v-theme-success))';
     }
     if (cents < 0) {
-        return '#ff3333';
+        return 'rgb(var(--v-theme-error))';
     }
     return '';
 }
 
-export const color_with_alpha = function(color: string, alpha: number): string {
+export const flow_color_for_tag = function(type: string): string {
+    if (type === 'Income') {
+        return 'rgb(var(--v-theme-success))';
+    }
+    if (type === 'Expense') {
+        return 'rgb(var(--v-theme-error))';
+    }
+    return 'rgb(var(--v-theme-info))';
+}
+
+interface Rgb {
+    r: number;
+    g: number;
+    b: number;
+}
+
+export const is_dark_theme = function(): boolean {
+    return settings.theme === 'midnight' || settings.theme === 'neon';
+}
+
+const parse_color_rgb = function(color: string): Rgb | null {
     const value = color.trim();
     if (value.startsWith('#')) {
         const hex = value.slice(1);
         const full = hex.length === 3 ? hex.split('').map(part => part + part).join('') : hex;
+        if (full.length < 6) {
+            return null;
+        }
         const r = parseInt(full.slice(0, 2), 16);
         const g = parseInt(full.slice(2, 4), 16);
         const b = parseInt(full.slice(4, 6), 16);
         if ([r, g, b].some(channel => Number.isNaN(channel))) {
-            return value;
+            return null;
         }
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        return { r, g, b };
     }
     const channels = value.match(/\d+/g);
     if (channels && channels.length >= 3) {
-        return `rgba(${channels[0]}, ${channels[1]}, ${channels[2]}, ${alpha})`;
+        return { r: Number(channels[0]), g: Number(channels[1]), b: Number(channels[2]) };
     }
-    return value;
+    return null;
+}
+
+const rgb_luminance = function({ r, g, b }: Rgb): number {
+    const to_linear = function(channel: number) {
+        const value = channel / 255;
+        return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * to_linear(r) + 0.7152 * to_linear(g) + 0.0722 * to_linear(b);
+}
+
+const mix_rgb = function(from: Rgb, to: Rgb, amount: number): Rgb {
+    return {
+        r: Math.round(from.r + (to.r - from.r) * amount),
+        g: Math.round(from.g + (to.g - from.g) * amount),
+        b: Math.round(from.b + (to.b - from.b) * amount),
+    };
+}
+
+const rgb_to_css = function({ r, g, b }: Rgb): string {
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+export const color_with_alpha = function(color: string, alpha: number): string {
+    const rgb = parse_color_rgb(color);
+    if (!rgb) {
+        return color;
+    }
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+export const entity_accent_color = function(color: string): string {
+    if (!is_dark_theme()) {
+        return color;
+    }
+    const rgb = parse_color_rgb(color);
+    if (!rgb) {
+        return color;
+    }
+    const luminance = rgb_luminance(rgb);
+    if (luminance >= 0.42) {
+        return color;
+    }
+    const amount = Math.min(0.78, 0.4 + (0.42 - luminance) * 0.95);
+    return rgb_to_css(mix_rgb(rgb, { r: 255, g: 255, b: 255 }, amount));
+}
+
+export const entity_tint = function(color: string): string {
+    const accent = entity_accent_color(color);
+    return color_with_alpha(accent, is_dark_theme() ? 0.28 : 0.18);
+}
+
+export const entity_avatar_style = function(color: string): Record<string, string> {
+    const accent = entity_accent_color(color);
+    const style: Record<string, string> = {
+        backgroundColor: color_with_alpha(accent, is_dark_theme() ? 0.24 : 0.18),
+    };
+    if (is_dark_theme()) {
+        style.boxShadow = `inset 0 0 0 1px ${color_with_alpha(accent, 0.55)}`;
+    }
+    return style;
+}
+
+export const entity_card_style = function(color: string): Record<string, string> {
+    const accent = entity_accent_color(color);
+    if (is_dark_theme()) {
+        return {
+            background: `linear-gradient(105deg, ${color_with_alpha(accent, 0.3)} 0%, ${color_with_alpha(accent, 0.1)} 40%, rgba(255, 255, 255, 0.03) 100%)`,
+            boxShadow: `inset 3px 0 0 ${accent}`,
+        };
+    }
+    return {
+        background: `linear-gradient(135deg, ${color_with_alpha(color, 0.18)} 0%, transparent 58%)`,
+    };
+}
+
+export const entity_card_background = function(color: string): string {
+    return entity_card_style(color).background ?? '';
 }

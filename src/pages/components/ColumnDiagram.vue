@@ -3,9 +3,12 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 
 import { invoke } from '@tauri-apps/api/core';
 import { SummaryType } from '../../common/SummaryType';
 import { formatDate } from '../../common/Utils';
+import { apex_chart_theme } from '../../common/ChartTheme';
 import ApexCharts from 'apexcharts';
 import { useI18n } from 'vue-i18n';
+import { useTheme } from 'vuetify';
 const { t } = useI18n();
+const vuetify_theme = useTheme();
 
 interface ColumnDiagramData {
     currency_code: string;
@@ -94,6 +97,7 @@ const merge_data = function(page: SummaryPage, append: boolean) {
 }
 
 const render_chart = async function() {
+    const chart_theme = apex_chart_theme();
     const options = {
         chart: {
             type: 'bar',
@@ -105,7 +109,12 @@ const render_chart = async function() {
             animations: { enabled: false },
             redrawOnWindowResize: false,
             redrawOnParentResize: false,
+            ...chart_theme.chart,
         },
+        theme: chart_theme.theme,
+        colors: chart_data.value.flatMap((_, index) => {
+            return chart_theme.income_expense_pairs[index % chart_theme.income_expense_pairs.length];
+        }),
         series: chart_data.value.flatMap(item => {
             return [
                 {
@@ -129,9 +138,12 @@ const render_chart = async function() {
         xaxis: {
             type: 'category',
             categories: dates.value,
+            ...chart_theme.xaxis,
         },
         yaxis: {
+            ...chart_theme.yaxis,
             labels: {
+                ...chart_theme.yaxis.labels,
                 formatter: (value: number) => {
                     const SIGNS = ['', 'K', 'M', 'B', 'T'];
                     const index = Math.floor(Math.log10(value) / 3);
@@ -144,6 +156,7 @@ const render_chart = async function() {
             }
         },
         grid: {
+            ...chart_theme.grid,
             padding: {
                 left: 30,
                 right: 30,
@@ -151,7 +164,9 @@ const render_chart = async function() {
         },
         legend: {
             horizontalAlign: 'left',
+            ...chart_theme.legend,
         },
+        tooltip: chart_theme.tooltip,
         dataLabels: {
             enabled: false,
         },
@@ -251,6 +266,13 @@ onMounted(() => {
 watch(props, () => {
     draw_chart();
 })
+
+watch(() => vuetify_theme.global.name.value, async () => {
+    await nextTick();
+    if (has_data.value) {
+        await render_chart();
+    }
+});
 
 onBeforeUnmount(() => {
     request_id++;

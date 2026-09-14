@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { Activity } from '../../common/Activity';
 import { load_settings, settings } from '../../common/Settings';
-import { color_with_alpha, format_net_cash_flow, net_cash_flow_color } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, format_net_cash_flow, net_cash_flow_color } from '../../common/Utils';
 
 const PREVIEW_COUNT = 3;
 const { t } = useI18n();
@@ -24,7 +24,7 @@ const visible_activities = computed(() => {
 const hidden_count = computed(() => Math.max(0, activities.value.length - PREVIEW_COUNT));
 
 const avatar_style = function(color: string) {
-    return { backgroundColor: color_with_alpha(color, 0.22) };
+    return entity_avatar_style(color);
 };
 
 const retrieve_open_activities = async function() {
@@ -81,7 +81,7 @@ onMounted(retrieve_open_activities);
                 @click="router.push({ path: `/activity/${item.id}` })"
             >
                 <div class="activity-avatar" :style="avatar_style(item.color)">
-                    <v-icon :color="item.color" size="20">{{ item.icon }}</v-icon>
+                    <v-icon :color="entity_accent_color(item.color)" size="20">{{ item.icon }}</v-icon>
                 </div>
                 <div class="activity-copy">
                     <div class="activity-name">{{ item.name }}</div>

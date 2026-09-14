@@ -106,6 +106,8 @@ export default {
         update: 'Update Tag',
         select: 'Select Tag',
         empty_on_select: 'No tag yet. Create one.',
+        no_tag: 'No Tag',
+        no_tag_tip: 'Click the button in the bottom right corner to add a tag!',
         no_available_parent: 'No available parent tag',
         enter: {
             name: 'Enter Tag Name',
@@ -169,7 +171,9 @@ export default {
         },
         list: {
             title: 'Recent transactions',
-        }
+        },
+        no_transaction: 'No transactions',
+        no_transaction_tip: 'Tap the button in the bottom right corner to add one.',
     },
     list: {
         summary: 'Found {0} records',

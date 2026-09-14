@@ -20,8 +20,8 @@ const summary_type = ref<SummaryType>(SummaryType.Monthly);
     </ColumnDiagram>
     <NetCashFlowDiagram class="mb-2" variant="flat" rounded="xl" />
     <ExpenseTagRanking class="mb-2" />
-    <ExpenseActivityRanking mode="instance" />
-    <ExpenseActivityRanking mode="class" />
+    <ExpenseActivityRanking class="mb-2" mode="instance" />
+    <ExpenseActivityRanking class="mb-2" mode="class" />
 </template>
 
 <style scoped>

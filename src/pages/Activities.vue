@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { Activity } from '../common/Activity';
 import { load_settings, settings } from '../common/Settings';
+import EmptyState from './components/EmptyState.vue';
 import ActivityCard from './components/ActivityCard.vue';
 const { t } = useI18n();
 const router = useRouter();
@@ -35,10 +36,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-card v-if="activities.length === 0" rounded="xl">
-        <v-card-title>{{ t('activity.no_activity') }}</v-card-title>
-        <v-card-text>{{ t('activity.no_activity_tip') }}</v-card-text>
-    </v-card>
+    <EmptyState v-if="activities.length === 0" :title="t('activity.no_activity')" :tip="t('activity.no_activity_tip')" />
     <template v-else>
         <ActivityCard
             v-for="item in activities"

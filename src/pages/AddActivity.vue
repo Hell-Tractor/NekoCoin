@@ -136,16 +136,15 @@ onBeforeRouteLeave(() => {
     <div v-if="page == 'main'">
         <BackTitleBar :title="t(id == undefined ? 'activity.add' : 'activity.update')" @back="router.back()"></BackTitleBar>
         <v-main class="main">
-            <v-form class="fill-height" v-model="form">
+            <v-form class="fill-height form-page" v-model="form">
                 <v-text-field v-model="activity_name" :placeholder="t('activity.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_ACTIVITY_NAME_LENGTH)]"></v-text-field>
                 <v-text-field v-model="activity_remark" :placeholder="t('activity.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_ACTIVITY_REMARK_LENGTH)]"></v-text-field>
                 <v-switch v-if="id" v-model="activity_open" :label="activity_open ? t('activity.open') : t('activity.closed')" color="primary" hide-details class="mb-2" />
                 <TagSelector v-model="selected_tag" :tags="tags" :kind="TagType.ACTIVITY"></TagSelector>
                 <v-btn :prepend-icon="icon" size="large" variant="text" @click="page = 'select_icon'" block class="justify-start">{{ t('icon.select') }}</v-btn>
                 <ColorPalette v-model="selected_color" />
-                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
-                <div style="height: 50px;"></div>
-                <v-btn @click="save" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!form || selected_tag == undefined">{{ t('actions.save') }}</v-btn>
+                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" class="mt-2"></v-color-picker>
+                <v-btn @click="save" color="primary" class="form-save-btn" :disabled="!form || selected_tag == undefined">{{ t('actions.save') }}</v-btn>
             </v-form>
         </v-main>
     </div>

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { Wallet } from '../Wallets.vue';
 import { useI18n } from 'vue-i18n';
-import { color_with_alpha, formatAmount } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, entity_card_style, formatAmount } from '../../common/Utils';
 const { t } = useI18n();
 
 const props = defineProps<{
@@ -13,20 +13,16 @@ const props = defineProps<{
 
 const layout = computed(() => props.layout ?? 'list');
 const balance_text = computed(() => `${props.wallet.currency_code} ${formatAmount(props.wallet.balance)}`);
-const card_style = computed(() => ({
-    background: `linear-gradient(135deg, ${color_with_alpha(props.wallet.color, 0.22)} 0%, transparent 58%)`,
-}));
-const avatar_style = computed(() => ({
-    backgroundColor: color_with_alpha(props.wallet.color, 0.22),
-    color: props.wallet.color,
-}));
+const card_style = computed(() => entity_card_style(props.wallet.color));
+const avatar_style = computed(() => entity_avatar_style(props.wallet.color));
+const accent_color = computed(() => entity_accent_color(props.wallet.color));
 </script>
 
 <template>
     <v-card :variant="variant" class="entity-card mb-2" rounded="xl" :style="card_style">
         <div v-if="layout === 'list'" class="entity-row">
             <div class="entity-avatar" :style="avatar_style">
-                <v-icon :color="wallet.color" size="22">{{ wallet.icon }}</v-icon>
+                <v-icon :color="accent_color" size="22">{{ wallet.icon }}</v-icon>
             </div>
             <div class="entity-copy">
                 <div class="entity-name">{{ wallet.name }}</div>
@@ -37,7 +33,7 @@ const avatar_style = computed(() => ({
         <div v-else class="entity-hero">
             <div class="entity-row">
                 <div class="entity-avatar entity-avatar-lg" :style="avatar_style">
-                    <v-icon :color="wallet.color" size="28">{{ wallet.icon }}</v-icon>
+                    <v-icon :color="accent_color" size="28">{{ wallet.icon }}</v-icon>
                 </div>
                 <div class="entity-copy">
                     <div class="entity-name">{{ wallet.name }}</div>
@@ -51,84 +47,3 @@ const avatar_style = computed(() => ({
         </div>
     </v-card>
 </template>
-
-<style scoped>
-.entity-card {
-    overflow: hidden;
-}
-
-.entity-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-    padding: 14px 16px;
-}
-
-.entity-hero {
-    padding: 4px 0 8px;
-}
-
-.entity-avatar {
-    display: flex;
-    flex: 0 0 auto;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-}
-
-.entity-avatar-lg {
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
-}
-
-.entity-copy {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.entity-name {
-    overflow: hidden;
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.3;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.entity-meta {
-    overflow: hidden;
-    margin-top: 2px;
-    color: rgba(var(--v-theme-on-surface), 0.58);
-    font-size: 0.75rem;
-    line-height: 1.3;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.entity-meta-wrap {
-    white-space: normal;
-}
-
-.entity-amount {
-    flex: 0 0 auto;
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-.entity-hero-balance {
-    padding: 4px 16px 12px;
-}
-
-.entity-hero-amount {
-    margin-top: 2px;
-    font-size: 1.45rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-}
-</style>

@@ -84,7 +84,7 @@ onMounted(async () => {
     <div v-if="page == 'main'">
         <BackTitleBar :title="t(id == undefined ? 'account.add' : 'account.update')" @back="router.back()"></BackTitleBar>
         <v-main class="main">
-            <v-form class="fill-height" v-model="form">
+            <v-form class="fill-height form-page" v-model="form">
                 <v-text-field v-model="wallet_name" :placeholder="t('account.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_WALLET_NAME_LENGTH)]"></v-text-field>
                 <v-text-field v-model="wallet_remark" :placeholder="t('account.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_WALLET_REMARK_LENGTH)]"></v-text-field>
                 <div class="d-flex">
@@ -93,9 +93,8 @@ onMounted(async () => {
                 </div>
                 <v-btn :prepend-icon="icon" variant="text" @click="page = 'icon_selector'" block size="large" class="justify-start">{{ t('icon.select') }}</v-btn>
                 <ColorPalette v-model="selected_color" />
-                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" style="margin-top: 10px; margin-bottom: 60px;"></v-color-picker>
-                <div style="height: 50px;"></div>
-                <v-btn @click="addWallet" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!form">{{ t('actions.save') }}</v-btn>
+                <v-color-picker elevation="0" width="100%" v-model="selected_color" mode="rgb" class="mt-2"></v-color-picker>
+                <v-btn @click="addWallet" color="primary" class="form-save-btn" :disabled="!form">{{ t('actions.save') }}</v-btn>
             </v-form>
         </v-main>
     </div>

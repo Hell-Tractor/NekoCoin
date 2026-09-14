@@ -30,7 +30,5 @@ onMounted(async () => {
 </template>
 
 <style>
-.main {
-    margin: 10px;
-}
+@import './styles/entity.css';
 </style>

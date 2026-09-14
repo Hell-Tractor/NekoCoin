@@ -28,9 +28,10 @@ const avatar_items = [
 ];
 const default_page_items = computed(() => [
     { value: 'home', title: t('page.home') },
+    { value: 'accounts', title: t('page.accounts') },
+    { value: 'activities', title: t('page.activities') },
     { value: 'transactions', title: t('page.transactions') },
     { value: 'reports', title: t('page.reports') },
-    { value: 'accounts', title: t('page.accounts') },
 ]);
 const date_format_items = computed(() => [
     { value: 'YYYY-MM-DD', title: '2026-09-14' },
@@ -130,7 +131,7 @@ onMounted(refresh_log_usage);
 
 <template>
     <back-title-bar :title="t('settings.title')" @back="router.back()"/>
-    <v-main class="main">
+    <v-main class="main form-page">
         <v-card rounded="xl">
             <!-- <v-card-title>{{ t('settings.title') }}</v-card-title> -->
             <v-card-text>
@@ -139,14 +140,14 @@ onMounted(refresh_log_usage);
                     v-model="settings.user_name"
                     :label="t('settings.user_name')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 />
                 <v-select
                     v-model="settings.avatar"
                     :items="avatar_items"
                     :label="t('settings.avatar')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 >
                     <template #selection="{ item }">
                         <v-icon class="mr-2">{{ item.raw }}</v-icon>{{ item.raw }}
@@ -166,7 +167,7 @@ onMounted(refresh_log_usage);
                     item-value="value"
                     :label="t('settings.language')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                     @update:model-value="update_locale"
                 />
                 <v-select
@@ -176,7 +177,7 @@ onMounted(refresh_log_usage);
                     item-value="code"
                     :label="t('settings.primary_currency')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 />
                 <v-select
                     v-model="settings.default_page"
@@ -185,7 +186,7 @@ onMounted(refresh_log_usage);
                     item-value="value"
                     :label="t('settings.default_page')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 />
                 <v-select
                     v-model="settings.date_format"
@@ -194,7 +195,7 @@ onMounted(refresh_log_usage);
                     item-value="value"
                     :label="t('settings.date_format')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 />
                 <v-select
                     v-model="settings.time_format"
@@ -203,14 +204,14 @@ onMounted(refresh_log_usage);
                     item-value="value"
                     :label="t('settings.time_format')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 />
                 <v-select
                     v-model="settings.decimal_places"
                     :items="[0, 1, 2, 3, 4]"
                     :label="t('settings.decimal_places')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 />
                 <v-switch
                     v-model="settings.thousands_separator"
@@ -226,7 +227,7 @@ onMounted(refresh_log_usage);
                     item-value="value"
                     :label="t('settings.theme')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                     @update:model-value="update_theme"
                 >
                     <template #selection="{ item }">
@@ -254,7 +255,7 @@ onMounted(refresh_log_usage);
                     :model-value="log_usage_display"
                     :label="t('settings.logs.usage')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                     readonly
                 />
                 <v-select
@@ -264,7 +265,7 @@ onMounted(refresh_log_usage);
                     item-value="value"
                     :label="t('settings.logs.retention')"
                     variant="outlined"
-                    density="comfortable"
+                    density="compact"
                 />
                 <v-btn
                     variant="outlined"

@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import Tag from '../../common/Tag';
 import { SummaryType, SummaryTypeList } from '../../common/SummaryType';
+import { entity_accent_color, formatAmount } from '../../common/Utils';
 
 type Grouping = SummaryType | 'All';
 
@@ -72,7 +73,7 @@ const max_for_currency = function(group: TagSummary[], currency_code: string) {
 };
 
 const format_amount = function(item: TagSummary) {
-    return `${item.currency_code} ${(item.summary / 100).toFixed(2)}`;
+    return `${item.currency_code} ${formatAmount(item.summary)}`;
 };
 
 const open_tag = function(item: TagSummary) {
@@ -90,7 +91,7 @@ watch(grouping, () => {
 
 <template>
     <v-card variant="flat" rounded="xl">
-        <v-card-title class="title-row">
+        <v-card-title class="title-row text-body-1 font-weight-bold">
             <span>{{ t('report.expense_by_tag') }}</span>
             <v-select
                 v-model="grouping"
@@ -108,13 +109,13 @@ watch(grouping, () => {
             <section v-for="group in groups" :key="group.period || 'all'" class="period-group">
                 <button v-for="item in group.items" :key="`${group.period}-${item.currency_code}-${item.tag.id}`" class="tag-row" type="button" @click="open_tag(item)">
                     <div class="tag-label">
-                        <v-icon :color="item.tag.color" size="small">{{ item.tag.icon }}</v-icon>
+                        <v-icon :color="entity_accent_color(item.tag.color)" size="small">{{ item.tag.icon }}</v-icon>
                         <span>{{ item.tag.name }}</span>
                         <span class="tag-amount">{{ format_amount(item) }}</span>
                     </div>
                     <v-progress-linear
                         :model-value="(item.summary / max_for_currency(group.items, item.currency_code)) * 100"
-                        :color="item.tag.color"
+                        :color="entity_accent_color(item.tag.color)"
                         rounded
                         height="8"
                     />

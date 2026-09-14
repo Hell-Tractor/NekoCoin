@@ -67,12 +67,12 @@ onMounted(() => {
     <BackTitleBar :title="t('account.details')" @back="router.back()"/>
     <v-main v-if="wallet" class="main">
         <WalletCard variant="flat" layout="hero" :wallet="wallet" />
-        <SummaryBar variant="flat" rounded="lg" :title="t('account.summary')" :current-expense="new Money(sum_balance.expense, { symbol: '', code: wallet.currency_code })" :current-income="new Money(sum_balance.income, { symbol: '', code: wallet.currency_code })" />
-        <StackDiagram class="mt-2" variant="flat" rounded="lg" :kind="TagType.EXPENSE" :item_id="{ type: 'wallet', value: props.id }" :currency_code="wallet.currency_code" />
-        <v-row class="d-flex" style="margin: 0px;">
-            <v-col><v-btn block variant="tonal" rounded="xl" prepend-icon="mdi-pencil" color="secondary-darken-1" :text="t('actions.edit')" @click="edit_wallet"></v-btn></v-col>
-            <v-col><v-btn block variant="outlined" rounded="xl" prepend-icon="mdi-delete" color="error" :text="t('actions.delete')" @click="show_confirm_sheet = true"></v-btn></v-col>
-        </v-row>
+        <SummaryBar variant="flat" rounded="xl" :title="t('account.summary')" :current-expense="new Money(sum_balance.expense, { symbol: '', code: wallet.currency_code })" :current-income="new Money(sum_balance.income, { symbol: '', code: wallet.currency_code })" />
+        <StackDiagram class="mt-2" variant="flat" rounded="xl" :kind="TagType.EXPENSE" :item_id="{ type: 'wallet', value: props.id }" :currency_code="wallet.currency_code" />
+        <div class="detail-actions">
+            <v-btn block variant="tonal" rounded="xl" prepend-icon="mdi-pencil" color="secondary-darken-1" :text="t('actions.edit')" @click="edit_wallet"></v-btn>
+            <v-btn block variant="outlined" rounded="xl" prepend-icon="mdi-delete" color="error" :text="t('actions.delete')" @click="show_confirm_sheet = true"></v-btn>
+        </div>
         <TransactionList variant="flat" :title="t('account.transactions')" :filter="{ by: 'wallet', id: props.id }"/>
         <ConfirmSheet v-model="show_confirm_sheet" :title="t('warning.cascade_and_irrevertible.title')" :text="t('warning.cascade_and_irrevertible.content')" @confirm="delete_wallet" />
     </v-main>

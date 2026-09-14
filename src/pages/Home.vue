@@ -58,23 +58,29 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-row>
-        <v-col class="flex-grow-0">
-            <v-avatar :icon="settings.avatar" size="large" />
-        </v-col>
-        <v-col>
-            <div>{{ today() }}</div>
-            <div>{{ settings.user_name ? t('welcome_user', { username: settings.user_name }) : t('welcome') }}</div>
-        </v-col>
-    </v-row>
-    <v-card rounded="xl">
+    <v-card rounded="xl" class="mb-2">
         <v-card-text>
-            <div>{{ t('total_balance') }}</div>
-            <div style="height: 10px;"></div>
-            <p class="text-h5 font-weight-black">{{ totalBalance ?? "loading..." }}</p>
+            <div class="home-hero-top">
+                <v-avatar :icon="settings.avatar" size="40" />
+                <div class="entity-copy">
+                    <div class="entity-meta">{{ today() }}</div>
+                    <div class="entity-name">{{ settings.user_name ? t('welcome_user', { username: settings.user_name }) : t('welcome') }}</div>
+                </div>
+            </div>
+            <div class="entity-meta">{{ t('total_balance') }}</div>
+            <div class="entity-hero-amount">{{ totalBalance ?? t('loading') }}</div>
         </v-card-text>
     </v-card>
-    <SummaryBar v-if="!!currentMonthExpense && !!currentMonthIncome && !!currentMonthNetCashFlow" variant="text" :title="t('this_month')" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money" :current-net-cash-flow="currentMonthNetCashFlow as Money"></SummaryBar>
+    <SummaryBar
+        v-if="!!currentMonthExpense && !!currentMonthIncome && !!currentMonthNetCashFlow"
+        class="mb-2"
+        variant="flat"
+        rounded="xl"
+        :title="t('this_month')"
+        :current-income="currentMonthIncome as Money"
+        :current-expense="currentMonthExpense as Money"
+        :current-net-cash-flow="currentMonthNetCashFlow as Money"
+    />
     <ActiveActivityList />
     <TransactionList :title="t('transaction.list.title')" @deleted="_ => refresh()"></TransactionList>
 </template>

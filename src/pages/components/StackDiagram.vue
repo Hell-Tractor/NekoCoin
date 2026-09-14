@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core';
 import Tag, { TagType, TagTypeToString } from '../../common/Tag';
-import { formatDate } from '../../common/Utils';
+import { entity_accent_color, formatAmount, formatDate } from '../../common/Utils';
 import { computed, onMounted, Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
@@ -77,13 +77,13 @@ onMounted(() => {
                         :key="`segment-${item.tag.id}`"
                         location="top"
                         open-on-click
-                        :text="`${item.tag.name} ${format_percentage(item.summary)} - ${props.currency_code} ${(item.summary / 100).toFixed(2)}`"
+                        :text="`${item.tag.name} ${format_percentage(item.summary)} - ${props.currency_code} ${formatAmount(item.summary)}`"
                     >
                         <template #activator="{ props: tooltip_props }">
                             <div
                                 v-bind="tooltip_props"
                                 class="progress-segment"
-                                :style="{ width: `${percentage(item.summary)}%`, backgroundColor: item.tag.color }"
+                                :style="{ width: `${percentage(item.summary)}%`, backgroundColor: entity_accent_color(item.tag.color) }"
                                 :aria-label="`${item.tag.name} ${format_percentage(item.summary)}`"
                             >
                                 <span v-if="percentage(item.summary) >= 7" class="segment-percent">{{ format_percentage(item.summary) }}</span>
@@ -94,9 +94,9 @@ onMounted(() => {
                 <div class="tag-legend">
                     <div v-for="item in data" :key="item.tag.id" class="tag-row">
                         <div class="tag-label">
-                            <v-icon :color="item.tag.color" size="x-small">{{ item.tag.icon }}</v-icon>
+                            <v-icon :color="entity_accent_color(item.tag.color)" size="x-small">{{ item.tag.icon }}</v-icon>
                             <span>{{ item.tag.name }}</span>
-                            <span class="tag-amount">{{ props.currency_code }} {{ (item.summary / 100).toFixed(2) }}</span>
+                            <span class="tag-amount">{{ props.currency_code }} {{ formatAmount(item.summary) }}</span>
                         </div>
                     </div>
                 </div>
@@ -132,10 +132,10 @@ onMounted(() => {
     position: absolute;
     top: 50%;
     left: 50%;
-    color: white;
+    color: rgb(var(--v-theme-on-surface));
     font-size: 0.7rem;
     font-variant-numeric: tabular-nums;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.55);
     transform: translate(-50%, -50%);
     white-space: nowrap;
 }

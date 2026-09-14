@@ -314,7 +314,7 @@ onBeforeRouteLeave(() => {
 <template>
     <BackTitleBar :title="t(id == undefined ? 'transaction.add' : 'transaction.update')" @back="router.back()"></BackTitleBar>
     <v-main class="main">
-        <v-form class="fill-height" v-model="form">
+        <v-form class="fill-height form-page" v-model="form">
             <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]">
                 <v-chip v-for="tag in TransactionTagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
             </v-chip-group>
@@ -365,13 +365,13 @@ onBeforeRouteLeave(() => {
             <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="'account.select_to'" v-model="selected_to_wallet" :wallets="wallets"></WalletSelector>
             <TagSelector v-model="selected_tag" :tags="tags" :kind="selected_tag_type"></TagSelector>
             <ActivitySelector v-if="selected_tag_type != TagType.TRANSFER" v-model="selected_activity" :activities="activities"></ActivitySelector>
-            <v-card v-if="selected_tag_type == TagType.EXPENSE" :variant="has_split ? 'flat' : 'text'" density="compact" color="surface-lighten-1">
-                <v-card-text style="padding: 0px;">
+            <v-card v-if="selected_tag_type == TagType.EXPENSE" :variant="has_split ? 'flat' : 'text'" density="compact" color="surface-lighten-1" rounded="xl" class="mt-2">
+                <v-card-text class="pa-2">
                     <v-row class="d-flex align-center">
                         <v-col class="flex-grow-0">
-                            <v-checkbox class="text-body-2" v-model="has_split" hide-details density="compact" color="secondary" base-color="black"></v-checkbox>
+                            <v-checkbox class="text-body-2" v-model="has_split" hide-details density="compact" color="secondary"></v-checkbox>
                         </v-col>
-                        <v-col style="margin-left: 5px; color: black">{{ t('transaction.has_split') }}</v-col>
+                        <v-col>{{ t('transaction.has_split') }}</v-col>
                     </v-row>
                     <v-sheet v-if="has_split" style="margin: 0px 7px 0px 7px;" color="surface-lighten-1">
                         <v-row class="d-flex align-center">
@@ -394,7 +394,7 @@ onBeforeRouteLeave(() => {
                 </v-card-text>
             </v-card>
             <div style="height: 50px;"></div>
-            <v-btn @click="confirm" color="primary" width="95%" style="position: fixed; bottom: 10px;" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
+            <v-btn @click="confirm" color="primary" class="form-save-btn" :disabled="!isFormValid()">{{ t('actions.save') }}</v-btn>
         </v-form>
     </v-main>
 </template>

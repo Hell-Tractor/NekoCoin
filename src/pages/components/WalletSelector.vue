@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import { Wallet } from '../Wallets.vue';
 import { useRouter } from 'vue-router';
-import { color_with_alpha } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, entity_tint } from '../../common/Utils';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -13,15 +13,16 @@ const props = defineProps<{
 }>();
 
 const avatar_style = function(color: string) {
-    return { backgroundColor: color_with_alpha(color, 0.22) };
+    return entity_avatar_style(color);
 };
 
 const card_style = function(wallet: Wallet, selected: boolean) {
+    const accent = entity_accent_color(wallet.color);
     return {
         background: selected
-            ? `linear-gradient(180deg, ${color_with_alpha(wallet.color, 0.28)} 0%, ${color_with_alpha(wallet.color, 0.08)} 100%)`
-            : `linear-gradient(180deg, ${color_with_alpha(wallet.color, 0.16)} 0%, transparent 70%)`,
-        outline: selected ? `2px solid ${wallet.color}` : '2px solid transparent',
+            ? `linear-gradient(180deg, ${entity_tint(wallet.color)} 0%, ${entity_tint(wallet.color)} 100%)`
+            : `linear-gradient(180deg, ${entity_tint(wallet.color)} 0%, transparent 78%)`,
+        outline: selected ? `2px solid ${accent}` : '2px solid transparent',
     };
 };
 </script>
@@ -41,7 +42,7 @@ const card_style = function(wallet: Wallet, selected: boolean) {
                 <v-slide-group-item v-for="wallet in props.wallets" :key="wallet.id" :value="wallet" v-slot="{ isSelected, toggle }">
                     <button class="wallet-tile" :style="card_style(wallet, isSelected)" type="button" @click="toggle">
                         <div class="wallet-tile-icon" :style="avatar_style(wallet.color)">
-                            <v-icon :color="wallet.color" size="22">{{ wallet.icon }}</v-icon>
+                            <v-icon :color="entity_accent_color(wallet.color)" size="22">{{ wallet.icon }}</v-icon>
                         </div>
                         <div class="wallet-tile-name">{{ wallet.name }}</div>
                     </button>

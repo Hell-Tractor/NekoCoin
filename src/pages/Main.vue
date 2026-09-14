@@ -25,6 +25,14 @@ const allPages: Page[] = [
     { name: 'settings', path: '/settings', icon: 'mdi-cog-outline' },
 ];
 const bottomPages = computed(() => allPages.filter(page => page.indexInBottom != undefined).sort((a, b) => (a.indexInBottom as number) - (b.indexInBottom as number)));
+const current_page_title = computed(() => {
+    const current_page_name = route.path.split('/')[2];
+    if (!current_page_name || current_page_name === 'home') {
+        return t('app_name');
+    }
+    const currentPage = allPages.find(page => page.name === current_page_name);
+    return currentPage ? t(`page.${currentPage.name}`) : t('app_name');
+});
 const showDrawer: Ref<boolean> = ref(false);
 
 const changePage = function(target_page: Page) : void {
@@ -49,7 +57,7 @@ const hasNextAction = function() : boolean {
 <template>
     <v-app-bar density="compact" color="primary">
         <v-app-bar-nav-icon @click="showDrawer = !showDrawer;"></v-app-bar-nav-icon>
-        <v-toolbar-title>{{ t('app_name') }}</v-toolbar-title>
+        <v-toolbar-title>{{ current_page_title }}</v-toolbar-title>
     </v-app-bar>
 
     <v-navigation-drawer v-model="showDrawer" width="288" class="app-drawer">
@@ -81,10 +89,10 @@ const hasNextAction = function() : boolean {
         </v-list>
     </v-navigation-drawer>
 
-    <v-main class="main">
+    <v-main class="main main-with-nav">
         <router-view />
     </v-main>
-    <v-btn v-if="hasNextAction()" color="secondary" @click="globalButtonClick" icon="mdi-paw" size="large" class="right-0 bottom-0" style="margin: 10px; margin-bottom: 65px; position: fixed;"></v-btn>
+    <v-btn v-if="hasNextAction()" color="secondary" @click="globalButtonClick" icon="mdi-paw" size="large" class="fab-page-action"></v-btn>
 
     <v-bottom-navigation grow mandatory bg-color="primary">
         <v-btn v-for="page in bottomPages" :key="page.indexInBottom as number" @click="changePage(page)">

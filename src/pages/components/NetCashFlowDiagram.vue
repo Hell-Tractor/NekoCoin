@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import ApexCharts from 'apexcharts';
 import { useI18n } from 'vue-i18n';
+import { useTheme } from 'vuetify';
 import { SummaryType } from '../../common/SummaryType';
 import { formatDate } from '../../common/Utils';
+import { apex_chart_theme } from '../../common/ChartTheme';
 
 interface SummaryData {
     currency_code: string;
@@ -25,6 +27,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const vuetify_theme = useTheme();
 const chart_element = ref<HTMLElement>();
 const scroll_element = ref<HTMLElement>();
 const width = ref(0);
@@ -68,6 +71,7 @@ const load_chart = async function() {
             return;
         }
 
+        const chart_theme = apex_chart_theme();
         const options = {
             chart: {
                 type: 'line',
@@ -76,9 +80,11 @@ const load_chart = async function() {
                 toolbar: { show: false },
                 animations: { enabled: false },
                 redrawOnWindowResize: true,
+                ...chart_theme.chart,
             },
+            theme: chart_theme.theme,
             series,
-            colors: ['#2e7d32', '#1565c0', '#ef6c00', '#6a1b9a'],
+            colors: chart_theme.line_colors,
             stroke: {
                 curve: 'smooth',
                 width: 2,
@@ -86,23 +92,32 @@ const load_chart = async function() {
             markers: {
                 size: 3,
                 hover: { size: 5 },
+                ...chart_theme.markers,
             },
             xaxis: {
                 categories: dates,
                 tickAmount: Math.min(8, dates.length),
+                ...chart_theme.xaxis,
             },
             yaxis: {
+                ...chart_theme.yaxis,
                 labels: {
+                    ...chart_theme.yaxis.labels,
                     formatter: (value: number) => value.toFixed(0),
                 },
             },
+            grid: chart_theme.grid,
             tooltip: {
+                ...chart_theme.tooltip,
                 y: {
                     formatter: (value: number) => value.toFixed(2),
                 },
             },
             dataLabels: { enabled: false },
-            legend: { horizontalAlign: 'left' },
+            legend: {
+                horizontalAlign: 'left',
+                ...chart_theme.legend,
+            },
             noData: { text: t('loading') },
         };
 
@@ -147,6 +162,11 @@ const on_pointer_up = function(event: PointerEvent) {
 
 onMounted(() => {
     load_chart();
+});
+
+watch(() => vuetify_theme.global.name.value, async () => {
+    await nextTick();
+    await load_chart();
 });
 
 onBeforeUnmount(() => {

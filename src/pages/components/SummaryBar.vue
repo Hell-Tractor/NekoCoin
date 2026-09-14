@@ -29,7 +29,7 @@ const net_cash_flow_hint = function() {
 </script>
 
 <template>
-    <v-card :variant="variant" :rounded="rounded">
+    <v-card :variant="variant" :rounded="rounded ?? 'xl'" class="mb-2">
         <v-card-text>
             <div v-if="!!title" class="summary-title">
                 <span>{{ title }}</span>
@@ -45,11 +45,11 @@ const net_cash_flow_hint = function() {
             </div>
             <v-row class="flex-nowrap">
                 <v-col class="flex-grow-1">
-                    <p>{{ t('income') }}<v-icon color="green">mdi-chart-line-variant</v-icon></p>
+                    <p>{{ t('income') }}<v-icon color="success">mdi-chart-line-variant</v-icon></p>
                     <p class="text-h8 font-weight-black">{{ currentIncome }}</p>
                 </v-col>
                 <v-col class="flex-grow-1">
-                    <p>{{ t('expense') }}<v-icon color="red" class="v-flipped">mdi-chart-line-variant</v-icon></p>
+                    <p>{{ t('expense') }}<v-icon color="error" class="v-flipped">mdi-chart-line-variant</v-icon></p>
                     <p class="text-h8 font-weight-black">{{ currentExpense }}</p>
                 </v-col>
             </v-row>

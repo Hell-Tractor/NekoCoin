@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import { Activity } from '../../common/Activity';
 import { useRouter } from 'vue-router';
+import { entity_accent_color, entity_tint } from '../../common/Utils';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -10,13 +11,12 @@ const props = defineProps<{
 }>();
 const selected_activity = defineModel<Activity | undefined>();
 
-const clamp = function(value: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, value));
-}
-
-const offsetColor = function(color: string, offset: number, alpha: number) {
-    var [r, g, b] = color.substring(4, color.length - 1).split(',');
-    return `rgba(${clamp(parseInt(r) + offset, 0, 255)}, ${clamp(parseInt(g) + offset, 0, 255)}, ${clamp(parseInt(b) + offset, 0, 255)}, ${alpha})`;
+const chip_style = function(color: string, selected: boolean) {
+    const accent = entity_accent_color(color);
+    if (selected) {
+        return { borderWidth: '1px', borderColor: accent };
+    }
+    return { backgroundColor: entity_tint(color) };
 }
 </script>
 
@@ -37,8 +37,8 @@ const offsetColor = function(color: string, offset: number, alpha: number) {
                     v-for="activity in props.activities"
                     :key="activity.id"
                     :value="activity"
-                    :color="activity.color"
-                    :style="(!selected_activity || selected_activity.id != activity.id) ? { backgroundColor: offsetColor(activity.color, 50, 0.7) } : { borderWidth: '1px', borderColor: offsetColor(activity.color, -50, 1) }"
+                    :color="entity_accent_color(activity.color)"
+                    :style="chip_style(activity.color, !!selected_activity && selected_activity.id == activity.id)"
                     label
                     :prepend-icon="activity.icon"
                 >{{ activity.name }}</v-chip>
