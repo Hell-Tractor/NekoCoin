@@ -544,7 +544,6 @@ pub async fn get_expense_summary_by_tag(summary_type: Option<SummaryType>, begin
         SELECT
             SUM(CASE
                 WHEN tags.kind = $3 THEN COALESCE(transaction_splits.expense, transactions.amount)
-                WHEN tags.kind = $4 THEN transactions.amount
                 ELSE 0
             END) AS summary,
             root.id, root.name, root.remark, root.color, root.icon, root.kind, root.parent_id,
@@ -564,7 +563,6 @@ pub async fn get_expense_summary_by_tag(summary_type: Option<SummaryType>, begin
         .bind(begin.format(super::DATETIME_FORMAT).to_string())
         .bind(end.format(super::DATETIME_FORMAT).to_string())
         .bind(TagKind::Expense as u8)
-        .bind(TagKind::Transfer as u8)
         .fetch_all(db())
         .await?;
     info!("Retrieved {} expense tag summaries.", result.len());
@@ -588,11 +586,12 @@ pub async fn get_summary_by_tag_with_tag(tag_id: u32, currency_code: String, beg
             -- find all children of tag(id = $3)'s children recursively, but not for tag(id = $3) itself
             SELECT tt.root_id, t.id FROM tag_tree tt JOIN tags t ON tt.id = t.parent_id WHERE tt.id != $3
         )
-        SELECT SUM(amount) as summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+        SELECT SUM(COALESCE(ts.expense, amount)) as summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
         FROM transactions
         JOIN tag_tree tt ON transactions.tag_id = tt.id
         JOIN tags tag ON tt.root_id = tag.id
         JOIN wallets ON transactions.wallet_id = wallets.id
+        LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
         WHERE time BETWEEN $1 AND $2 AND wallets.currency_code = $4
         GROUP BY tt.root_id
         "#)

@@ -197,7 +197,6 @@ pub async fn get_expense_summary_by_activity(summary_type: Option<SummaryType>, 
             activities.id, activities.name, activities.color, activities.icon, activities.open,
             SUM(CASE
                 WHEN tags.kind = $3 THEN COALESCE(transaction_splits.expense, transactions.amount)
-                WHEN tags.kind = $4 THEN transactions.amount
                 ELSE 0
             END) AS summary,
             wallets.currency_code,
@@ -216,7 +215,6 @@ pub async fn get_expense_summary_by_activity(summary_type: Option<SummaryType>, 
     .bind(begin.format(crate::transaction::DATETIME_FORMAT).to_string())
     .bind(end.format(crate::transaction::DATETIME_FORMAT).to_string())
     .bind(TagKind::Expense as u8)
-    .bind(TagKind::Transfer as u8)
     .fetch_all(db())
     .await?;
     info!("Retrieved {} activity instance summaries.", result.len());
@@ -232,7 +230,7 @@ pub async fn get_expense_summary_by_activity_tag(summary_type: Option<SummaryTyp
     let result = sqlx::query_as(
         r#"
         WITH RECURSIVE tag_tree(root_id, id) AS (
-            SELECT id, id FROM tags WHERE parent_id IS NULL AND kind = $5
+            SELECT id, id FROM tags WHERE parent_id IS NULL AND kind = $4
             UNION ALL
             SELECT tag_tree.root_id, tags.id
             FROM tag_tree JOIN tags ON tags.parent_id = tag_tree.id
@@ -240,7 +238,6 @@ pub async fn get_expense_summary_by_activity_tag(summary_type: Option<SummaryTyp
         SELECT
             SUM(CASE
                 WHEN tx_tags.kind = $3 THEN COALESCE(transaction_splits.expense, transactions.amount)
-                WHEN tx_tags.kind = $4 THEN transactions.amount
                 ELSE 0
             END) AS summary,
             root.id, root.name, root.remark, root.color, root.icon, root.kind, root.parent_id,
@@ -262,7 +259,6 @@ pub async fn get_expense_summary_by_activity_tag(summary_type: Option<SummaryTyp
     .bind(begin.format(crate::transaction::DATETIME_FORMAT).to_string())
     .bind(end.format(crate::transaction::DATETIME_FORMAT).to_string())
     .bind(TagKind::Expense as u8)
-    .bind(TagKind::Transfer as u8)
     .bind(TagKind::Activity as u8)
     .fetch_all(db())
     .await?;

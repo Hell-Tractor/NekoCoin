@@ -229,9 +229,15 @@ const update_split_expense = function(count: number) {
     split_expense.value = Number.parseFloat(((amount.value ?? 0) - (count - 1) * others_expense.value).toFixed(2));
 }
 watch(split_count, function(newValue) {
+    if (restoring_draft) {
+        return;
+    }
     update_split_expense(newValue);
 });
 watch(has_split, function(newValue) {
+    if (restoring_draft) {
+        return;
+    }
     if (newValue) {
         update_split_expense(split_count.value);
         if (split_receive_wallet.value == undefined) {
@@ -240,6 +246,9 @@ watch(has_split, function(newValue) {
     }
 });
 watch(amount, function(_newValue) {
+    if (restoring_draft) {
+        return;
+    }
     update_split_expense(split_count.value);
 })
 watch(selected_tag_type, function(newValue, oldValue) {
@@ -275,6 +284,7 @@ onMounted(async () => {
     await retrieve_activities();
 
     if (props.init) {
+        restoring_draft = true;
         clear_transaction_draft();
         selected_tag_type.value = TagTypeFromString(props.init.tag.type);
         await retrieve_tags();
@@ -297,13 +307,14 @@ onMounted(async () => {
             selected_to_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.to_wallet_name);
         }
         has_split.value = props.init!.split != undefined;
-        // console.log(props.init);
         if (props.init!.split) {
             split_id.value = props.init!.split.id;
             split_count.value = props.init!.split.count;
-            split_expense.value = props.init!.split.expense;
+            split_expense.value = props.init!.split.expense / 100;
             split_receive_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.split!.receive_wallet_name);
         }
+        await nextTick();
+        restoring_draft = false;
     } else if (transaction_draft.active) {
         await restore_draft_after_tags_loaded();
     } else {

@@ -33,9 +33,34 @@ const selected_tag_type: Ref<{ type: TagType, name: string }> = ref(TagTypeNames
 const tags: Ref<Tag[]> = ref([]);
 const page: Ref<string> = ref('main');
 
+const collect_descendant_ids = function(root_id: number, all: Tag[]) {
+    const ids = new Set<number>();
+    const walk = (parent_id: number) => {
+        for (const tag of all) {
+            if (tag.parent_id === parent_id && !ids.has(tag.id)) {
+                ids.add(tag.id);
+                walk(tag.id);
+            }
+        }
+    };
+    walk(root_id);
+    return ids;
+};
+
 const retrieve_tags = async function() {
     try {
-        tags.value = await invoke('retrieve_tags', { filter: tag_search_text.value, kind: TagTypeToString(selected_tag_type.value.type) });
+        const kind = TagTypeToString(selected_tag_type.value.type);
+        const result = await invoke('retrieve_tags', { filter: tag_search_text.value, kind }) as Tag[];
+        if (id.value === undefined) {
+            tags.value = result;
+            return;
+        }
+        const all = tag_search_text.value.trim() === ''
+            ? result
+            : await invoke('retrieve_tags', { filter: '', kind }) as Tag[];
+        const forbidden = collect_descendant_ids(id.value, all);
+        forbidden.add(id.value);
+        tags.value = result.filter(tag => !forbidden.has(tag.id));
     } catch (error) {
         // TODO: handle error
         console.error(error);
@@ -84,7 +109,6 @@ onMounted(async () => {
         selected_tag_type.value = TagTypeNames.find(tag => tag.name == props.init!.type) || TagTypeNames[0];
         await retrieve_tags();
         parent_tag.value = tags.value.find(tag => tag.id == props.init!.parent_id) || null;
-        tags.value = tags.value.filter(tag => tag.id != id.value);
     } else {
         const kind_name = route.query.kind;
         if (typeof kind_name === 'string') {

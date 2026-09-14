@@ -20,6 +20,37 @@ async fn ensure_parent_kind(kind: TagKind, parent_id: Option<u32>) -> Result<()>
     Ok(())
 }
 
+async fn ensure_parent_not_descendant(tag_id: u32, parent_id: Option<u32>) -> Result<()> {
+    let Some(parent_id) = parent_id else {
+        return Ok(());
+    };
+    if parent_id == tag_id {
+        return Err(Error::InvalidParameter(format!(
+            "tag(id = {tag_id}) cannot be its own parent"
+        )));
+    }
+    let descendant_count = sqlx::query(
+        r#"
+        WITH RECURSIVE descendants(id) AS (
+            SELECT id FROM tags WHERE parent_id = $1
+            UNION ALL
+            SELECT t.id FROM tags t JOIN descendants d ON t.parent_id = d.id
+        )
+        SELECT COUNT(*) FROM descendants WHERE id = $2
+        "#)
+        .bind(tag_id)
+        .bind(parent_id)
+        .fetch_one(db())
+        .await?
+        .get::<i64, _>(0);
+    if descendant_count > 0 {
+        return Err(Error::InvalidParameter(format!(
+            "tag(id = {parent_id}) is a descendant of tag(id = {tag_id}) and cannot be its parent"
+        )));
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn create_tag(name: String, remark: String, color: String, icon: String, kind: TagKind, parent_id: Option<u32>) -> Result<()> {
     debug!("Creating tag `{}` with parent_id=`{:?}` in type `{:?}`", name, parent_id, kind);
@@ -41,6 +72,7 @@ pub async fn update_tag(vo: UpdateTagVo) -> Result<()> {
     debug!("Updating tag(id = {})", vo.id);
     let existing = super::service::get_tag_by_id(vo.id).await?;
     ensure_parent_kind(existing.kind, vo.parent_id).await?;
+    ensure_parent_not_descendant(vo.id, vo.parent_id).await?;
     sqlx::query(
         r#"
         UPDATE tags

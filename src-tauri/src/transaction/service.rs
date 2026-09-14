@@ -43,6 +43,7 @@ pub async fn delete_transaction(executor: &mut SqliteConnection, id: u32) -> Res
     revert_currency(&mut *executor, &tag_kind, transaction.wallet_id, transaction.to_wallet_id, transaction.amount).await?;
     // revert income from transaction split
     let amount = transaction.amount; // * remove clone in the future
+    let split_id = transaction.split_id;
     if let Some(split) = transaction.get_split().await? {
         revert_currency(&mut *executor, &TagKind::Income, split.receive_wallet_id, None, amount - split.expense).await?;
     }
@@ -53,8 +54,18 @@ pub async fn delete_transaction(executor: &mut SqliteConnection, id: u32) -> Res
         WHERE id = $1
         "#)
         .bind(id)
-        .execute(executor)
+        .execute(&mut *executor)
         .await?;
+    if let Some(split_id) = split_id {
+        sqlx::query(
+            r#"
+            DELETE FROM transaction_splits
+            WHERE id = $1
+            "#)
+            .bind(split_id)
+            .execute(executor)
+            .await?;
+    }
     Ok(())
 }
 
