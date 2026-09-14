@@ -19,8 +19,9 @@ const allPages: Page[] = [
     { name: 'home', path: '/main/home', indexInBottom: 0, icon: 'mdi-home', nextPage: '/transaction/add' },
     { name: 'accounts', path: '/main/accounts', indexInBottom: 1, icon: 'mdi-credit-card', nextPage: '/account/add' },
     { name: 'tags', path: '/main/tags', icon: 'mdi-tag-multiple', nextPage: '/tag/add' },
+    { name: 'activities', path: '/main/activities', indexInBottom: 2, icon: 'mdi-flag', nextPage: '/activity/add' },
     { name: 'transactions', path: '/main/transactions', icon: 'mdi-format-list-bulleted' },
-    { name: 'reports', path: '/main/reports', indexInBottom: 2, icon: 'mdi-chart-multiple' },
+    { name: 'reports', path: '/main/reports', indexInBottom: 3, icon: 'mdi-chart-multiple' },
     { name: 'settings', path: '/settings', icon: 'mdi-cog-outline' },
 ];
 const bottomPages = computed(() => allPages.filter(page => page.indexInBottom != undefined).sort((a, b) => (a.indexInBottom as number) - (b.indexInBottom as number)));

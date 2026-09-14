@@ -9,7 +9,7 @@ pub async fn get_transaction_by_id(id: u32) -> Result<Transaction> {
     debug!("Getting transaction with id: {}", id);
     let transaction = sqlx::query_as::<_, Transaction>(
         r#"
-        SELECT id, remark, wallet_id, to_wallet_id, tag_id, amount, time, split_id
+        SELECT id, remark, wallet_id, to_wallet_id, tag_id, activity_id, amount, time, split_id
         FROM transactions
         WHERE transactions.id = $1
         "#,
@@ -79,6 +79,12 @@ pub async fn modify_currency(executor: &mut SqliteConnection, tag_kind: &TagKind
             wallet::service::modify_currency(&mut *executor, wallet_id, -amount).await?;
             wallet::service::modify_currency(executor, to_wallet_id, amount).await?;
         }
+        tag::TagKind::Activity => {
+            return Err(Error::InvalidTagType {
+                given: TagKind::Activity,
+                allow: vec![TagKind::Expense, TagKind::Income, TagKind::Transfer],
+            });
+        }
     }
     Ok(())
 }
@@ -95,6 +101,12 @@ pub async fn revert_currency(executor: &mut SqliteConnection, tag_kind: &TagKind
             let to_wallet_id = to_wallet_id.unwrap();
             wallet::service::modify_currency(&mut *executor, to_wallet_id, -amount).await?;
             wallet::service::modify_currency(executor, wallet_id, amount).await?;
+        }
+        tag::TagKind::Activity => {
+            return Err(Error::InvalidTagType {
+                given: TagKind::Activity,
+                allow: vec![TagKind::Expense, TagKind::Income, TagKind::Transfer],
+            });
         }
     }
     Ok(())

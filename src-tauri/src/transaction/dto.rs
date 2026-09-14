@@ -2,7 +2,7 @@ use serde::Serialize;
 use chrono::NaiveDateTime;
 use sqlx::{FromRow, sqlite::SqliteRow, Row};
 
-use crate::{tag::{service::get_tag_by_id, Tag}, wallet};
+use crate::{activity, tag::{service::get_tag_by_id, Tag}, wallet};
 
 #[derive(Serialize, Debug, FromRow)]
 pub struct SummaryByTagDto {
@@ -25,6 +25,7 @@ pub struct TransactionDto {
     pub to_wallet_name: Option<String>,
     pub currency_code: String,
     pub tag: Tag,
+    pub activity: Option<crate::activity::dto::ActivityBriefDto>,
     pub amount: i32,
     pub time: NaiveDateTime,
     pub split: Option<TransactionSplitDto>,
@@ -47,6 +48,22 @@ impl TransactionDto {
             to_wallet_name: row.try_get("to_wallet_name").ok(),
             currency_code: row.try_get("currency_code")?,
             tag: get_tag_by_id(row.try_get("tag_id")?).await?,
+            activity: {
+                let id: Option<u32> = row.try_get("activity_id").ok();
+                match id {
+                    Some(id) if id > 0 => {
+                        let activity = activity::service::get_activity_by_id(id).await?;
+                        Some(activity::dto::ActivityBriefDto {
+                            id: activity.id,
+                            name: activity.name,
+                            color: activity.color,
+                            icon: activity.icon,
+                            open: activity.open,
+                        })
+                    }
+                    _ => None,
+                }
+            },
             amount: row.try_get("amount")?,
             time: NaiveDateTime::parse_from_str(row.try_get("time")?, super::DATETIME_FORMAT)?,
             split: {

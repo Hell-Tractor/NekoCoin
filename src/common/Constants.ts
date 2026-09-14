@@ -4,6 +4,8 @@ export default {
     MAX_TAG_NAME_LENGTH: 16,
     MAX_TAG_REMARK_LENGTH: 128,
     MAX_TRANSACTION_REMARK_LENGTH: 128,
+    MAX_ACTIVITY_NAME_LENGTH: 16,
+    MAX_ACTIVITY_REMARK_LENGTH: 128,
     CURRENCIES: [
         { code: 'CNY', symbol: '¥' },
         { code: 'USD', symbol: '$' },

@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 const props = defineProps<{
-    item_id?: { type: 'wallet' | 'tag', value: number };
+    item_id?: { type: 'wallet' | 'tag' | 'activity', value: number };
     currency_code: string;
     // TagType.Transfer is only allowed when item_id.type is 'tag'
     kind: TagType;
@@ -31,6 +31,13 @@ const get_data = async function() {
         if (props.item_id?.type == 'wallet') {
             data.value = await invoke('get_summary_by_tag_in_wallet', {
                 walletId: props.item_id?.value,
+                kind: TagTypeToString(props.kind),
+                beginDate: props.beginDate ? formatDate(props.beginDate) : undefined,
+                endDate: props.endDate ? formatDate(props.endDate) : undefined
+            });
+        } else if (props.item_id?.type == 'activity') {
+            data.value = await invoke('get_summary_by_tag_in_activity', {
+                activityId: props.item_id?.value,
                 kind: TagTypeToString(props.kind),
                 beginDate: props.beginDate ? formatDate(props.beginDate) : undefined,
                 endDate: props.endDate ? formatDate(props.endDate) : undefined

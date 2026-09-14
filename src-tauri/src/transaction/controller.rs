@@ -4,12 +4,26 @@ use sqlx::Row;
 
 use crate::sql::db;
 use crate::tag::TagKind;
-use crate::{tag, wallet, Error, Result};
+use crate::{activity, tag, wallet, Error, Result};
 use crate::summary::SummaryType;
 
 use super::dto::{BalanceWithTypeDto, SummaryByTagDto, SummaryByTagWithCurrencyDto, TransactionDto};
 use super::service::{modify_currency, revert_currency};
 use super::vo::{CreateTransactionVo, TransactionVo};
+
+async fn resolve_activity_id(activity_id: Option<u32>, previous_activity_id: Option<u32>) -> Result<Option<u32>> {
+    let Some(activity_id) = activity_id else {
+        return Ok(None);
+    };
+    let activity = activity::service::get_activity_by_id(activity_id).await?;
+    if !activity.open && previous_activity_id != Some(activity_id) {
+        return Err(Error::InvalidParameter(format!(
+            "activity(id = {}) is closed and cannot be attached to new transactions",
+            activity_id
+        )));
+    }
+    Ok(Some(activity.id))
+}
 
 #[tauri::command]
 pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
@@ -18,6 +32,13 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
     let mut tx = db().begin().await?;
 
     let tag = tag::service::get_tag_by_id(vo.tag_id).await?;
+    if tag.kind == TagKind::Activity {
+        return Err(Error::InvalidTagType {
+            given: TagKind::Activity,
+            allow: vec![TagKind::Expense, TagKind::Income, TagKind::Transfer],
+        });
+    }
+    let activity_id = resolve_activity_id(vo.activity_id, None).await?;
     modify_currency(&mut *tx, &tag.kind, vo.wallet_id, vo.to_wallet_id, vo.amount).await?;
 
     let split_id = if let Some(split) = vo.split {
@@ -50,10 +71,10 @@ pub async fn create_transaction(vo: CreateTransactionVo) -> Result<()> {
 
     sqlx::query(
         r#"
-        INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, amount, time, split_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO transactions (remark, wallet_id, to_wallet_id, tag_id, activity_id, amount, time, split_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#)
-        .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(vo.amount).bind(time.format(super::DATETIME_FORMAT).to_string()).bind(split_id)
+        .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(activity_id).bind(vo.amount).bind(time.format(super::DATETIME_FORMAT).to_string()).bind(split_id)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
@@ -71,7 +92,15 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
     debug!("Old transaction: {:?}", old_transaction);
     let old_tag_kind = old_transaction.get_tag().await?.kind.clone(); // * remove clone in the future
     revert_currency(&mut *tx, &old_tag_kind, old_transaction.wallet_id, old_transaction.to_wallet_id, old_transaction.amount).await?;
-    let tag_kind = tag::service::get_tag_by_id(vo.tag_id).await?.kind;  // * remove clone in the future
+    let tag = tag::service::get_tag_by_id(vo.tag_id).await?;
+    if tag.kind == TagKind::Activity {
+        return Err(Error::InvalidTagType {
+            given: TagKind::Activity,
+            allow: vec![TagKind::Expense, TagKind::Income, TagKind::Transfer],
+        });
+    }
+    let tag_kind = tag.kind;
+    let activity_id = resolve_activity_id(vo.activity_id, old_transaction.activity_id).await?;
     modify_currency(&mut *tx, &tag_kind, vo.wallet_id, vo.to_wallet_id, vo.amount).await?;
 
     let split_id = if let Some(split) = vo.split {
@@ -158,10 +187,10 @@ pub async fn update_transaction(vo: TransactionVo) -> Result<()> {
     sqlx::query(
         r#"
         UPDATE transactions
-        SET remark = $1, wallet_id = $2, to_wallet_id = $3, tag_id = $4, amount = $5, time = $6, split_id = $7
-        WHERE id = $8
+        SET remark = $1, wallet_id = $2, to_wallet_id = $3, tag_id = $4, activity_id = $5, amount = $6, time = $7, split_id = $8
+        WHERE id = $9
         "#)
-        .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(vo.amount).bind(vo.time).bind(split_id).bind(vo.id)
+        .bind(vo.remark).bind(vo.wallet_id).bind(vo.to_wallet_id).bind(vo.tag_id).bind(activity_id).bind(vo.amount).bind(vo.time).bind(split_id).bind(vo.id)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
@@ -175,7 +204,7 @@ pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDa
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -199,7 +228,7 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
     let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
@@ -226,7 +255,7 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
     // retrieve transactions with tag_id or its children
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -248,6 +277,30 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
     let transactions = transactions.iter().map(|row| TransactionDto::try_from_row(row));
     let transactions = futures::future::try_join_all(transactions).await?;
     info!("Retrieved {} transactions with tag `{}`.", transactions.len(), tag_id);
+    Ok(transactions)
+}
+
+#[tauri::command]
+pub async fn retrieve_transactions_in_activity(activity_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>, page: u32, page_size: u32) -> Result<Vec<TransactionDto>> {
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let transactions = sqlx::query(
+        r#"
+        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
+        FROM transactions
+        JOIN wallets ON transactions.wallet_id = wallets.id
+        LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
+        WHERE activity_id = $1 AND time between $2 and $3
+        ORDER BY time DESC
+        LIMIT $4 OFFSET $5
+        "#)
+        .bind(activity_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .bind(page_size).bind(page * page_size)
+        .fetch_all(db())
+        .await?;
+    let transactions = transactions.iter().map(|row| TransactionDto::try_from_row(row));
+    let transactions = futures::future::try_join_all(transactions).await?;
+    info!("Retrieved {} transactions in activity `{}`.", transactions.len(), activity_id);
     Ok(transactions)
 }
 
@@ -315,6 +368,29 @@ pub async fn get_sum_balance_in_wallet(wallet_id: u32, begin: Option<NaiveDate>,
 }
 
 #[tauri::command]
+pub async fn get_sum_balance_in_activity(activity_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<BalanceWithTypeDto> {
+    debug!("Getting sum of transactions in activity(id = {})", activity_id);
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let result = sqlx::query_as::<_, BalanceWithTypeDto>(
+        r#"
+        SELECT
+            COALESCE(SUM(CASE WHEN tags.kind = $1 THEN COALESCE(ts.expense, amount) ELSE 0 END), 0) AS expense,
+            COALESCE(SUM(CASE WHEN tags.kind = $2 THEN amount ELSE 0 END), 0) AS income
+        FROM transactions
+        LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
+        JOIN tags ON transactions.tag_id = tags.id
+        WHERE activity_id = $3 AND time BETWEEN $4 AND $5
+        "#)
+        .bind(TagKind::Expense as u8).bind(TagKind::Income as u8)
+        .bind(activity_id).bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+        .fetch_one(db())
+        .await?;
+    info!("Sum of transactions in activity: {:?}", result);
+    Ok(result)
+}
+
+#[tauri::command]
 pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagDto>> {
     debug!("Getting summary by tag(kind = {:?}) in wallet(id = {})", kind, wallet_id);
     let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
@@ -377,6 +453,66 @@ pub async fn get_summary_by_tag_in_wallet(kind: TagKind, wallet_id: u32, begin: 
         return Err(Error::InvalidParameter("kind must be expense or income".to_string()));
     };
     info!("got summary by tag(length = {})", result.len());
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn get_summary_by_tag_in_activity(kind: TagKind, activity_id: u32, begin: Option<NaiveDate>, end: Option<NaiveDate>) -> Result<Vec<SummaryByTagDto>> {
+    debug!("Getting summary by tag(kind = {:?}) in activity(id = {})", kind, activity_id);
+    if kind != TagKind::Expense && kind != TagKind::Income {
+        return Err(Error::InvalidParameter("kind must be expense or income".to_string()));
+    }
+    let begin = begin.unwrap_or_else(|| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()).and_hms_opt(0, 0, 0).unwrap();
+    let end = end.unwrap_or_else(|| NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()).and_hms_opt(23, 59, 59).unwrap();
+    let result = if kind == TagKind::Expense {
+        sqlx::query_as(
+            r#"
+            WITH RECURSIVE tag_tree AS (
+                SELECT t.id AS root_id, t.id AS id FROM tags t WHERE t.parent_id IS NULL
+                UNION ALL
+                SELECT tt.root_id, t.id FROM tag_tree tt JOIN tags t ON tt.id = t.parent_id
+            )
+            SELECT SUM(
+                CASE WHEN tag.kind = $3 THEN COALESCE(ts.expense, amount) ELSE 0 END
+            ) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            FROM transactions
+            JOIN tag_tree AS tt ON transactions.tag_id = tt.id
+            JOIN tags AS tag ON tt.root_id = tag.id
+            LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
+            WHERE activity_id = $4 AND time BETWEEN $1 AND $2
+            GROUP BY tt.root_id
+            HAVING summary > 0
+            ORDER BY summary DESC
+            "#)
+            .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+            .bind(TagKind::Expense as u8).bind(activity_id)
+            .fetch_all(db())
+            .await?
+    } else {
+        sqlx::query_as(
+            r#"
+            WITH RECURSIVE tag_tree AS (
+                SELECT t.id AS root_id, t.id AS id FROM tags t WHERE t.parent_id IS NULL
+                UNION ALL
+                SELECT tt.root_id, t.id FROM tag_tree tt JOIN tags t ON tt.id = t.parent_id
+            )
+            SELECT SUM(
+                CASE WHEN tag.kind = $3 THEN amount ELSE 0 END
+            ) AS summary, tag.id, tag.name, tag.remark, tag.color, tag.icon, tag.kind, tag.parent_id
+            FROM transactions
+            JOIN tag_tree AS tt ON transactions.tag_id = tt.id
+            JOIN tags AS tag ON tt.root_id = tag.id
+            WHERE activity_id = $4 AND time BETWEEN $1 AND $2
+            GROUP BY tt.root_id
+            HAVING summary > 0
+            ORDER BY summary DESC
+            "#)
+            .bind(begin.format(super::DATETIME_FORMAT).to_string()).bind(end.format(super::DATETIME_FORMAT).to_string())
+            .bind(TagKind::Income as u8).bind(activity_id)
+            .fetch_all(db())
+            .await?
+    };
+    info!("got summary by tag in activity(length = {})", result.len());
     Ok(result)
 }
 

@@ -28,6 +28,7 @@ export default {
         reports: 'Reports',
         accounts: 'Accounts',
         tags: 'Tags',
+        activities: 'Activities',
         settings: 'Settings',
     },
     settings: {
@@ -95,6 +96,7 @@ export default {
         },
         no_account: 'No Account',
         no_account_tip: 'Click the button in the bottom right corner to add an account!',
+        empty_on_select: 'No account yet. Create one.',
         details: 'Account Details',
         summary: 'Summary',
         transactions: 'Transactions',
@@ -103,6 +105,7 @@ export default {
         add: 'Add Tag',
         update: 'Update Tag',
         select: 'Select Tag',
+        empty_on_select: 'No tag yet. Create one.',
         no_available_parent: 'No available parent tag',
         enter: {
             name: 'Enter Tag Name',
@@ -113,11 +116,37 @@ export default {
             hint: 'Search...',
             count: 'Found {count} tags',
         },
+        filter: {
+            all: 'All',
+        },
         type: {
             Income: 'Income',
             Expense: 'Expense',
             Transfer: 'Transfer',
+            Activity: 'Activity',
         }
+    },
+    activity: {
+        title: 'Activity',
+        add: 'Add Activity',
+        update: 'Update Activity',
+        select: 'Select activity (optional)',
+        category: 'Category',
+        open: 'Open',
+        closed: 'Closed',
+        summary: 'Summary',
+        transactions: 'Transactions',
+        no_activity: 'No Activity',
+        no_activity_tip: 'Click the button in the bottom right corner to add an activity!',
+        empty_on_select: 'No active activity yet. Create or open one.',
+        active_on_home: 'Active activities',
+        close: 'Close',
+        show_more: 'Show {count} more',
+        show_less: 'Show less',
+        enter: {
+            name: 'Enter Activity Name',
+            remark: 'Enter Remark',
+        },
     },
     transaction: {
         add: 'Add Transaction',
@@ -173,10 +202,15 @@ export default {
             title: 'Warning',
             content: 'This action is IRREVERTIBLE and will also delete ALL RELATED data, confirm to proceed?',
         },
+        activity_tag_in_use: {
+            content: 'Deletion will be rejected if any activity still uses this category. Delete this activity category?',
+        },
     },
     report: {
         overview: 'Overview',
         expense_by_tag: 'Expense by Tag',
+        expense_by_activity: 'Expense by Activity',
+        expense_by_activity_tag: 'Expense by Activity Category',
         net_cash_flow: 'Net Cash Flow Trend',
         all: 'All',
         no_data: 'No data',

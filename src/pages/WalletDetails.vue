@@ -66,7 +66,7 @@ onMounted(() => {
 <template>
     <BackTitleBar :title="t('account.details')" @back="router.back()"/>
     <v-main v-if="wallet" class="main">
-        <WalletCard variant="flat" :wallet="wallet" />
+        <WalletCard variant="flat" layout="hero" :wallet="wallet" />
         <SummaryBar variant="flat" rounded="lg" :title="t('account.summary')" :current-expense="new Money(sum_balance.expense, { symbol: '', code: wallet.currency_code })" :current-income="new Money(sum_balance.income, { symbol: '', code: wallet.currency_code })" />
         <StackDiagram class="mt-2" variant="flat" rounded="lg" :kind="TagType.EXPENSE" :item_id="{ type: 'wallet', value: props.id }" :currency_code="wallet.currency_code" />
         <v-row class="d-flex" style="margin: 0px;">

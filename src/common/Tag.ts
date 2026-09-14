@@ -2,6 +2,7 @@ export enum TagType {
     EXPENSE,
     INCOME,
     TRANSFER,
+    ACTIVITY,
 }
 
 export const TagTypeToString = (type: TagType): string => {
@@ -26,7 +27,10 @@ export const TagTypeNames = [
     { type: TagType.EXPENSE, name: 'Expense' },
     { type: TagType.INCOME, name: 'Income' },
     { type: TagType.TRANSFER, name: 'Transfer' },
+    { type: TagType.ACTIVITY, name: 'Activity' },
 ]
+
+export const TransactionTagTypeNames = TagTypeNames.filter(item => item.type !== TagType.ACTIVITY);
 
 export default interface Tag {
     id: number;

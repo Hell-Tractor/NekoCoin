@@ -7,6 +7,7 @@ import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDate, formatDisplayDate } from '../common/Utils';
 import TransactionList from './components/TransactionList.vue';
+import ActiveActivityList from './components/ActiveActivityList.vue';
 import { load_settings, settings } from '../common/Settings';
 const { t } = useI18n();
 
@@ -74,5 +75,6 @@ onMounted(() => {
         </v-card-text>
     </v-card>
     <SummaryBar v-if="!!currentMonthExpense && !!currentMonthIncome && !!currentMonthNetCashFlow" variant="text" :title="t('this_month')" :current-income="currentMonthIncome as Money" :current-expense="currentMonthExpense as Money" :current-net-cash-flow="currentMonthNetCashFlow as Money"></SummaryBar>
+    <ActiveActivityList />
     <TransactionList :title="t('transaction.list.title')" @deleted="_ => refresh()"></TransactionList>
 </template>

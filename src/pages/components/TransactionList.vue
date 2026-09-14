@@ -11,7 +11,7 @@ const { t } = useI18n();
 const router = useRouter();
 
 interface TransactionFilter {
-    by: "tag" | "wallet",
+    by: "tag" | "wallet" | "activity",
     id: number,
 }
 
@@ -32,6 +32,13 @@ export interface Transaction {
     to_wallet_name?: string;
     currency_code: string;
     tag: Tag;
+    activity?: {
+        id: number;
+        name: string;
+        color: string;
+        icon: string;
+        open: boolean;
+    };
     amount: number;
     time: Date;
     split?: {
@@ -54,6 +61,8 @@ const retrieve_transactions = async function(page: number, pageSize: number): Pr
             transactions = await invoke('retrieve_transactions', { page, pageSize });
         else if (props.filter!.by === 'tag')
             transactions = await invoke('retrieve_transactions_with_tag', { page, pageSize, tagId: props.filter!.id });
+        else if (props.filter!.by === 'activity')
+            transactions = await invoke('retrieve_transactions_in_activity', { page, pageSize, activityId: props.filter!.id });
         else { // props.filter.by === 'wallet'
             transactions = await invoke('retrieve_transactions_in_wallet', { page, pageSize, walletId: props.filter!.id });
         }
@@ -135,7 +144,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                         </v-col>
                                         <v-col style="padding-bottom: 0px;">
                                             <v-row class="flex-nowrap">
-                                                <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
+                                                <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}{{ transaction.activity ? ` · ${transaction.activity.name}` : '' }}</v-col>
                                                 <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency_code} ${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                             </v-row>
                                             <v-row class="flex-nowrap">
@@ -155,7 +164,7 @@ const get_actual_expense = function(transaction: Transaction) {
                                     </v-col>
                                     <v-col style="padding-bottom: 0px;">
                                         <v-row class="flex-nowrap">
-                                            <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}</v-col>
+                                            <v-col class="no-pad" style="font-size: 2ch;">{{ transaction.tag.name }}{{ transaction.activity ? ` · ${transaction.activity.name}` : '' }}</v-col>
                                             <v-col class="no-pad text-end" :style="{ color: get_color_with_type(transaction.tag.type) }">{{ `${transaction.currency_code} ${(get_actual_expense(transaction) / 100).toFixed(2)}` }}</v-col>
                                         </v-row>
                                         <v-row class="flex-nowrap">
@@ -199,6 +208,15 @@ const get_actual_expense = function(transaction: Transaction) {
                                         <v-row><v-col class="no-pad">{{ transaction.split!.receive_wallet_name }}</v-col></v-row>
                                     </v-col>
                                             <v-col v-if="transaction.split" class="no-pad text-end" :style="{ color: get_color_with_type(TagTypeToString(TagType.INCOME)) }">{{ `${transaction.currency_code} ${((transaction.amount - transaction.split!.expense) / 100).toFixed(2)}` }}</v-col>
+                                </v-row>
+                                <v-row class="flex-nowrap" v-if="transaction.activity">
+                                    <v-col class="flex-grow-0" style="padding-left: 0px;">
+                                        <v-icon :color="transaction.activity.color">{{ transaction.activity.icon }}</v-icon>
+                                    </v-col>
+                                    <v-col>
+                                        <v-row><v-col class="no-pad on-surface-lighten-1" style="font-size: 0.9em;">{{ t('activity.title') }}</v-col></v-row>
+                                        <v-row><v-col class="no-pad">{{ transaction.activity.name }}</v-col></v-row>
+                                    </v-col>
                                 </v-row>
                                 <v-row class="flex-nowrap" v-if="!!transaction.remark">
                                     <v-col class="flex-grow-0" style="padding-left: 0px;">

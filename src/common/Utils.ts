@@ -92,3 +92,38 @@ export const formatTime = function(date: Date) : string {
     const minute = date.getMinutes().toString().padStart(2, '0');
     return `${hour}:${minute}`;
 }
+
+export const format_net_cash_flow = function(cents: number): string {
+    const prefix = cents > 0 ? '+' : '';
+    return `${settings.primary_currency_code} ${prefix}${formatAmount(cents)}`;
+}
+
+export const net_cash_flow_color = function(cents: number): string {
+    if (cents > 0) {
+        return '#009900';
+    }
+    if (cents < 0) {
+        return '#ff3333';
+    }
+    return '';
+}
+
+export const color_with_alpha = function(color: string, alpha: number): string {
+    const value = color.trim();
+    if (value.startsWith('#')) {
+        const hex = value.slice(1);
+        const full = hex.length === 3 ? hex.split('').map(part => part + part).join('') : hex;
+        const r = parseInt(full.slice(0, 2), 16);
+        const g = parseInt(full.slice(2, 4), 16);
+        const b = parseInt(full.slice(4, 6), 16);
+        if ([r, g, b].some(channel => Number.isNaN(channel))) {
+            return value;
+        }
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    const channels = value.match(/\d+/g);
+    if (channels && channels.length >= 3) {
+        return `rgba(${channels[0]}, ${channels[1]}, ${channels[2]}, ${alpha})`;
+    }
+    return value;
+}

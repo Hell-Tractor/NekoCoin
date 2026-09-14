@@ -11,6 +11,7 @@ export interface TransactionDraftState {
     to_wallet_id?: number;
     tag_id?: number;
     tag?: Tag;
+    activity_id?: number;
     has_split: boolean;
     split_count: number;
     split_expense: number;
@@ -38,6 +39,7 @@ export const clear_transaction_draft = function() {
     transaction_draft.to_wallet_id = undefined;
     transaction_draft.tag_id = undefined;
     transaction_draft.tag = undefined;
+    transaction_draft.activity_id = undefined;
     transaction_draft.has_split = false;
     transaction_draft.split_count = 2;
     transaction_draft.split_expense = 0;

@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import { Wallet } from '../Wallets.vue';
 import { useRouter } from 'vue-router';
+import { color_with_alpha } from '../../common/Utils';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -10,6 +11,19 @@ const props = defineProps<{
     wallets: Wallet[];
     title?: string;
 }>();
+
+const avatar_style = function(color: string) {
+    return { backgroundColor: color_with_alpha(color, 0.22) };
+};
+
+const card_style = function(wallet: Wallet, selected: boolean) {
+    return {
+        background: selected
+            ? `linear-gradient(180deg, ${color_with_alpha(wallet.color, 0.28)} 0%, ${color_with_alpha(wallet.color, 0.08)} 100%)`
+            : `linear-gradient(180deg, ${color_with_alpha(wallet.color, 0.16)} 0%, transparent 70%)`,
+        outline: selected ? `2px solid ${wallet.color}` : '2px solid transparent',
+    };
+};
 </script>
 
 <template>
@@ -23,17 +37,57 @@ const props = defineProps<{
                     <v-btn icon="mdi-plus" size="medium" density="compact" variant="text" @click="router.push({ path: '/account/add' })"></v-btn>
                 </v-col>
             </v-row>
-            <v-slide-group class="pa-4" style="margin-left: -20px;" mandatory v-model="selected_wallet">
+            <v-slide-group v-if="props.wallets.length > 0" class="selector-group" mandatory v-model="selected_wallet">
                 <v-slide-group-item v-for="wallet in props.wallets" :key="wallet.id" :value="wallet" v-slot="{ isSelected, toggle }">
-                    <v-card @click="toggle" :border="isSelected ? 'opacity-100 primary md' : ''" width="100" height="100" class="ma-1">
-                        <v-card-text style="padding: 10px;">
-                            <v-icon :color="wallet.color">{{ wallet.icon }}</v-icon>
-                            <div>{{ (wallet.remark?.length ?? 0) > 5 ? (wallet.remark!.substring(0, 4) + '...') : (wallet.remark?.substring(0, 5) || '') }}</div>
-                            <div style="position: absolute; bottom: 10px;" class="font-weight-black">{{ wallet.name }}</div>
-                        </v-card-text>
-                    </v-card>
+                    <button class="wallet-tile" :style="card_style(wallet, isSelected)" type="button" @click="toggle">
+                        <div class="wallet-tile-icon" :style="avatar_style(wallet.color)">
+                            <v-icon :color="wallet.color" size="22">{{ wallet.icon }}</v-icon>
+                        </div>
+                        <div class="wallet-tile-name">{{ wallet.name }}</div>
+                    </button>
                 </v-slide-group-item>
             </v-slide-group>
+            <div v-else class="on-surface-lighten-1 text-body-2 mt-2 mb-2">{{ t('account.empty_on_select') }}</div>
         </v-card-text>
     </v-card>
 </template>
+
+<style scoped>
+.selector-group {
+    margin: 4px 0 8px -4px;
+}
+
+.wallet-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 92px;
+    min-height: 96px;
+    margin: 4px;
+    padding: 12px 8px 10px;
+    border: 0;
+    border-radius: 16px;
+    cursor: pointer;
+}
+
+.wallet-tile-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+}
+
+.wallet-tile-name {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>

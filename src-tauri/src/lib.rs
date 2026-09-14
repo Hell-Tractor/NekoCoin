@@ -17,6 +17,7 @@ mod transaction;
 mod summary;
 mod settings;
 mod log;
+mod activity;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -81,15 +82,28 @@ pub fn run() {
             tag::controller::retrieve_tags,
             tag::controller::delete_tag,
 
+            activity::controller::create_activity,
+            activity::controller::update_activity,
+            activity::controller::get_activity_by_id,
+            activity::controller::retrieve_activities,
+            activity::controller::get_activity_balances,
+            activity::controller::delete_activity,
+            activity::controller::set_activity_open,
+            activity::controller::get_expense_summary_by_activity,
+            activity::controller::get_expense_summary_by_activity_tag,
+
             transaction::controller::create_transaction,
             transaction::controller::retrieve_transactions,
             transaction::controller::retrieve_transactions_in_wallet,
             transaction::controller::retrieve_transactions_with_tag,
+            transaction::controller::retrieve_transactions_in_activity,
             transaction::controller::delete_transaction,
             transaction::controller::get_sum_balance_with_type,
             transaction::controller::get_sum_balance_in_wallet,
+            transaction::controller::get_sum_balance_in_activity,
             transaction::controller::update_transaction,
             transaction::controller::get_summary_by_tag_in_wallet,
+            transaction::controller::get_summary_by_tag_in_activity,
             transaction::controller::get_expense_summary_by_tag,
             transaction::controller::get_summary_by_tag_with_tag,
 

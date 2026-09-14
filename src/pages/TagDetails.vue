@@ -59,8 +59,8 @@ onMounted(async () => {
         </template>
     </BackTitleBar>
     <v-main class="main">
-        <StackDiagram v-if="tag" class="mb-2" :item_id="{ type: 'tag', value: props.id }" :currency_code="settings.primary_currency_code" variant="flat" rounded="lg" :kind="TagTypeFromString(tag!.type)"></StackDiagram>
-        <TransactionList :filter="{ by: 'tag', id: props.id }" variant="flat"></TransactionList>
-        <ConfirmSheet v-model="show_confirm_sheet" :title="t('warning.cascade_and_irrevertible.title')" :text="t('warning.cascade_and_irrevertible.content')" @confirm="delete_tag"></ConfirmSheet>
+        <StackDiagram v-if="tag && tag.type !== 'Activity'" class="mb-2" :item_id="{ type: 'tag', value: props.id }" :currency_code="settings.primary_currency_code" variant="flat" rounded="lg" :kind="TagTypeFromString(tag!.type)"></StackDiagram>
+        <TransactionList v-if="tag && tag.type !== 'Activity'" :filter="{ by: 'tag', id: props.id }" variant="flat"></TransactionList>
+        <ConfirmSheet v-model="show_confirm_sheet" :title="tag?.type === 'Activity' ? t('warning.irrevertible.title') : t('warning.cascade_and_irrevertible.title')" :text="tag?.type === 'Activity' ? t('warning.activity_tag_in_use.content') : t('warning.cascade_and_irrevertible.content')" @confirm="delete_tag"></ConfirmSheet>
     </v-main>
 </template>

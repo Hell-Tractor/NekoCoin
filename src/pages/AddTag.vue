@@ -9,10 +9,11 @@ import { get_random_theme_color } from '../themes/palettes';
 import { load_settings, settings } from '../common/Settings';
 import { invoke } from '@tauri-apps/api/core';
 import IconSelector from './components/IconSelector.vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import ColorPalette from './components/ColorPalette.vue';
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 
 const props = defineProps<{
     init?: Tag
@@ -73,7 +74,6 @@ const addTag = async function() {
 
 onMounted(async () => {
     await load_settings();
-    await retrieve_tags();
 
     if (props.init) {
         id.value = props.init.id;
@@ -81,15 +81,17 @@ onMounted(async () => {
         tag_remark.value = props.init.remark || '';
         icon.value = props.init.icon;
         selected_color.value = props.init.color;
-        parent_tag.value = tags.value.find(tag => tag.id == props.init!.parent_id) || null;
         selected_tag_type.value = TagTypeNames.find(tag => tag.name == props.init!.type) || TagTypeNames[0];
-        console.log(TagTypeNames);
-        console.log(props.init.type);
-        console.log(selected_tag_type.value);
-
+        await retrieve_tags();
+        parent_tag.value = tags.value.find(tag => tag.id == props.init!.parent_id) || null;
         tags.value = tags.value.filter(tag => tag.id != id.value);
     } else {
+        const kind_name = route.query.kind;
+        if (typeof kind_name === 'string') {
+            selected_tag_type.value = TagTypeNames.find(tag => tag.name === kind_name) || TagTypeNames[0];
+        }
         selected_color.value = get_random_theme_color(settings.theme);
+        await retrieve_tags();
     }
 });
 </script>

@@ -1,24 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Wallet } from '../Wallets.vue';
 import { useI18n } from 'vue-i18n';
-import { color_with_alpha, formatAmount } from '../../common/Utils';
+import { Activity } from '../../common/Activity';
+import { color_with_alpha, format_net_cash_flow, net_cash_flow_color } from '../../common/Utils';
+
 const { t } = useI18n();
 
 const props = defineProps<{
-    wallet: Wallet,
+    activity: Pick<Activity, 'name' | 'remark' | 'color' | 'icon' | 'open'>,
+    net?: number,
     variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain",
     layout?: 'list' | 'hero',
 }>();
 
 const layout = computed(() => props.layout ?? 'list');
-const balance_text = computed(() => `${props.wallet.currency_code} ${formatAmount(props.wallet.balance)}`);
 const card_style = computed(() => ({
-    background: `linear-gradient(135deg, ${color_with_alpha(props.wallet.color, 0.22)} 0%, transparent 58%)`,
+    background: `linear-gradient(135deg, ${color_with_alpha(props.activity.color, 0.22)} 0%, transparent 58%)`,
 }));
 const avatar_style = computed(() => ({
-    backgroundColor: color_with_alpha(props.wallet.color, 0.22),
-    color: props.wallet.color,
+    backgroundColor: color_with_alpha(props.activity.color, 0.22),
+    color: props.activity.color,
+}));
+const net_style = computed(() => ({
+    color: net_cash_flow_color(props.net ?? 0) || undefined,
 }));
 </script>
 
@@ -26,27 +30,34 @@ const avatar_style = computed(() => ({
     <v-card :variant="variant" class="entity-card mb-2" rounded="xl" :style="card_style">
         <div v-if="layout === 'list'" class="entity-row">
             <div class="entity-avatar" :style="avatar_style">
-                <v-icon :color="wallet.color" size="22">{{ wallet.icon }}</v-icon>
+                <v-icon :color="activity.color" size="22">{{ activity.icon }}</v-icon>
             </div>
             <div class="entity-copy">
-                <div class="entity-name">{{ wallet.name }}</div>
-                <div v-if="wallet.remark" class="entity-meta">{{ wallet.remark }}</div>
+                <div class="entity-name">{{ activity.name }}</div>
+                <div class="entity-meta" :style="net !== undefined ? net_style : undefined">
+                    {{ net !== undefined ? format_net_cash_flow(net) : (activity.remark || '') }}
+                </div>
             </div>
-            <div class="entity-amount">{{ balance_text }}</div>
+            <div class="entity-aside">
+                <slot name="append">
+                    <v-chip size="x-small" :color="activity.open ? 'primary' : undefined" variant="tonal">
+                        {{ activity.open ? t('activity.open') : t('activity.closed') }}
+                    </v-chip>
+                </slot>
+            </div>
         </div>
         <div v-else class="entity-hero">
             <div class="entity-row">
                 <div class="entity-avatar entity-avatar-lg" :style="avatar_style">
-                    <v-icon :color="wallet.color" size="28">{{ wallet.icon }}</v-icon>
+                    <v-icon :color="activity.color" size="28">{{ activity.icon }}</v-icon>
                 </div>
                 <div class="entity-copy">
-                    <div class="entity-name">{{ wallet.name }}</div>
-                    <div v-if="wallet.remark" class="entity-meta entity-meta-wrap">{{ wallet.remark }}</div>
+                    <div class="entity-name">{{ activity.name }}</div>
+                    <div v-if="activity.remark" class="entity-meta entity-meta-wrap">{{ activity.remark }}</div>
                 </div>
             </div>
-            <div class="entity-hero-balance">
-                <div class="entity-meta">{{ t('total_balance') }}</div>
-                <div class="entity-hero-amount">{{ balance_text }}</div>
+            <div v-if="$slots.extra" class="entity-extra">
+                <slot name="extra" />
             </div>
         </div>
     </v-card>
@@ -113,22 +124,13 @@ const avatar_style = computed(() => ({
     white-space: normal;
 }
 
-.entity-amount {
+.entity-aside {
+    display: flex;
     flex: 0 0 auto;
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    align-items: center;
 }
 
-.entity-hero-balance {
-    padding: 4px 16px 12px;
-}
-
-.entity-hero-amount {
-    margin-top: 2px;
-    font-size: 1.45rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
+.entity-extra {
+    padding: 0 16px 8px;
 }
 </style>

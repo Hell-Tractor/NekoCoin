@@ -28,6 +28,7 @@ export default {
         reports: '报表',
         accounts: '账户',
         tags: '标签',
+        activities: '活动',
         settings: '设置',
     },
     settings: {
@@ -95,6 +96,7 @@ export default {
         },
         no_account: '暂无账户',
         no_account_tip: '点击右下角按钮添加一个账户吧！',
+        empty_on_select: '暂无账户，创建一个吧',
         details: '账户详情',
         summary: '汇总',
         transactions: '交易记录',
@@ -103,6 +105,7 @@ export default {
         add: '添加标签',
         update: '更新标签',
         select: '选择标签',
+        empty_on_select: '暂无标签，创建一个吧',
         no_available_parent: '没有可用的父标签',
         enter: {
             name: '输入标签名',
@@ -113,11 +116,37 @@ export default {
             hint: '搜索...',
             count: '找到{count}个标签',
         },
+        filter: {
+            all: '全部',
+        },
         type: {
             Income: '收入',
             Expense: '支出',
             Transfer: '转账',
+            Activity: '活动',
         }
+    },
+    activity: {
+        title: '活动',
+        add: '添加活动',
+        update: '更新活动',
+        select: '选择活动（可选）',
+        category: '分类',
+        open: '进行中',
+        closed: '已关闭',
+        summary: '汇总',
+        transactions: '交易记录',
+        no_activity: '暂无活动',
+        no_activity_tip: '点击右下角按钮添加一个活动吧！',
+        empty_on_select: '暂无进行中活动，创建或开启一个吧',
+        active_on_home: '进行中的活动',
+        close: '关闭',
+        show_more: '展开其余 {count} 个',
+        show_less: '收起',
+        enter: {
+            name: '输入活动名',
+            remark: '输入备注',
+        },
     },
     transaction: {
         add: '添加交易',
@@ -173,10 +202,15 @@ export default {
             title: '警告',
             content: '该操作不可逆且会删除所有相关数据，确认继续？',
         },
+        activity_tag_in_use: {
+            content: '若仍有活动使用该分类，删除会被拒绝。确认删除此活动分类？',
+        },
     },
     report: {
         overview: '概览',
         expense_by_tag: '支出排行—标签',
+        expense_by_activity: '支出排行—活动',
+        expense_by_activity_tag: '支出排行—活动分类',
         net_cash_flow: '净现金流趋势',
         all: '全部',
         no_data: '暂无数据',

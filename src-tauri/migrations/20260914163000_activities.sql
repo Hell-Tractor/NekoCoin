@@ -1,0 +1,12 @@
+CREATE TABLE activities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    remark TEXT,
+    color TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    open INTEGER NOT NULL DEFAULT 1,
+    tag_id INTEGER NOT NULL,
+    FOREIGN KEY(tag_id) REFERENCES tags(id)
+);
+
+ALTER TABLE transactions ADD COLUMN activity_id INTEGER DEFAULT NULL REFERENCES activities(id) ON DELETE SET NULL;

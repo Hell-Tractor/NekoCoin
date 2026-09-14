@@ -4,7 +4,7 @@ import BackTitleBar from './components/BackTitleBar.vue';
 import { useI18n } from 'vue-i18n';
 import { rules } from '../common/Rules';
 import Constants from '../common/Constants';
-import Tag, { TagType, TagTypeFromString, TagTypeNames, TagTypeToString } from '../common/Tag';
+import Tag, { TagType, TagTypeFromString, TagTypeToString, TransactionTagTypeNames } from '../common/Tag';
 import { useDate } from 'vuetify';
 import { Wallet } from './Wallets.vue';
 import { invoke } from '@tauri-apps/api/core';
@@ -12,9 +12,11 @@ import { formatDatetime, formatTime } from '../common/Utils';
 import { load_settings, settings } from '../common/Settings';
 import WalletSelector from './components/WalletSelector.vue';
 import TagSelector from './components/TagSelector.vue';
+import ActivitySelector from './components/ActivitySelector.vue';
 import { Transaction } from './components/TransactionList.vue';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { clear_transaction_draft, transaction_draft } from '../common/TransactionDraft';
+import { Activity } from '../common/Activity';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -37,7 +39,9 @@ const wallets: Ref<Wallet[]> = ref([]);
 const selected_wallet: Ref<Wallet | undefined> = ref(undefined);
 const selected_to_wallet: Ref<Wallet | undefined> = ref(undefined);
 const selected_tag: Ref<Tag | undefined> = ref(undefined);
+const selected_activity: Ref<Activity | undefined> = ref(undefined);
 const tags: Ref<Tag[]> = ref([]);
+const activities: Ref<Activity[]> = ref([]);
 const has_split: Ref<boolean> = ref(false);
 const split_count: Ref<number> = ref(2);
 const split_expense: Ref<number> = ref(0);
@@ -105,6 +109,7 @@ const save_draft = function() {
     transaction_draft.to_wallet_id = selected_to_wallet.value?.id;
     transaction_draft.tag_id = selected_tag.value?.id;
     transaction_draft.tag = selected_tag.value ? { ...selected_tag.value } : undefined;
+    transaction_draft.activity_id = tag_type === TagType.TRANSFER ? undefined : selected_activity.value?.id;
     transaction_draft.has_split = has_split.value;
     transaction_draft.split_count = split_count.value;
     transaction_draft.split_expense = split_expense.value;
@@ -121,6 +126,7 @@ const restore_draft = function() {
     selected_wallet.value = wallets.value.find(wallet => wallet.id === transaction_draft.wallet_id);
     selected_to_wallet.value = wallets.value.find(wallet => wallet.id === transaction_draft.to_wallet_id);
     selected_tag.value = tags.value.find(tag => tag.id === transaction_draft.tag_id) ?? transaction_draft.tag;
+    selected_activity.value = activities.value.find(activity => activity.id === transaction_draft.activity_id);
     has_split.value = transaction_draft.has_split;
     split_count.value = transaction_draft.split_count;
     split_expense.value = transaction_draft.split_expense;
@@ -131,6 +137,7 @@ const restore_draft_after_tags_loaded = async function() {
     restoring_draft = true;
     selected_tag_type.value = TagTypeFromString(transaction_draft.selected_tag_type);
     await retrieve_tags();
+    await retrieve_activities();
     await nextTick();
     restore_draft();
     await nextTick();
@@ -144,6 +151,17 @@ const retrieve_wallets = async function() {
         wallets.value = await invoke('retrieve_wallets');
     } catch (error) {
         // TODO: handle error
+        console.error(error);
+    }
+}
+const retrieve_activities = async function() {
+    try {
+        const open_activities = await invoke('retrieve_activities', { openOnly: true }) as Activity[];
+        activities.value = open_activities;
+        if (selected_activity.value && !activities.value.some(item => item.id === selected_activity.value!.id)) {
+            activities.value = [selected_activity.value, ...activities.value];
+        }
+    } catch (error) {
         console.error(error);
     }
 }
@@ -176,6 +194,7 @@ const confirm = async function() {
             walletId: selected_wallet.value!.id,
             toWalletId: selected_to_wallet.value?.id,
             tagId: selected_tag.value!.id,
+            activityId: selected_tag_type.value == TagType.TRANSFER ? undefined : selected_activity.value?.id,
             amount: Math.round(amount.value! * 100),
             time: formatDatetime(time.value),
             split: has_split.value && selected_tag_type.value == TagType.EXPENSE ? spilt : undefined,
@@ -220,6 +239,9 @@ watch(selected_tag_type, function(newValue, oldValue) {
         return;
     }
     selected_tag.value = undefined;
+    if (newValue == TagType.TRANSFER) {
+        selected_activity.value = undefined;
+    }
     retrieve_tags();
 });
 watch([
@@ -229,6 +251,7 @@ watch([
     selected_wallet,
     selected_to_wallet,
     selected_tag,
+    selected_activity,
     has_split,
     split_count,
     split_expense,
@@ -241,6 +264,7 @@ watch([
 onMounted(async () => {
     await load_settings();
     await retrieve_wallets();
+    await retrieve_activities();
 
     if (props.init) {
         clear_transaction_draft();
@@ -252,6 +276,15 @@ onMounted(async () => {
         time.value = props.init.time;
         selected_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.wallet_name);
         selected_tag.value = tags.value.find(tag => tag.id == props.init!.tag.id) ?? props.init.tag;
+        const can_keep_activity = selected_tag_type.value != TagType.TRANSFER
+            && !!props.init.activity
+            && (props.init.activity.open || !!props.init.id);
+        if (can_keep_activity && props.init.activity) {
+            selected_activity.value = props.init.activity;
+            if (!activities.value.some(item => item.id === props.init!.activity!.id)) {
+                activities.value = [props.init.activity, ...activities.value];
+            }
+        }
         if (props.init!.to_wallet_name) {
             selected_to_wallet.value = wallets.value.find(wallet => wallet.name == props.init!.to_wallet_name);
         }
@@ -283,7 +316,7 @@ onBeforeRouteLeave(() => {
     <v-main class="main">
         <v-form class="fill-height" v-model="form">
             <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]">
-                <v-chip v-for="tag in TagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
+                <v-chip v-for="tag in TransactionTagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
             </v-chip-group>
             <v-text-field v-model.number="amount" :placeholder="t('transaction.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
             <v-text-field v-model="remark" :placeholder="t('transaction.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TRANSACTION_REMARK_LENGTH)]"></v-text-field>
@@ -330,7 +363,8 @@ onBeforeRouteLeave(() => {
             </v-card>
             <WalletSelector :title="selected_tag_type == TagType.TRANSFER ? 'account.select_from' : undefined" v-model="selected_wallet" :wallets="wallets"></WalletSelector>
             <WalletSelector v-if="selected_tag_type == TagType.TRANSFER" :title="'account.select_to'" v-model="selected_to_wallet" :wallets="wallets"></WalletSelector>
-            <TagSelector v-model="selected_tag" :tags="tags"></TagSelector>
+            <TagSelector v-model="selected_tag" :tags="tags" :kind="selected_tag_type"></TagSelector>
+            <ActivitySelector v-if="selected_tag_type != TagType.TRANSFER" v-model="selected_activity" :activities="activities"></ActivitySelector>
             <v-card v-if="selected_tag_type == TagType.EXPENSE" :variant="has_split ? 'flat' : 'text'" density="compact" color="surface-lighten-1">
                 <v-card-text style="padding: 0px;">
                     <v-row class="d-flex align-center">
