@@ -296,9 +296,13 @@ onMounted(async () => {
             && !!props.init.activity
             && (props.init.activity.open || !!props.init.id);
         if (can_keep_activity && props.init.activity) {
-            selected_activity.value = props.init.activity;
+            const activity = {
+                ...props.init.activity,
+                tag_id: selected_tag.value?.id ?? 0,
+            };
+            selected_activity.value = activity;
             if (!activities.value.some(item => item.id === props.init!.activity!.id)) {
-                activities.value = [props.init.activity, ...activities.value];
+                activities.value = [activity, ...activities.value];
             }
         }
         if (props.init!.to_wallet_name) {

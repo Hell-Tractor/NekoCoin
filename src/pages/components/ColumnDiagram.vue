@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { SummaryType } from '../../common/SummaryType';
 import { formatDate } from '../../common/Utils';
