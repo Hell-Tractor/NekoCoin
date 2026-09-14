@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
 import Constants from '../common/Constants';
-import { settings, save_settings } from '../common/Settings';
+import { reset_app, settings, save_settings } from '../common/Settings';
 import { get_theme_color_palette } from '../themes/palettes';
 import BackTitleBar from './components/BackTitleBar.vue';
+import ConfirmSheet from './components/ConfirmSheet.vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -68,6 +69,22 @@ const queue_save = function() {
 
 const update_locale = function(value: 'zh-CN' | 'en-US') {
     locale.value = value;
+};
+
+const show_reset_confirm = ref(false);
+const resetting = ref(false);
+
+const confirm_reset = async function() {
+    if (resetting.value) {
+        return;
+    }
+    resetting.value = true;
+    try {
+        await reset_app();
+    } catch (error) {
+        console.error(error);
+        resetting.value = false;
+    }
 };
 
 watch(settings, queue_save, { deep: true });
@@ -192,6 +209,27 @@ watch(settings, queue_save, { deep: true });
                 </v-select>
             </v-card-text>
         </v-card>
+        <v-card class="mt-4 danger-zone" rounded="xl" variant="outlined">
+            <v-card-text>
+                <div class="danger-zone-title">{{ t('settings.danger_zone.title') }}</div>
+                <div class="danger-zone-description">{{ t('settings.danger_zone.description') }}</div>
+                <v-btn
+                    color="error"
+                    variant="outlined"
+                    rounded="xl"
+                    :loading="resetting"
+                    @click="show_reset_confirm = true"
+                >
+                    {{ t('settings.danger_zone.reset_app') }}
+                </v-btn>
+            </v-card-text>
+        </v-card>
+        <confirm-sheet
+            v-model="show_reset_confirm"
+            :title="t('settings.danger_zone.confirm_title')"
+            :text="t('settings.danger_zone.confirm_text')"
+            @confirm="confirm_reset"
+        />
     </v-main>
 </template>
 
@@ -224,5 +262,22 @@ watch(settings, queue_save, { deep: true });
     display: inline-flex;
     align-items: center;
     gap: 4px;
+}
+
+.danger-zone {
+    border-color: rgb(var(--v-theme-error)) !important;
+}
+
+.danger-zone-title {
+    margin-bottom: 8px;
+    color: rgb(var(--v-theme-error));
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.danger-zone-description {
+    margin-bottom: 16px;
+    color: rgba(var(--v-theme-on-surface), 0.7);
+    font-size: 0.9rem;
 }
 </style>

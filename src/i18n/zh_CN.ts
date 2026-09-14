@@ -51,6 +51,18 @@ export default {
             calico: '森野陶土',
             neon: '霓虹薄荷',
         },
+        danger_zone: {
+            title: '危险区域',
+            description: '重置将清除所有账户、标签、交易记录和用户配置，此操作不可撤销。',
+            reset_app: '重置 App',
+            confirm_title: '确认重置',
+            confirm_text: '所有数据和设置将被永久删除，App 将回到初始状态。确认继续？',
+        },
+    },
+    onboarding: {
+        title: '欢迎使用 NekoCoin',
+        subtitle: '先完成几项基础设置，即可开始记账。',
+        start: '开始使用',
     },
     validation: {
         required: '必填',

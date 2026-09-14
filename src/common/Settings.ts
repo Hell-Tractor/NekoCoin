@@ -12,6 +12,7 @@ export interface UserSettings {
     time_format: '12hr' | '24hr';
     decimal_places: number;
     thousands_separator: boolean;
+    initialized: boolean;
 }
 
 export const default_settings: UserSettings = {
@@ -25,6 +26,7 @@ export const default_settings: UserSettings = {
     time_format: '24hr',
     decimal_places: 2,
     thousands_separator: true,
+    initialized: false,
 };
 
 export const settings = reactive<UserSettings>({ ...default_settings });
@@ -52,4 +54,8 @@ export const load_settings = async function() {
 
 export const save_settings = async function() {
     await invoke('save_settings', { settings: { ...settings } });
+};
+
+export const reset_app = async function() {
+    await invoke('reset_app');
 };

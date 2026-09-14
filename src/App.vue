@@ -13,6 +13,10 @@ onMounted(async () => {
     await load_settings();
     locale.value = settings.locale;
     theme.global.name.value = settings.theme;
+    if (!settings.initialized) {
+        await router.replace('/onboarding');
+        return;
+    }
     if (window.location.pathname === '/' && settings.default_page !== 'home') {
         await router.replace(`/main/${settings.default_page}`);
     }

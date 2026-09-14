@@ -51,6 +51,18 @@ export default {
             calico: 'Calico',
             neon: 'Neon Mint',
         },
+        danger_zone: {
+            title: 'Danger Zone',
+            description: 'Resetting will erase all accounts, tags, transactions, and user settings. This cannot be undone.',
+            reset_app: 'Reset App',
+            confirm_title: 'Confirm Reset',
+            confirm_text: 'All data and settings will be permanently deleted and the app will return to its initial state. Continue?',
+        },
+    },
+    onboarding: {
+        title: 'Welcome to NekoCoin',
+        subtitle: 'Complete a few basic settings to get started.',
+        start: 'Get Started',
     },
     validation: {
         required: 'Required',

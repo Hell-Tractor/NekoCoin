@@ -11,6 +11,8 @@ import Wallets from "./pages/Wallets.vue";
 import WalletDetails from "./pages/WalletDetails.vue";
 import Report from "./pages/Report.vue";
 import Settings from "./pages/Settings.vue";
+import Onboarding from "./pages/Onboarding.vue";
+import { load_settings, settings } from "./common/Settings";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -33,7 +35,18 @@ const router = createRouter({
         { path: "/tag/:id", component: TagDetails, props: route => ({ id: Number(route.params.id) }) },
         { path: "/wallet/:id", component: WalletDetails, props: route => ({ id: Number(route.params.id) }) },
         { path: "/settings", component: Settings },
+        { path: "/onboarding", component: Onboarding },
     ]
+});
+
+router.beforeEach(async (to) => {
+    await load_settings();
+    if (!settings.initialized && to.path !== '/onboarding') {
+        return '/onboarding';
+    }
+    if (settings.initialized && to.path === '/onboarding') {
+        return '/main/home';
+    }
 });
 
 export default router;

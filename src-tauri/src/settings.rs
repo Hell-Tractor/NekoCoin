@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::{Error, Result};
+use crate::{constants, sql, Error, Result};
 
 const SETTINGS_FILE: &str = "nekocoin_settings.yaml";
 
@@ -20,6 +20,7 @@ pub struct Settings {
     pub time_format: String,
     pub decimal_places: u8,
     pub thousands_separator: bool,
+    pub initialized: bool,
 }
 
 impl Default for Settings {
@@ -35,6 +36,7 @@ impl Default for Settings {
             time_format: "24hr".to_string(),
             decimal_places: 2,
             thousands_separator: true,
+            initialized: false,
         }
     }
 }
@@ -55,8 +57,12 @@ pub fn get_settings(app: AppHandle) -> Result<Settings> {
     }
     let content = fs::read_to_string(path)
         .map_err(|error| Error::InvalidParameter(format!("failed to read settings: {error}")))?;
-    serde_yaml::from_str(&content)
-        .map_err(|error| Error::InvalidParameter(format!("failed to parse settings: {error}")))
+    let mut settings: Settings = serde_yaml::from_str(&content)
+        .map_err(|error| Error::InvalidParameter(format!("failed to parse settings: {error}")))?;
+    if !settings.initialized {
+        settings.initialized = true;
+    }
+    Ok(settings)
 }
 
 #[tauri::command]
@@ -69,5 +75,31 @@ pub fn save_settings(app: AppHandle, settings: Settings) -> Result<()> {
         .map_err(|error| Error::InvalidParameter(format!("failed to write settings: {error}")))?;
     fs::rename(temporary_path, path)
         .map_err(|error| Error::InvalidParameter(format!("failed to replace settings: {error}")))?;
+    Ok(())
+}
+
+fn database_path(app: &AppHandle) -> Result<PathBuf> {
+    let directory = app.path().app_data_dir()
+        .map_err(|error| Error::InvalidParameter(format!("failed to locate database directory: {error}")))?;
+    Ok(directory.join(constants::DB_NAME))
+}
+
+#[tauri::command]
+pub async fn reset_app(app: AppHandle) -> Result<()> {
+    sql::close().await?;
+
+    let database_path = database_path(&app)?;
+    if database_path.exists() {
+        fs::remove_file(&database_path)
+            .map_err(|error| Error::InvalidParameter(format!("failed to delete database: {error}")))?;
+    }
+
+    let settings_file = settings_path(&app)?;
+    if settings_file.exists() {
+        fs::remove_file(&settings_file)
+            .map_err(|error| Error::InvalidParameter(format!("failed to delete settings: {error}")))?;
+    }
+
+    app.restart();
     Ok(())
 }

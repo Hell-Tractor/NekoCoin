@@ -13,6 +13,13 @@ pub fn db() -> &'static Pool<Sqlite> {
     DB.get().expect("Database has not been initialized")
 }
 
+pub async fn close() -> Result<()> {
+    if let Some(pool) = DB.get() {
+        pool.close().await;
+    }
+    Ok(())
+}
+
 pub async fn init(path: PathBuf) -> Result<()> {
     debug!("Connecting to database");
 
