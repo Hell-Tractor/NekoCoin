@@ -10,6 +10,7 @@ import BackTitleBar from './components/BackTitleBar.vue';
 import ConfirmSheet from './components/ConfirmSheet.vue';
 import { useRouter } from 'vue-router';
 import { show_error, show_success } from '../common/Notify';
+import { getVersion } from '@tauri-apps/api/app';
 
 const router = useRouter();
 const { t, locale } = useI18n();
@@ -63,6 +64,7 @@ const log_level_items = computed(() => [
 ]);
 const log_usage_bytes = ref(0);
 const log_usage_display = computed(() => format_bytes(log_usage_bytes.value));
+const app_version = ref('');
 
 const update_theme = function(value: string) {
     theme.global.name.value = value;
@@ -177,7 +179,14 @@ const confirm_import = async function() {
 
 watch(settings, queue_save, { deep: true });
 
-onMounted(refresh_log_usage);
+onMounted(async () => {
+    await refresh_log_usage();
+    try {
+        app_version.value = await getVersion();
+    } catch {
+        app_version.value = '';
+    }
+});
 </script>
 
 <template>
@@ -381,6 +390,7 @@ onMounted(refresh_log_usage);
             :text="t('settings.danger_zone.confirm_text')"
             @confirm="confirm_reset"
         />
+        <div v-if="app_version" class="app-version">{{ t('app_name') }} v{{ app_version }}</div>
     </v-main>
 </template>
 
@@ -436,5 +446,12 @@ onMounted(refresh_log_usage);
     margin-bottom: 16px;
     color: rgba(var(--v-theme-on-surface), 0.7);
     font-size: 0.9rem;
+}
+
+.app-version {
+    margin: 20px 0 8px;
+    color: rgba(var(--v-theme-on-surface), 0.46);
+    font-size: 0.75rem;
+    text-align: center;
 }
 </style>
