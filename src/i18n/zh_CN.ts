@@ -190,6 +190,8 @@ export default {
             other: '其他人每人 {each}, 共 {total}',
             select_wallet: '选择收款账户',
             people: '{count} 人',
+            income: '分账收入',
+            from: '来自 {account} 的分账 · {tag}',
         },
         enter: {
             remark: '输入备注',

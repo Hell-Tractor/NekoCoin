@@ -20,6 +20,7 @@ pub struct BalanceWithTypeDto {
 #[derive(Debug, Clone, Serialize)]
 pub struct TransactionDto {
     pub id: u32,
+    pub wallet_id: u32,
     pub remark: String,
     pub wallet_name: String,
     pub to_wallet_name: Option<String>,
@@ -36,6 +37,7 @@ pub struct TransactionSplitDto {
     pub id: u32,
     pub count: u32,
     pub expense: i32,
+    pub receive_wallet_id: u32,
     pub receive_wallet_name: String,
 }
 
@@ -43,6 +45,7 @@ impl TransactionDto {
     pub async fn try_from_row(row: &SqliteRow) -> crate::Result<Self> {
         Ok(TransactionDto {
             id: row.try_get("id")?,
+            wallet_id: row.try_get("wallet_id")?,
             remark: row.try_get("remark")?,
             wallet_name: row.try_get("wallet_name")?,
             to_wallet_name: row.try_get("to_wallet_name").ok(),
@@ -74,6 +77,7 @@ impl TransactionDto {
                         id: split.id,
                         count: split.count,
                         expense: split.expense,
+                        receive_wallet_id: split.receive_wallet_id,
                         receive_wallet_name: wallet::service::get_wallet_by_id(split.receive_wallet_id).await?.name,
                     })
                 } else {

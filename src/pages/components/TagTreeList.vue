@@ -7,7 +7,7 @@ defineOptions({ name: 'TagTreeList' });
 defineProps<{
     nodes: TagNode[];
     depth?: number;
-    collapsed: Set<number>;
+    expanded: Set<number>;
     kindIcon: (type: string) => { icon: string; color: string; flipped: boolean };
 }>();
 
@@ -33,7 +33,7 @@ const emit = defineEmits<{
                 type="button"
                 @click.stop="emit('toggle', node.id)"
             >
-                <v-icon size="20">{{ collapsed.has(node.id) ? 'mdi-chevron-right' : 'mdi-chevron-down' }}</v-icon>
+                <v-icon size="20">{{ expanded.has(node.id) ? 'mdi-chevron-down' : 'mdi-chevron-right' }}</v-icon>
             </button>
             <span v-else class="tag-tree-toggle-spacer" />
             <div class="entity-avatar" :style="entity_avatar_style(node.color)">
@@ -46,10 +46,10 @@ const emit = defineEmits<{
             <v-icon size="22" :color="kindIcon(node.type).color" :class="{ 'v-flipped': kindIcon(node.type).flipped }">{{ kindIcon(node.type).icon }}</v-icon>
         </div>
         <TagTreeList
-            v-if="node.children.length > 0 && !collapsed.has(node.id)"
+            v-if="node.children.length > 0 && expanded.has(node.id)"
             :nodes="node.children"
             :depth="(depth ?? 0) + 1"
-            :collapsed="collapsed"
+            :expanded="expanded"
             :kind-icon="kindIcon"
             @open="emit('open', $event)"
             @toggle="emit('toggle', $event)"

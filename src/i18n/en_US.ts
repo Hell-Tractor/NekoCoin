@@ -190,6 +190,8 @@ export default {
             other: 'Others each: {each}, Total: {total}',
             select_wallet: 'Select Recieve Wallet',
             people: '{count} people',
+            income: 'Split income',
+            from: 'Split from {account} · {tag}',
         },
         enter: {
             remark: 'Enter Remark',

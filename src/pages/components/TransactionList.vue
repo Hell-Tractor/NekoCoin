@@ -32,6 +32,7 @@ const emits = defineEmits<{
 export interface Transaction {
     id?: number;
     remark?: string;
+    wallet_id: number;
     wallet_name: string;
     to_wallet_name?: string;
     currency_code: string;
@@ -49,6 +50,7 @@ export interface Transaction {
         id?: number;
         count: number;
         expense: number;
+        receive_wallet_id: number;
         receive_wallet_name: string;
     }
 }
@@ -119,11 +121,46 @@ const operate_transaction = async function(transaction: Transaction, operation: 
     await router.push({ path: '/transaction/operate' });
 }
 
+const is_split_income = function(transaction: Transaction) {
+    return props.filter?.by === 'wallet'
+        && transaction.split != undefined
+        && transaction.split.receive_wallet_id === props.filter.id
+        && transaction.wallet_id !== props.filter.id;
+}
+
 const get_actual_expense = function(transaction: Transaction) {
+    if (is_split_income(transaction) && transaction.split) {
+        return transaction.amount - transaction.split.expense;
+    }
     if (transaction.split) {
         return transaction.split.expense;
     }
     return transaction.amount;
+}
+
+const display_flow_type = function(transaction: Transaction) {
+    if (is_split_income(transaction)) {
+        return 'Income';
+    }
+    return transaction.tag.type;
+}
+
+const display_title = function(transaction: Transaction) {
+    if (is_split_income(transaction)) {
+        return t('transaction.split.income');
+    }
+    return transaction.tag.name;
+}
+
+const display_meta = function(transaction: Transaction) {
+    if (is_split_income(transaction) && transaction.split) {
+        return t('transaction.split.from', {
+            account: transaction.wallet_name,
+            tag: transaction.tag.name,
+        });
+    }
+    const activity = transaction.activity ? `${transaction.activity.name} · ` : '';
+    return `${activity}${formatDatetimeRelative(transaction.time, new Date())}`;
 }
 
 const money_text = function(cents: number, currency_code: string) {
@@ -136,42 +173,46 @@ const money_text = function(cents: number, currency_code: string) {
             <div v-if="!!props.title" class="list-section-title">{{ props.title }}</div>
             <v-infinite-scroll :items="transactions" @load="load_transactions">
                 <template v-for="transaction in transactions" :key="transaction.id">
-                    <v-bottom-sheet>
+                    <v-bottom-sheet content-class="tx-sheet">
                         <template v-slot:activator="{ props: sheet_props }">
                             <button class="tx-row" type="button" v-bind="sheet_props">
                                 <div class="entity-avatar" :style="entity_avatar_style(transaction.tag.color)">
                                     <v-icon :color="entity_accent_color(transaction.tag.color)" size="20">{{ transaction.tag.icon }}</v-icon>
                                 </div>
                                 <div class="entity-copy">
-                                    <div class="entity-name">{{ transaction.tag.name }}</div>
-                                    <div class="entity-meta">
-                                        <span v-if="transaction.activity">{{ transaction.activity.name }} · </span>
-                                        {{ formatDatetimeRelative(transaction.time, new Date()) }}
-                                    </div>
+                                    <div class="entity-name">{{ display_title(transaction) }}</div>
+                                    <div class="entity-meta">{{ display_meta(transaction) }}</div>
                                 </div>
                                 <div class="tx-amount">
-                                    <div class="entity-amount" :style="{ color: flow_color_for_tag(transaction.tag.type) }">
+                                    <div class="entity-amount" :style="{ color: flow_color_for_tag(display_flow_type(transaction)) }">
                                         {{ money_text(get_actual_expense(transaction), transaction.currency_code) }}
                                     </div>
                                     <div class="entity-meta" style="text-align: right;">{{ formatTime(transaction.time) }}</div>
                                 </div>
                             </button>
                         </template>
-                        <v-card class="pa-2" rounded="xl">
+                        <v-card class="pa-2 tx-sheet-card" rounded="t-xl">
                             <v-card-text>
                                 <div class="sheet-row">
                                     <div class="entity-avatar" :style="entity_avatar_style(transaction.tag.color)">
                                         <v-icon :color="entity_accent_color(transaction.tag.color)">{{ transaction.tag.icon }}</v-icon>
                                     </div>
                                     <div class="entity-copy">
-                                        <div class="entity-name">{{ transaction.tag.name }}</div>
+                                        <div class="entity-name">{{ display_title(transaction) }}</div>
                                         <div class="entity-meta">{{ formatDisplayDate(transaction.time) }}</div>
                                     </div>
-                                    <div class="entity-amount" :style="{ color: flow_color_for_tag(transaction.tag.type) }">
+                                    <div class="entity-amount" :style="{ color: flow_color_for_tag(display_flow_type(transaction)) }">
                                         {{ money_text(get_actual_expense(transaction), transaction.currency_code) }}
                                     </div>
                                 </div>
                                 <v-divider class="my-2"></v-divider>
+                                <div class="sheet-row" v-if="is_split_income(transaction)">
+                                    <v-icon class="sheet-row-icon" color="success">mdi-call-split</v-icon>
+                                    <div class="entity-copy">
+                                        <div class="entity-meta">{{ t('transaction.split.income') }}</div>
+                                        <div>{{ t('transaction.split.from', { account: transaction.wallet_name, tag: transaction.tag.name }) }}</div>
+                                    </div>
+                                </div>
                                 <div class="sheet-row">
                                     <v-icon class="sheet-row-icon" color="on-surface-lighten-1">mdi-bank</v-icon>
                                     <div class="entity-copy">
@@ -239,3 +280,12 @@ const money_text = function(cents: number, currency_code: string) {
         </v-card-text>
     </v-card>
 </template>
+
+<style>
+.tx-sheet,
+.tx-sheet .v-bottom-sheet__content,
+.tx-sheet-card {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+</style>

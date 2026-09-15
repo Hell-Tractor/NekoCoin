@@ -89,3 +89,43 @@ export const toTag = (node: TagNode): Tag => {
     const { children: _children, ...tag } = node;
     return tag;
 };
+
+const node_matches_query = (node: Tag, query: string) => {
+    const key = query.trim().toLowerCase();
+    if (!key) {
+        return true;
+    }
+    return node.name.toLowerCase().includes(key) || (node.remark ?? '').toLowerCase().includes(key);
+};
+
+export const filterTagForest = (nodes: TagNode[], query: string): TagNode[] => {
+    const key = query.trim();
+    if (!key) {
+        return nodes;
+    }
+    const walk = (list: TagNode[]): TagNode[] => {
+        const result: TagNode[] = [];
+        for (const node of list) {
+            const children = walk(node.children);
+            if (node_matches_query(node, key) || children.length > 0) {
+                result.push({ ...node, children });
+            }
+        }
+        return result;
+    };
+    return walk(nodes);
+};
+
+export const collectExpandableIds = (nodes: TagNode[]): number[] => {
+    const ids: number[] = [];
+    const walk = (list: TagNode[]) => {
+        for (const node of list) {
+            if (node.children.length > 0) {
+                ids.push(node.id);
+                walk(node.children);
+            }
+        }
+    };
+    walk(nodes);
+    return ids;
+};

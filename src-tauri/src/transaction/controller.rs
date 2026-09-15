@@ -209,7 +209,7 @@ pub async fn retrieve_transactions(begin: Option<NaiveDate>, end: Option<NaiveDa
     let keyword = sanitize_keyword(keyword);
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.wallet_id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -245,7 +245,7 @@ pub async fn retrieve_transactions_in_wallet(wallet_id: u32, begin: Option<Naive
     let keyword = sanitize_keyword(keyword);
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.wallet_id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN transaction_splits ts ON transactions.split_id = ts.id
@@ -284,7 +284,7 @@ pub async fn retrieve_transactions_with_tag(tag_id: u32, begin: Option<NaiveDate
     // retrieve transactions with tag_id or its children
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.wallet_id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id
@@ -327,7 +327,7 @@ pub async fn retrieve_transactions_in_activity(activity_id: u32, begin: Option<N
     let keyword = sanitize_keyword(keyword);
     let transactions = sqlx::query(
         r#"
-        SELECT transactions.id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
+        SELECT transactions.id, transactions.wallet_id, transactions.remark, wallets.name AS wallet_name, to_wallets.name AS to_wallet_name, wallets.currency_code, transactions.tag_id, transactions.activity_id, transactions.amount, transactions.time, transactions.split_id
         FROM transactions
         JOIN wallets ON transactions.wallet_id = wallets.id
         LEFT JOIN wallets AS to_wallets ON transactions.to_wallet_id = to_wallets.id

@@ -50,17 +50,26 @@ const split_receive_wallet: Ref<Wallet | undefined> = ref(undefined);
 let tag_request_id = 0;
 let restoring_draft = false;
 let submitted = false;
+let keep_draft_on_leave = false;
 
+const to_cents = function(value: number) {
+    return Math.round(value * 100);
+}
+const from_cents = function(cents: number) {
+    return cents / 100;
+}
+const amount_cents = computed(() => to_cents(amount.value ?? 0));
 const others_expense: ComputedRef<number> = computed(() => {
-    return Number.parseInt(Math.ceil((amount.value ?? 0) * 100 / split_count.value).toFixed(0)) / 100;
+    const count = Math.max(1, split_count.value);
+    return from_cents(Math.ceil(amount_cents.value / count));
 });
-const split_others_total = computed(() => Math.max(0, (amount.value ?? 0) - split_expense.value));
+const split_others_total = computed(() => Math.max(0, from_cents(amount_cents.value - to_cents(split_expense.value))));
 const split_others_each = computed(() => {
     const others = split_count.value - 1;
     if (others <= 0) {
         return 0;
     }
-    return Math.ceil(split_others_total.value / others * 100) / 100;
+    return from_cents(Math.floor(to_cents(split_others_total.value) / others));
 });
 
 const formatter = new Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
@@ -226,7 +235,8 @@ const isFormValid = function() {
     return basic && split;
 }
 const update_split_expense = function(count: number) {
-    split_expense.value = Number.parseFloat(((amount.value ?? 0) - (count - 1) * others_expense.value).toFixed(2));
+    const others = Math.max(0, count - 1);
+    split_expense.value = from_cents(Math.max(0, amount_cents.value - others * to_cents(others_expense.value)));
 }
 watch(split_count, function(newValue) {
     if (restoring_draft) {
@@ -327,11 +337,19 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-    save_draft();
+    if (keep_draft_on_leave) {
+        save_draft();
+    }
 });
 
-onBeforeRouteLeave(() => {
-    save_draft();
+onBeforeRouteLeave((to) => {
+    const keep = ['/tag/add', '/account/add', '/activity/add'].some(path => to.path === path || to.path.startsWith(`${path}/`));
+    keep_draft_on_leave = keep;
+    if (keep) {
+        save_draft();
+        return;
+    }
+    clear_transaction_draft();
 });
 </script>
 <template>
