@@ -35,8 +35,19 @@ const current_page_title = computed(() => {
 });
 const showDrawer: Ref<boolean> = ref(false);
 
+const is_main_tab = function(path: string) {
+    return path === '/main' || path.startsWith('/main/');
+};
+
 const changePage = function(target_page: Page) : void {
     showDrawer.value = false;
+    if (target_page.path === route.path) {
+        return;
+    }
+    if (is_main_tab(route.path) && is_main_tab(target_page.path)) {
+        router.replace({ path: target_page.path });
+        return;
+    }
     router.push({ path: target_page.path });
 };
 const globalButtonClick = function() : void {
