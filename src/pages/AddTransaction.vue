@@ -49,6 +49,7 @@ const split_expense: Ref<number> = ref(0);
 const split_receive_wallet: Ref<Wallet | undefined> = ref(undefined);
 let tag_request_id = 0;
 let restoring_draft = false;
+let submitted = false;
 
 const others_expense: ComputedRef<number> = computed(() => {
     return Number.parseInt(Math.ceil((amount.value ?? 0) * 100 / split_count.value).toFixed(0)) / 100;
@@ -103,7 +104,7 @@ const getMaxTime = function() {
 }
 
 const save_draft = function() {
-    if (props.init) {
+    if (props.init || submitted) {
         return;
     }
     transaction_draft.active = true;
@@ -211,6 +212,7 @@ const confirm = async function() {
             await invoke('create_transaction', { vo: params });
         else
             await invoke('update_transaction', { vo: params });
+        submitted = true;
         clear_transaction_draft();
         router.back();
     } catch (error) {

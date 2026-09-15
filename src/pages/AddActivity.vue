@@ -33,6 +33,7 @@ const selected_tag: Ref<Tag | undefined> = ref(undefined);
 const tags: Ref<Tag[]> = ref([]);
 const page: Ref<string> = ref('main');
 let restoring_draft = false;
+let submitted = false;
 
 const retrieve_tags = async function() {
     try {
@@ -43,7 +44,7 @@ const retrieve_tags = async function() {
 }
 
 const save_draft = function() {
-    if (props.init) {
+    if (props.init || submitted) {
         return;
     }
     activity_draft.active = true;
@@ -84,6 +85,7 @@ const save = async function() {
                 tagId: selected_tag.value!.id,
             });
         }
+        submitted = true;
         clear_activity_draft();
         router.back();
     } catch (error) {
