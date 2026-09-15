@@ -200,6 +200,41 @@ export const entity_tint = function(color: string): string {
     return color_with_alpha(accent, is_dark_theme() ? 0.28 : 0.18);
 }
 
+export const entity_ink_color = function(color: string): string {
+    const rgb = parse_color_rgb(color);
+    if (!rgb) {
+        return color;
+    }
+    if (is_dark_theme()) {
+        return entity_accent_color(color);
+    }
+    const luminance = rgb_luminance(rgb);
+    if (luminance < 0.45) {
+        return color;
+    }
+    const amount = Math.min(0.74, 0.38 + (luminance - 0.45) * 1.15);
+    return rgb_to_css(mix_rgb(rgb, { r: 36, g: 30, b: 28 }, amount));
+}
+
+export const entity_chip_style = function(color: string, selected: boolean): Record<string, string> {
+    const accent = entity_accent_color(color);
+    if (is_dark_theme()) {
+        if (selected) {
+            return { borderWidth: '1px', borderColor: accent };
+        }
+        return { backgroundColor: entity_tint(color) };
+    }
+    const ink = entity_ink_color(color);
+    const style: Record<string, string> = {
+        backgroundColor: color_with_alpha(accent, selected ? 0.34 : 0.24),
+        color: ink,
+    };
+    if (selected) {
+        style.outline = `1px solid ${accent}`;
+    }
+    return style;
+}
+
 export const entity_avatar_style = function(color: string): Record<string, string> {
     const accent = entity_accent_color(color);
     const style: Record<string, string> = {

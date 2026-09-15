@@ -140,6 +140,9 @@ export default {
             hint: '搜索...',
             count: '找到{count}个标签',
         },
+        frequent: '最近常用',
+        all_tags: '全部标签',
+        back_level: '返回上一级',
         filter: {
             all: '全部',
         },

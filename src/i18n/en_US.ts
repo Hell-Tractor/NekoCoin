@@ -140,6 +140,9 @@ export default {
             hint: 'Search...',
             count: 'Found {count} tags',
         },
+        frequent: 'Frequent',
+        all_tags: 'All tags',
+        back_level: 'Back',
         filter: {
             all: 'All',
         },

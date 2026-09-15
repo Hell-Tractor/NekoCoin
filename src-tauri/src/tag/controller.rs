@@ -136,6 +136,69 @@ pub async fn retrieve_tags(filter: String, kind: Option<TagKind>) -> Result<Vec<
 }
 
 #[tauri::command]
+pub async fn frequent_tags(kind: TagKind, limit: Option<u32>) -> Result<Vec<Tag>> {
+    let limit = limit.unwrap_or(5).clamp(1, 20) as i64;
+    let window: i64 = 50;
+    let tags = if kind == TagKind::Activity {
+        sqlx::query_as::<_, Tag>(
+            r#"
+            WITH recent AS (
+                SELECT a.tag_id AS tag_id, a.id AS recency
+                FROM activities a
+                INNER JOIN tags ON tags.id = a.tag_id
+                WHERE tags.kind = $1
+                ORDER BY a.id DESC
+                LIMIT $2
+            ),
+            ranked AS (
+                SELECT tag_id, COUNT(*) AS freq, MAX(recency) AS last_seen
+                FROM recent
+                GROUP BY tag_id
+            )
+            SELECT tags.id, tags.name, tags.remark, tags.color, tags.icon, tags.kind, tags.parent_id
+            FROM ranked
+            INNER JOIN tags ON tags.id = ranked.tag_id
+            ORDER BY ranked.freq DESC, ranked.last_seen DESC
+            LIMIT $3
+            "#)
+            .bind(kind as u8)
+            .bind(window)
+            .bind(limit)
+            .fetch_all(db())
+            .await?
+    } else {
+        sqlx::query_as::<_, Tag>(
+            r#"
+            WITH recent AS (
+                SELECT t.tag_id AS tag_id, t.time AS recency, t.id AS recency_id
+                FROM transactions t
+                INNER JOIN tags ON tags.id = t.tag_id
+                WHERE tags.kind = $1
+                ORDER BY t.time DESC, t.id DESC
+                LIMIT $2
+            ),
+            ranked AS (
+                SELECT tag_id, COUNT(*) AS freq, MAX(recency) AS last_seen, MAX(recency_id) AS last_id
+                FROM recent
+                GROUP BY tag_id
+            )
+            SELECT tags.id, tags.name, tags.remark, tags.color, tags.icon, tags.kind, tags.parent_id
+            FROM ranked
+            INNER JOIN tags ON tags.id = ranked.tag_id
+            ORDER BY ranked.freq DESC, ranked.last_seen DESC, ranked.last_id DESC
+            LIMIT $3
+            "#)
+            .bind(kind as u8)
+            .bind(window)
+            .bind(limit)
+            .fetch_all(db())
+            .await?
+    };
+    info!("Retrieved {} frequent tags for kind {:?}.", tags.len(), kind);
+    Ok(tags)
+}
+
+#[tauri::command]
 pub async fn delete_tag(id: u32) -> Result<()> {
     debug!("Deleting tag(id = {})", id);
     let tag = super::service::get_tag_by_id(id).await?;

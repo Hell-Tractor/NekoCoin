@@ -87,6 +87,7 @@ pub fn run() {
             tag::controller::get_tag_by_id,
             tag::controller::has_child_tag,
             tag::controller::retrieve_tags,
+            tag::controller::frequent_tags,
             tag::controller::delete_tag,
 
             activity::controller::create_activity,

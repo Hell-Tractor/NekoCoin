@@ -41,3 +41,51 @@ export default interface Tag {
     type: string;
     parent_id: number | null;
 };
+
+export interface TagNode extends Tag {
+    children: TagNode[];
+}
+
+export const buildTagForest = (tags: Tag[]): TagNode[] => {
+    const nodes = new Map<number, TagNode>();
+    for (const tag of tags) {
+        nodes.set(tag.id, { ...tag, children: [] });
+    }
+    const roots: TagNode[] = [];
+    for (const node of nodes.values()) {
+        const parent = node.parent_id == null ? undefined : nodes.get(node.parent_id);
+        if (parent) {
+            parent.children.push(node);
+        } else {
+            roots.push(node);
+        }
+    }
+    return roots;
+};
+
+export const tagPath = (forest: TagNode[], id: number): TagNode[] => {
+    const walk = (nodes: TagNode[], acc: TagNode[]): TagNode[] | null => {
+        for (const node of nodes) {
+            const next = [...acc, node];
+            if (node.id === id) {
+                return next;
+            }
+            const found = walk(node.children, next);
+            if (found) {
+                return found;
+            }
+        }
+        return null;
+    };
+    return walk(forest, []) ?? [];
+};
+
+export const findTagNode = (forest: TagNode[], id: number): TagNode | undefined => {
+    const path = tagPath(forest, id);
+    return path[path.length - 1];
+};
+
+export const toTag = (node: TagNode): Tag => {
+    const { children: _children, ...tag } = node;
+    return tag;
+};
