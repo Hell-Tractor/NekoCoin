@@ -109,7 +109,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <BackTitleBar :title="activity?.name ?? t('loading')" @back="router.back()"/>
+    <BackTitleBar :title="t('activity.details')" @back="router.back()"/>
     <v-main v-if="activity" class="main">
         <ActivityCard variant="flat" layout="hero" :activity="activity">
             <template #extra>
@@ -130,8 +130,8 @@ onMounted(async () => {
         <SummaryBar variant="flat" rounded="xl" :title="t('activity.summary')" :current-expense="new Money(sum_balance.expense, { symbol: '', code: settings.primary_currency_code })" :current-income="new Money(sum_balance.income, { symbol: '', code: settings.primary_currency_code })" />
         <StackDiagram class="mt-2" variant="flat" rounded="xl" :kind="TagType.EXPENSE" :item_id="{ type: 'activity', value: props.id }" :currency_code="settings.primary_currency_code" />
         <div class="detail-actions">
-            <v-btn block variant="tonal" rounded="xl" prepend-icon="mdi-pencil" color="secondary-darken-1" :text="t('actions.edit')" @click="edit_activity"></v-btn>
-            <v-btn block variant="outlined" rounded="xl" prepend-icon="mdi-delete" color="error" :text="t('actions.delete')" @click="show_confirm_sheet = true"></v-btn>
+            <v-btn variant="tonal" rounded="xl" prepend-icon="mdi-pencil" color="secondary-darken-1" :text="t('actions.edit')" @click="edit_activity"></v-btn>
+            <v-btn variant="outlined" rounded="xl" prepend-icon="mdi-delete" color="error" :text="t('actions.delete')" @click="show_confirm_sheet = true"></v-btn>
         </div>
         <TransactionList class="mt-2" variant="flat" :title="t('activity.transactions')" :filter="{ by: 'activity', id: props.id }"/>
         <ConfirmSheet v-model="show_confirm_sheet" :title="t('warning.irrevertible.title')" :text="t('warning.irrevertible.content')" @confirm="delete_activity" />

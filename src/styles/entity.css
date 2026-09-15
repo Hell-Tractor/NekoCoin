@@ -1,9 +1,30 @@
-.main {
-    margin: 10px;
+html, body, #app {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+.v-application,
+.v-application__wrap {
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.v-main.main {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    padding-top: calc(var(--v-layout-top, 0px) + 10px) !important;
+    padding-right: calc(var(--v-layout-right, 0px) + 10px) !important;
+    padding-bottom: calc(var(--v-layout-bottom, 0px) + 10px) !important;
+    padding-left: calc(var(--v-layout-left, 0px) + 10px) !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .main-with-nav {
-    padding-bottom: 88px;
+    padding-bottom: 98px !important;
 }
 
 .form-page {
@@ -154,12 +175,14 @@
 
 .detail-actions {
     display: flex;
+    flex-direction: column;
     gap: 12px;
     margin: 8px 0 12px;
 }
 
 .detail-actions > * {
-    flex: 1 1 0;
+    width: 100%;
+    flex: none;
 }
 
 .home-hero-top {

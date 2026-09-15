@@ -152,6 +152,7 @@ export default {
     },
     activity: {
         title: 'Activity',
+        details: 'Activity Details',
         add: 'Add Activity',
         update: 'Update Activity',
         select: 'Select activity (optional)',

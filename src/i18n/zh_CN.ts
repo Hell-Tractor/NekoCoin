@@ -152,6 +152,7 @@ export default {
     },
     activity: {
         title: '活动',
+        details: '活动详情',
         add: '添加活动',
         update: '更新活动',
         select: '选择活动（可选）',
