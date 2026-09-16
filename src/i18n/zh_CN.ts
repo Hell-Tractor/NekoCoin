@@ -14,6 +14,10 @@ export default {
     },
     WIP: '开发中...',
     loading: '加载中...',
+    privacy: {
+        show_amounts: '显示金额',
+        hide_amounts: '隐藏金额',
+    },
     actions: {
         save: '保存',
         confirm: '确认',
@@ -42,6 +46,8 @@ export default {
         time_format: '时间格式',
         decimal_places: '金额小数位',
         thousands_separator: '使用千位分隔符',
+        privacy_mode_default: '启动时隐藏金额',
+        privacy_mode_default_hint: '每次打开应用时生效，可随时在标题栏切换。',
         theme: '主题',
         avatar: '头像',
         language: '语言',

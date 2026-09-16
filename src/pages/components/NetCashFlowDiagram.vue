@@ -5,7 +5,8 @@ import ApexCharts from 'apexcharts';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
 import { SummaryType } from '../../common/SummaryType';
-import { formatDate } from '../../common/Utils';
+import { formatDate, format_chart_number } from '../../common/Utils';
+import { privacy_mode } from '../../common/Settings';
 import { apex_chart_theme } from '../../common/ChartTheme';
 import { create_chart_pan } from '../../common/chartPan';
 
@@ -104,14 +105,14 @@ const load_chart = async function() {
                 ...chart_theme.yaxis,
                 labels: {
                     ...chart_theme.yaxis.labels,
-                    formatter: (value: number) => value.toFixed(0),
+                    formatter: (value: number) => format_chart_number(value, 0),
                 },
             },
             grid: chart_theme.grid,
             tooltip: {
                 ...chart_theme.tooltip,
                 y: {
-                    formatter: (value: number) => value.toFixed(2),
+                    formatter: (value: number) => format_chart_number(value, 2),
                 },
             },
             dataLabels: { enabled: false },
@@ -141,6 +142,12 @@ onMounted(() => {
 watch(() => vuetify_theme.global.name.value, async () => {
     await nextTick();
     await load_chart();
+});
+
+watch(privacy_mode, async () => {
+    if (has_data.value) {
+        await load_chart();
+    }
 });
 
 onBeforeUnmount(() => {

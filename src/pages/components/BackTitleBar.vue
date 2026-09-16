@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PrivacyToggle from './PrivacyToggle.vue';
+
 const emits = defineEmits<{
     back: []
 }>();
@@ -16,6 +18,7 @@ const props = defineProps<{
         <v-toolbar-title>{{ props.title }}</v-toolbar-title>
         <template v-slot:append>
             <slot name="append"></slot>
+            <PrivacyToggle />
         </template>
     </v-app-bar>
 </template>

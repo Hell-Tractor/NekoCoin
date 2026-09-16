@@ -14,6 +14,10 @@ export default {
     },
     WIP: 'Work in Progress...',
     loading: 'Loading...',
+    privacy: {
+        show_amounts: 'Show amounts',
+        hide_amounts: 'Hide amounts',
+    },
     actions: {
         save: 'Save',
         confirm: 'Confirm',
@@ -42,6 +46,8 @@ export default {
         time_format: 'Time format',
         decimal_places: 'Decimal places',
         thousands_separator: 'Use thousands separator',
+        privacy_mode_default: 'Hide amounts on launch',
+        privacy_mode_default_hint: 'Applies each time the app opens. You can still toggle it from the title bar.',
         theme: 'Theme',
         avatar: 'Avatar',
         language: 'Language',

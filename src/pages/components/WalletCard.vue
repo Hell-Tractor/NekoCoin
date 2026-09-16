@@ -2,7 +2,8 @@
 import { computed } from 'vue';
 import { Wallet } from '../Wallets.vue';
 import { useI18n } from 'vue-i18n';
-import { entity_accent_color, entity_avatar_style, entity_card_style, formatAmount } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, entity_card_style } from '../../common/Utils';
+import AmountText from './AmountText.vue';
 const { t } = useI18n();
 
 const props = defineProps<{
@@ -12,7 +13,6 @@ const props = defineProps<{
 }>();
 
 const layout = computed(() => props.layout ?? 'list');
-const balance_text = computed(() => `${props.wallet.currency_code} ${formatAmount(props.wallet.balance)}`);
 const card_style = computed(() => entity_card_style(props.wallet.color));
 const avatar_style = computed(() => entity_avatar_style(props.wallet.color));
 const accent_color = computed(() => entity_accent_color(props.wallet.color));
@@ -28,7 +28,7 @@ const accent_color = computed(() => entity_accent_color(props.wallet.color));
                 <div class="entity-name">{{ wallet.name }}</div>
                 <div v-if="wallet.remark" class="entity-meta">{{ wallet.remark }}</div>
             </div>
-            <div class="entity-amount">{{ balance_text }}</div>
+            <div class="entity-amount"><AmountText :cents="wallet.balance" :currency="wallet.currency_code" /></div>
         </div>
         <div v-else class="entity-hero">
             <div class="entity-row">
@@ -42,7 +42,7 @@ const accent_color = computed(() => entity_accent_color(props.wallet.color));
             </div>
             <div class="entity-hero-balance">
                 <div class="entity-meta">{{ t('total_balance') }}</div>
-                <div class="entity-hero-amount">{{ balance_text }}</div>
+                <div class="entity-hero-amount"><AmountText :cents="wallet.balance" :currency="wallet.currency_code" /></div>
             </div>
         </div>
     </v-card>

@@ -2,7 +2,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Activity } from '../../common/Activity';
-import { entity_accent_color, entity_avatar_style, entity_card_style, format_net_cash_flow, net_cash_flow_color } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, entity_card_style, net_cash_flow_color } from '../../common/Utils';
+import AmountText from './AmountText.vue';
 
 const { t } = useI18n();
 
@@ -31,7 +32,8 @@ const net_style = computed(() => ({
             <div class="entity-copy">
                 <div class="entity-name">{{ activity.name }}</div>
                 <div class="entity-meta" :style="net !== undefined ? net_style : undefined">
-                    {{ net !== undefined ? format_net_cash_flow(net) : (activity.remark || '') }}
+                    <AmountText v-if="net !== undefined" :cents="net" signed />
+                    <template v-else>{{ activity.remark || '' }}</template>
                 </div>
             </div>
             <div class="entity-aside">

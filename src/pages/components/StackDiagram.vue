@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core';
 import Tag, { TagType, TagTypeToString } from '../../common/Tag';
-import { entity_accent_color, formatAmount, formatDate } from '../../common/Utils';
+import { entity_accent_color, display_amount, formatDate } from '../../common/Utils';
+import AmountText from './AmountText.vue';
 import { computed, onMounted, Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
@@ -77,7 +78,7 @@ onMounted(() => {
                         :key="`segment-${item.tag.id}`"
                         location="top"
                         open-on-click
-                        :text="`${item.tag.name} ${format_percentage(item.summary)} - ${props.currency_code} ${formatAmount(item.summary)}`"
+                        :text="`${item.tag.name} ${format_percentage(item.summary)} - ${display_amount(item.summary, props.currency_code)}`"
                     >
                         <template #activator="{ props: tooltip_props }">
                             <div
@@ -96,7 +97,7 @@ onMounted(() => {
                         <div class="tag-label">
                             <v-icon :color="entity_accent_color(item.tag.color)" size="x-small">{{ item.tag.icon }}</v-icon>
                             <span>{{ item.tag.name }}</span>
-                            <span class="tag-amount">{{ props.currency_code }} {{ formatAmount(item.summary) }}</span>
+                            <span class="tag-amount"><AmountText :cents="item.summary" :currency="props.currency_code" /></span>
                         </div>
                     </div>
                 </div>

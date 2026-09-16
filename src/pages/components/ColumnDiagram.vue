@@ -2,7 +2,8 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { SummaryType } from '../../common/SummaryType';
-import { formatDate } from '../../common/Utils';
+import { formatDate, format_chart_axis, format_chart_number } from '../../common/Utils';
+import { privacy_mode } from '../../common/Settings';
 import { apex_chart_theme } from '../../common/ChartTheme';
 import { create_chart_pan } from '../../common/chartPan';
 import ApexCharts from 'apexcharts';
@@ -143,15 +144,7 @@ const render_chart = async function() {
             ...chart_theme.yaxis,
             labels: {
                 ...chart_theme.yaxis.labels,
-                formatter: (value: number) => {
-                    const SIGNS = ['', 'K', 'M', 'B', 'T'];
-                    const index = Math.floor(Math.log10(value) / 3);
-                    if (index < 0 || index > SIGNS.length - 1) {
-                        return value.toString();
-                    }
-                    const newValue = value / Math.pow(10, index * 3);
-                    return newValue.toFixed(0) + SIGNS[index];
-                }
+                formatter: (value: number) => format_chart_axis(value),
             }
         },
         grid: {
@@ -165,7 +158,12 @@ const render_chart = async function() {
             horizontalAlign: 'left',
             ...chart_theme.legend,
         },
-        tooltip: chart_theme.tooltip,
+        tooltip: {
+            ...chart_theme.tooltip,
+            y: {
+                formatter: (value: number) => format_chart_number(value, 2),
+            },
+        },
         dataLabels: {
             enabled: false,
         },
@@ -241,6 +239,12 @@ watch(props, () => {
 
 watch(() => vuetify_theme.global.name.value, async () => {
     await nextTick();
+    if (has_data.value) {
+        await render_chart();
+    }
+});
+
+watch(privacy_mode, async () => {
     if (has_data.value) {
         await render_chart();
     }

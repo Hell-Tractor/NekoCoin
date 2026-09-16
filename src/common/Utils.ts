@@ -1,5 +1,5 @@
 import i18n from "../i18n";
-import { settings } from './Settings';
+import { privacy_mode, settings } from './Settings';
 const t = i18n.global.t;
 
 export const getRandomColor = function(type: 'rgb' | 'rgba') : string {
@@ -46,12 +46,45 @@ export const formatDisplayDate = function(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
+export const HIDDEN_AMOUNT = '••••';
+
 export const formatAmount = function(cents: number): string {
     const amount = cents / 100;
     const decimals = Math.max(0, Math.min(4, settings.decimal_places));
     return settings.thousands_separator
         ? amount.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
         : amount.toFixed(decimals);
+}
+
+export const display_amount = function(cents: number, currency_code?: string, options?: { signed?: boolean }): string {
+    if (privacy_mode.value) {
+        return currency_code ? `${currency_code} ${HIDDEN_AMOUNT}` : HIDDEN_AMOUNT;
+    }
+    const prefix = options?.signed && cents > 0 ? '+' : '';
+    const number = formatAmount(cents);
+    return currency_code ? `${currency_code} ${prefix}${number}` : `${prefix}${number}`;
+}
+
+export const format_chart_number = function(value: number, digits = 0): string {
+    if (privacy_mode.value) {
+        return HIDDEN_AMOUNT;
+    }
+    return value.toFixed(digits);
+}
+
+export const format_chart_axis = function(value: number): string {
+    if (privacy_mode.value) {
+        return HIDDEN_AMOUNT;
+    }
+    const signs = ['', 'K', 'M', 'B', 'T'];
+    if (value === 0) {
+        return '0';
+    }
+    const index = Math.floor(Math.log10(Math.abs(value)) / 3);
+    if (index < 0 || index > signs.length - 1) {
+        return value.toString();
+    }
+    return `${(value / Math.pow(10, index * 3)).toFixed(0)}${signs[index]}`;
 }
 
 export const formatDatetimeRelative = function(date: Date, relative_date: Date) : string {
@@ -91,11 +124,6 @@ export const formatTime = function(date: Date) : string {
     const hour = date.getHours().toString().padStart(2, '0');
     const minute = date.getMinutes().toString().padStart(2, '0');
     return `${hour}:${minute}`;
-}
-
-export const format_net_cash_flow = function(cents: number): string {
-    const prefix = cents > 0 ? '+' : '';
-    return `${settings.primary_currency_code} ${prefix}${formatAmount(cents)}`;
 }
 
 export const net_cash_flow_color = function(cents: number): string {

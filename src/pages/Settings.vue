@@ -280,6 +280,15 @@ onMounted(async () => {
                     hide-details
                     class="mb-4"
                 />
+                <v-switch
+                    v-model="settings.privacy_mode_default"
+                    :label="t('settings.privacy_mode_default')"
+                    :hint="t('settings.privacy_mode_default_hint')"
+                    persistent-hint
+                    color="primary"
+                    hide-details="auto"
+                    class="mb-4"
+                />
                 <v-select
                     v-model="settings.theme"
                     :items="theme_items"

@@ -3,7 +3,8 @@ import { ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Tag from '../../common/Tag';
 import { invoke } from '@tauri-apps/api/core';
-import { entity_accent_color, entity_avatar_style, flow_color_for_tag, formatAmount, formatDate, formatDatetimeRelative, formatDisplayDate, formatTime } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, flow_color_for_tag, formatDate, formatDatetimeRelative, formatDisplayDate, formatTime } from '../../common/Utils';
+import AmountText from './AmountText.vue';
 import { useRouter } from 'vue-router';
 import AddTransaction from '../AddTransaction.vue';
 import ConfirmSheet from './ConfirmSheet.vue';
@@ -162,10 +163,6 @@ const display_meta = function(transaction: Transaction) {
     const activity = transaction.activity ? `${transaction.activity.name} · ` : '';
     return `${activity}${formatDatetimeRelative(transaction.time, new Date())}`;
 }
-
-const money_text = function(cents: number, currency_code: string) {
-    return `${currency_code} ${formatAmount(cents)}`;
-}
 </script>
 <template>
     <v-card :variant="variant" rounded="xl">
@@ -185,7 +182,7 @@ const money_text = function(cents: number, currency_code: string) {
                                 </div>
                                 <div class="tx-amount">
                                     <div class="entity-amount" :style="{ color: flow_color_for_tag(display_flow_type(transaction)) }">
-                                        {{ money_text(get_actual_expense(transaction), transaction.currency_code) }}
+                                        <AmountText :cents="get_actual_expense(transaction)" :currency="transaction.currency_code" />
                                     </div>
                                     <div class="entity-meta" style="text-align: right;">{{ formatTime(transaction.time) }}</div>
                                 </div>
@@ -202,7 +199,7 @@ const money_text = function(cents: number, currency_code: string) {
                                         <div class="entity-meta">{{ formatDisplayDate(transaction.time) }}</div>
                                     </div>
                                     <div class="entity-amount" :style="{ color: flow_color_for_tag(display_flow_type(transaction)) }">
-                                        {{ money_text(get_actual_expense(transaction), transaction.currency_code) }}
+                                        <AmountText :cents="get_actual_expense(transaction)" :currency="transaction.currency_code" />
                                     </div>
                                 </div>
                                 <v-divider class="my-2"></v-divider>
@@ -227,7 +224,7 @@ const money_text = function(cents: number, currency_code: string) {
                                         </div>
                                     </template>
                                     <div v-if="transaction.split" class="entity-amount" :style="{ color: flow_color_for_tag('Expense') }">
-                                        {{ money_text(transaction.amount, transaction.currency_code) }}
+                                        <AmountText :cents="transaction.amount" :currency="transaction.currency_code" />
                                     </div>
                                 </div>
                                 <div class="sheet-row" v-if="transaction.split">
@@ -242,7 +239,7 @@ const money_text = function(cents: number, currency_code: string) {
                                         <div>{{ transaction.split.receive_wallet_name }}</div>
                                     </div>
                                     <div class="entity-amount" :style="{ color: flow_color_for_tag('Income') }">
-                                        {{ money_text(transaction.amount - transaction.split.expense, transaction.currency_code) }}
+                                        <AmountText :cents="transaction.amount - transaction.split.expense" :currency="transaction.currency_code" />
                                     </div>
                                 </div>
                                 <div class="sheet-row" v-if="transaction.activity">

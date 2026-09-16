@@ -6,7 +6,8 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { Activity } from '../../common/Activity';
 import { load_settings, settings } from '../../common/Settings';
-import { entity_accent_color, entity_avatar_style, format_net_cash_flow, net_cash_flow_color } from '../../common/Utils';
+import { entity_accent_color, entity_avatar_style, net_cash_flow_color } from '../../common/Utils';
+import AmountText from './AmountText.vue';
 
 const PREVIEW_COUNT = 3;
 const { t } = useI18n();
@@ -87,7 +88,7 @@ onMounted(retrieve_open_activities);
                 <div class="activity-copy">
                     <div class="activity-name">{{ item.name }}</div>
                     <div class="activity-net" :style="{ color: net_cash_flow_color(net_by_id[item.id] ?? 0) || undefined }">
-                        {{ format_net_cash_flow(net_by_id[item.id] ?? 0) }}
+                        <AmountText :cents="net_by_id[item.id] ?? 0" signed />
                     </div>
                 </div>
                 <v-btn

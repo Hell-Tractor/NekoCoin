@@ -13,6 +13,7 @@ export interface UserSettings {
     time_format: '12hr' | '24hr';
     decimal_places: number;
     thousands_separator: boolean;
+    privacy_mode_default: boolean;
     initialized: boolean;
     log_retention_days: number;
     log_level: 'error' | 'warn' | 'info' | 'debug' | 'trace';
@@ -29,6 +30,7 @@ export const default_settings: UserSettings = {
     time_format: '24hr',
     decimal_places: 2,
     thousands_separator: true,
+    privacy_mode_default: true,
     initialized: false,
     log_retention_days: 30,
     log_level: 'info',
@@ -36,7 +38,16 @@ export const default_settings: UserSettings = {
 
 export const settings = reactive<UserSettings>({ ...default_settings });
 export const settings_loaded = ref(false);
+export const privacy_mode = ref(true);
 let loading_settings: Promise<void> | undefined;
+
+export const toggle_privacy_mode = function() {
+    privacy_mode.value = !privacy_mode.value;
+};
+
+const apply_privacy_mode_default = function() {
+    privacy_mode.value = settings.privacy_mode_default;
+};
 
 export const load_settings = async function() {
     if (settings_loaded.value) {
@@ -53,6 +64,7 @@ export const load_settings = async function() {
             show_error(error);
         })
         .finally(() => {
+            apply_privacy_mode_default();
             settings_loaded.value = true;
             loading_settings = undefined;
         });

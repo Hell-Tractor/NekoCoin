@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { Money } from '../../common/Money';
+import AmountText from './AmountText.vue';
 const { t } = useI18n();
 
 const props = defineProps<{
@@ -40,17 +41,17 @@ const net_cash_flow_hint = function() {
                             <v-icon v-bind="tooltip_props" :color="net_cash_flow_color()" :icon="net_cash_flow_icon()" size="small" />
                         </template>
                     </v-tooltip>
-                    <span class="text-body-2">{{ currentNetCashFlow }}</span>
+                    <span class="text-body-2"><AmountText :money="currentNetCashFlow" signed /></span>
                 </span>
             </div>
             <v-row class="flex-nowrap">
                 <v-col class="flex-grow-1">
                     <p>{{ t('income') }}<v-icon color="success">mdi-chart-line-variant</v-icon></p>
-                    <p class="text-h8 font-weight-black">{{ currentIncome }}</p>
+                    <p class="text-h8 font-weight-black"><AmountText :money="currentIncome" /></p>
                 </v-col>
                 <v-col class="flex-grow-1">
                     <p>{{ t('expense') }}<v-icon color="error" class="v-flipped">mdi-chart-line-variant</v-icon></p>
-                    <p class="text-h8 font-weight-black">{{ currentExpense }}</p>
+                    <p class="text-h8 font-weight-black"><AmountText :money="currentExpense" /></p>
                 </v-col>
             </v-row>
         </v-card-text>

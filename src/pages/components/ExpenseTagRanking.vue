@@ -5,7 +5,8 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import Tag from '../../common/Tag';
 import { SummaryType, SummaryTypeList } from '../../common/SummaryType';
-import { entity_accent_color, formatAmount } from '../../common/Utils';
+import { entity_accent_color } from '../../common/Utils';
+import AmountText from './AmountText.vue';
 
 type Grouping = SummaryType | 'All';
 
@@ -72,10 +73,6 @@ const max_for_currency = function(group: TagSummary[], currency_code: string) {
         .reduce((max, item) => Math.max(max, item.summary), 1);
 };
 
-const format_amount = function(item: TagSummary) {
-    return `${item.currency_code} ${formatAmount(item.summary)}`;
-};
-
 const open_tag = function(item: TagSummary) {
     router.push({ path: `/tag/${item.tag.id}` });
 };
@@ -111,7 +108,7 @@ watch(grouping, () => {
                     <div class="tag-label">
                         <v-icon :color="entity_accent_color(item.tag.color)" size="small">{{ item.tag.icon }}</v-icon>
                         <span>{{ item.tag.name }}</span>
-                        <span class="tag-amount">{{ format_amount(item) }}</span>
+                        <span class="tag-amount"><AmountText :cents="item.summary" :currency="item.currency_code" /></span>
                     </div>
                     <v-progress-linear
                         :model-value="(item.summary / max_for_currency(group.items, item.currency_code)) * 100"

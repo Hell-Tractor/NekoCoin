@@ -3,6 +3,7 @@ import { computed, ref, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { settings } from '../common/Settings';
+import PrivacyToggle from './components/PrivacyToggle.vue';
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
@@ -69,6 +70,9 @@ const hasNextAction = function() : boolean {
     <v-app-bar density="compact" color="primary">
         <v-app-bar-nav-icon @click="showDrawer = !showDrawer;"></v-app-bar-nav-icon>
         <v-toolbar-title>{{ current_page_title }}</v-toolbar-title>
+        <template #append>
+            <PrivacyToggle />
+        </template>
     </v-app-bar>
 
     <v-navigation-drawer v-model="showDrawer" width="288" class="app-drawer">

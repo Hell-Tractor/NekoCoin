@@ -21,6 +21,8 @@ pub struct Settings {
     pub time_format: String,
     pub decimal_places: u8,
     pub thousands_separator: bool,
+    #[serde(default = "default_privacy_mode_default")]
+    pub privacy_mode_default: bool,
     pub initialized: bool,
     pub log_retention_days: u32,
     #[serde(default = "default_log_level")]
@@ -29,6 +31,10 @@ pub struct Settings {
 
 fn default_log_level() -> String {
     crate::log::DEFAULT_LOG_LEVEL.to_string()
+}
+
+fn default_privacy_mode_default() -> bool {
+    true
 }
 
 impl Default for Settings {
@@ -44,6 +50,7 @@ impl Default for Settings {
             time_format: "24hr".to_string(),
             decimal_places: 2,
             thousands_separator: true,
+            privacy_mode_default: true,
             initialized: false,
             log_retention_days: 30,
             log_level: default_log_level(),

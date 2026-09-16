@@ -2,6 +2,7 @@
 import { onMounted, Ref, ref } from 'vue';
 import { Money } from '../common/Money';
 import { useI18n } from 'vue-i18n';
+import AmountText from './components/AmountText.vue';
 import SummaryBar from './components/SummaryBar.vue';
 import Constants from '../common/Constants';
 import { invoke } from '@tauri-apps/api/core';
@@ -69,7 +70,10 @@ onMounted(() => {
                 </div>
             </div>
             <div class="entity-meta">{{ t('total_balance') }}</div>
-            <div class="entity-hero-amount">{{ totalBalance ?? t('loading') }}</div>
+            <div class="entity-hero-amount">
+                <AmountText v-if="totalBalance" :money="totalBalance" />
+                <span v-else>{{ t('loading') }}</span>
+            </div>
         </v-card-text>
     </v-card>
     <SummaryBar

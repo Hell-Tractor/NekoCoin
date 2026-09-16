@@ -13,6 +13,10 @@ export class Money {
         return this._amount;
     }
 
+    public getCurrency(): Currency {
+        return this._currency;
+    }
+
     public toString() : string {
         return `${this._currency.code} ${formatAmount(this._amount)}`;
     }
