@@ -13,6 +13,7 @@ import IconSelector from './components/IconSelector.vue';
 import { Wallet } from './Wallets.vue';
 import { useRouter } from 'vue-router';
 import ColorPalette from './components/ColorPalette.vue';
+import AmountField from './components/AmountField.vue';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -88,7 +89,7 @@ onMounted(async () => {
                 <v-text-field v-model="wallet_name" :placeholder="t('account.enter.name')" variant="outlined" density="comfortable" :rules="[rules.required, rules.maxLength(Constants.MAX_WALLET_NAME_LENGTH)]"></v-text-field>
                 <v-text-field v-model="wallet_remark" :placeholder="t('account.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_WALLET_REMARK_LENGTH)]"></v-text-field>
                 <div class="d-flex">
-                    <v-text-field v-model.number="wallet_amount" :placeholder="t('account.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
+                    <AmountField v-model="wallet_amount" :placeholder="t('account.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]" />
                     <v-select :disabled="id != undefined" max-width="80" :items="Constants.CURRENCIES" v-model="selected_currency" :item-props="currencyItemProps" return-object density="comfortable" variant="outlined"></v-select>
                 </div>
                 <v-btn :prepend-icon="icon" variant="text" @click="page = 'icon_selector'" block size="large" class="justify-start">{{ t('icon.select') }}</v-btn>

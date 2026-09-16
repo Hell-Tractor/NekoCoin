@@ -18,6 +18,7 @@ import { Transaction } from './components/TransactionList.vue';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { clear_transaction_draft, transaction_draft } from '../common/TransactionDraft';
 import { Activity } from '../common/Activity';
+import AmountField from './components/AmountField.vue';
 const { t } = useI18n();
 const router = useRouter();
 
@@ -359,7 +360,7 @@ onBeforeRouteLeave((to) => {
             <v-chip-group mandatory v-model="selected_tag_type" :rules="[rules.required]">
                 <v-chip v-for="tag in TransactionTagTypeNames" :value="tag.type" :key="tag.type" variant="flat" color="secondary">{{ t(`tag.type.${tag.name}`) }}</v-chip>
             </v-chip-group>
-            <v-text-field v-model.number="amount" :placeholder="t('transaction.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]"></v-text-field>
+            <AmountField v-model="amount" :placeholder="t('transaction.enter.amount')" variant="outlined" density="comfortable" :rules="[rules.required, rules.isValidMoney]" />
             <v-text-field v-model="remark" :placeholder="t('transaction.enter.remark')" variant="outlined" density="comfortable" :rules="[rules.maxLength(Constants.MAX_TRANSACTION_REMARK_LENGTH)]"></v-text-field>
             <v-card variant="text" density="compact">
                 <v-card-text>
@@ -413,23 +414,19 @@ onBeforeRouteLeave((to) => {
                 </div>
                 <div v-if="has_split" class="split-body">
                     <div class="split-grid">
-                        <v-text-field
-                            v-model.number="split_count"
+                        <AmountField
+                            v-model="split_count"
+                            inputmode="numeric"
                             :label="t('transaction.split.count')"
                             variant="outlined"
-                            type="number"
-                            min="2"
                             :rules="[rules.required, rules.min(2)]"
                             density="compact"
                             hide-details="auto"
                         />
-                        <v-text-field
-                            v-model.number="split_expense"
+                        <AmountField
+                            v-model="split_expense"
                             :label="t('transaction.split.your')"
                             variant="outlined"
-                            type="number"
-                            min="0"
-                            :max="amount ?? 0"
                             :rules="[rules.required, rules.min(0), rules.max(amount ?? 0)]"
                             density="compact"
                             hide-details="auto"

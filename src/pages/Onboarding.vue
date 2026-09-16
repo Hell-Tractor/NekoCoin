@@ -10,6 +10,7 @@ import { settings, save_settings } from '../common/Settings';
 import { show_error } from '../common/Notify';
 import { Currency } from '../common/Money';
 import { get_random_theme_color } from '../themes/palettes';
+import AmountField from './components/AmountField.vue';
 
 const { t, locale } = useI18n();
 const theme = useTheme();
@@ -145,8 +146,8 @@ const finish = async function() {
                             density="comfortable"
                         />
                         <div class="d-flex">
-                            <v-text-field
-                                v-model.number="wallet_amount"
+                            <AmountField
+                                v-model="wallet_amount"
                                 :label="t('account.enter.amount')"
                                 :rules="[rules.required, rules.isValidMoney]"
                                 variant="outlined"
