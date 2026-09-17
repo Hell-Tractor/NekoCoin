@@ -6,6 +6,7 @@ import Constants from '../common/Constants';
 import { clear_logs, export_csv, export_database, get_log_usage, import_csv, import_database, reset_app, settings, save_settings } from '../common/Settings';
 import { format_bytes } from '../common/Utils';
 import { get_theme_color_palette } from '../themes/palettes';
+import { THEME_NAMES, get_theme_background, is_theme_dark } from '../themes';
 import BackTitleBar from './components/BackTitleBar.vue';
 import ConfirmSheet from './components/ConfirmSheet.vue';
 import { useRouter } from 'vue-router';
@@ -15,9 +16,11 @@ import { getVersion } from '@tauri-apps/api/app';
 const router = useRouter();
 const { t, locale } = useI18n();
 const theme = useTheme();
-const theme_items = computed(() => ['pinkPad', 'midnight', 'calico', 'neon'].map(value => ({
+const theme_items = computed(() => THEME_NAMES.map(value => ({
     value,
     title: t(`settings.themes.${value}`),
+    dark: is_theme_dark(value),
+    background: get_theme_background(value),
     palette: get_theme_color_palette(value).slice(0, 6),
 })));
 const avatar_items = [
@@ -301,14 +304,14 @@ onMounted(async () => {
                 >
                     <template #selection="{ item }">
                         <span class="theme-name">{{ item.raw.title }}</span>
-                        <span class="theme-palette">
+                        <span class="theme-preview" :class="{ 'theme-preview-dark': item.raw.dark }" :style="{ backgroundColor: item.raw.background }">
                             <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
                         </span>
                     </template>
                     <template #item="{ props: item_props, item }">
                         <v-list-item v-bind="item_props">
                             <template #append>
-                                <span class="theme-palette">
+                                <span class="theme-preview" :class="{ 'theme-preview-dark': item.raw.dark }" :style="{ backgroundColor: item.raw.background }">
                                     <span v-for="color in item.raw.palette" :key="color" class="theme-swatch" :style="{ backgroundColor: color }"></span>
                                 </span>
                             </template>
@@ -426,7 +429,7 @@ onMounted(async () => {
     width: 14px;
     height: 14px;
     flex: 0 0 auto;
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+    border: 1px solid rgba(0, 0, 0, 0.18);
     border-radius: 50%;
 }
 
@@ -434,10 +437,17 @@ onMounted(async () => {
     margin-right: 10px;
 }
 
-.theme-palette {
+.theme-preview {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    padding: 4px 6px;
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.14);
+    border-radius: 10px;
+}
+
+.theme-preview-dark .theme-swatch {
+    border-color: rgba(255, 255, 255, 0.32);
 }
 
 .danger-zone {

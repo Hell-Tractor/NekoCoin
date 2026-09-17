@@ -1,5 +1,6 @@
 import i18n from "../i18n";
 import { privacy_mode, settings } from './Settings';
+import { is_theme_dark } from '../themes';
 const t = i18n.global.t;
 
 export const getRandomColor = function(type: 'rgb' | 'rgba') : string {
@@ -153,7 +154,7 @@ interface Rgb {
 }
 
 export const is_dark_theme = function(): boolean {
-    return settings.theme === 'midnight' || settings.theme === 'neon';
+    return is_theme_dark(settings.theme);
 }
 
 const parse_color_rgb = function(color: string): Rgb | null {
