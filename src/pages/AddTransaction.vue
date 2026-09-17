@@ -168,7 +168,7 @@ const maxTime: Ref<string> = ref(getMaxTime());
 const time_picker_format = computed(() => settings.time_format === '12hr' ? 'ampm' : '24hr');
 const retrieve_wallets = async function() {
     try {
-        wallets.value = await invoke('retrieve_wallets');
+        wallets.value = await invoke('retrieve_wallets', { forSelect: true });
     } catch (error) {
         show_error(error);
     }

@@ -46,15 +46,54 @@ pub async fn get_wallet_by_id(id: u32) -> Result<Wallet> {
 }
 
 #[tauri::command]
-pub async fn retrieve_wallets() -> Result<Vec<Wallet>> {
-    debug!("Retrieving wallets...");
-    let wallets = sqlx::query_as::<_, Wallet>(
-        r#"
-        SELECT id, name, remark, balance, currency_code, color, icon
-        FROM wallets
-        "#)
-        .fetch_all(db())
-        .await?;
+pub async fn retrieve_wallets(for_select: Option<bool>) -> Result<Vec<Wallet>> {
+    debug!("Retrieving wallets for_select={:?}", for_select);
+    let wallets = if for_select == Some(true) {
+        sqlx::query_as::<_, Wallet>(
+            r#"
+            WITH recent AS (
+                SELECT t.id, t.time
+                FROM transactions t
+                ORDER BY t.time DESC, t.id DESC
+                LIMIT 50
+            ),
+            usages AS (
+                SELECT t.wallet_id AS wallet_id, recent.time AS recency, recent.id AS recency_id
+                FROM recent
+                JOIN transactions t ON t.id = recent.id
+                UNION ALL
+                SELECT t.to_wallet_id, recent.time, recent.id
+                FROM recent
+                JOIN transactions t ON t.id = recent.id
+                WHERE t.to_wallet_id IS NOT NULL
+                UNION ALL
+                SELECT ts.receive_wallet_id, recent.time, recent.id
+                FROM recent
+                JOIN transactions t ON t.id = recent.id
+                JOIN transaction_splits ts ON ts.id = t.split_id
+            ),
+            ranked AS (
+                SELECT wallet_id, COUNT(*) AS freq, MAX(recency) AS last_seen, MAX(recency_id) AS last_id
+                FROM usages
+                GROUP BY wallet_id
+            )
+            SELECT wallets.id, wallets.name, wallets.remark, wallets.balance, wallets.currency_code, wallets.color, wallets.icon
+            FROM wallets
+            LEFT JOIN ranked ON ranked.wallet_id = wallets.id
+            ORDER BY ranked.freq DESC, ranked.last_seen DESC, ranked.last_id DESC, wallets.id
+            "#)
+            .fetch_all(db())
+            .await?
+    } else {
+        sqlx::query_as::<_, Wallet>(
+            r#"
+            SELECT id, name, remark, balance, currency_code, color, icon
+            FROM wallets
+            ORDER BY id
+            "#)
+            .fetch_all(db())
+            .await?
+    };
     info!("Retrieved {} wallets.", wallets.len());
     Ok(wallets)
 }
